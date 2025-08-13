@@ -1,5 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { getUser } from "./action/user.action";
+import { UserRole } from "./model/user.model";
 
 const isAuthRoute = createRouteMatcher(["/auth(.*)"]);
 const isPublicRoute = createRouteMatcher([
@@ -7,9 +9,11 @@ const isPublicRoute = createRouteMatcher([
   "/_next/(.*)",
   "/favicon.ico",
 ]);
+const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId } = await auth();
+  const { userId, getToken } = await auth();
+  const token = await getToken();
 
   // Si c'est une route d'auth et que l'utilisateur est connecté, rediriger vers l'accueil
   if (isAuthRoute(req) && userId) {
@@ -19,6 +23,15 @@ export default clerkMiddleware(async (auth, req) => {
   // Si c'est une route publique, permettre l'accès
   if (isPublicRoute(req)) {
     return NextResponse.next();
+  }
+
+  const user = await getUser({ token });
+
+  if (
+    isAdminRoute(req) &&
+    (!user.success || user.data?.roleId !== UserRole.ADMIN)
+  ) {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   // Pour les routes protégées (y compris /), vérifier l'authentification

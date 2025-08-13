@@ -1,5 +1,5 @@
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from 'src/middleware/AuthGuard';
 import { User } from '../entities/user.entity';
 import { UserService } from '../services/user.service';
@@ -16,7 +16,6 @@ export class UserController {
   @Get()
   @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Récupérer un utilisateur par ID' })
-  @ApiParam({ name: 'id', description: "ID de l'utilisateur" })
   @ApiResponse({
     status: 200,
     description: 'Utilisateur récupéré avec succès',
