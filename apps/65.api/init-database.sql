@@ -11,8 +11,11 @@ CREATE TABLE IF NOT EXISTS User (
 
 CREATE TABLE IF NOT EXISTS UserRole (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name VARCHAR(255) NOT NULL,
+  name VARCHAR(255) NOT NULL
 );
 
 -- Création d'un index sur l'email pour améliorer les performances
 CREATE INDEX IF NOT EXISTS idx_users_email ON User(email);
+
+INSERT INTO UserRole (id, name) VALUES (0, 'user');
+INSERT INTO UserRole (id, name) VALUES (1, 'admin');

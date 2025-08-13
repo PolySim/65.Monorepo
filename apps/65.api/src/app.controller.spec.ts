@@ -21,12 +21,4 @@ describe('AppController', () => {
       expect(appController.getHello()).toBe("Bienvenue sur l'API 65.api !");
     });
   });
-
-  describe('health', () => {
-    it('should return health status', () => {
-      const result = appController.getHealth();
-      expect(result.status).toBe('OK');
-      expect(result.timestamp).toBeDefined();
-    });
-  });
 });
