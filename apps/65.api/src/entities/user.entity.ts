@@ -1,20 +1,22 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { UserRole } from './userRole.entity';
 
 @Entity('User')
 export class User {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn('varchar', { length: 255 })
   id: string;
 
-  @Column({ unique: true })
+  @Column('varchar', { length: 255, unique: true })
   email: string;
 
-  @Column({ default: 0 })
+  @Column('integer')
   roleId: number;
 
-  @Column({ unique: true })
+  @Column('varchar', { length: 255 })
   subId: string;
 
-  @ManyToOne(() => UserRole, (role) => role.users)
+  // Relation Many-to-One : plusieurs utilisateurs peuvent avoir le même rôle
+  @ManyToOne(() => UserRole, (userRole) => userRole.users)
+  @JoinColumn({ name: 'roleId' })
   role: UserRole;
 }

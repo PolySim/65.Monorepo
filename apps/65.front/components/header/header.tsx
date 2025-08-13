@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Button } from "../ui/button";
 import AdminLink from "./adminLink";
 import Logout from "./logout";
+import Menu from "./menu";
 
 const Header = () => {
   return (
@@ -13,6 +14,7 @@ const Header = () => {
         65 Passion Montagne
       </Link>
       <div className="flex items-center gap-2">
+        <Menu />
         <Button
           variant="ghost"
           className="text-secondary-dark hover:bg-secondary-dark/20 hover:text-secondary-dark"

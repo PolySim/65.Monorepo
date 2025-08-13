@@ -14,6 +14,26 @@ CREATE TABLE IF NOT EXISTS UserRole (
   name VARCHAR(255) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS State (
+  id VARCHAR(255) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  image_path VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS Category (
+  id VARCHAR(255) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  image_path VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS J_Category_State (
+  categoryId VARCHAR(255) NOT NULL,
+  stateId VARCHAR(255) NOT NULL,
+  PRIMARY KEY (categoryId, stateId),
+  FOREIGN KEY (categoryId) REFERENCES Category(id),
+  FOREIGN KEY (stateId) REFERENCES State(id)
+);
+
 -- Création d'un index sur l'email pour améliorer les performances
 CREATE INDEX IF NOT EXISTS idx_users_email ON User(email);
 
