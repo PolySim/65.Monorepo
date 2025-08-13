@@ -66,14 +66,20 @@ const Menu = () => {
               <Link
                 key={state.id}
                 href={`/categories/${categoryHover?.id}/states/${state.id}`}
+                className="relative rounded-sm w-[135px] h-[80px] overflow-hidden hover:scale-105 transition-all duration-300"
               >
                 <Image
-                  src={`${config.IMAGE_URL}/${state.image_path}`}
+                  src={`${config.IMAGE_URL}?path=${state.image_path}`}
                   alt={state.name}
-                  width={135}
-                  height={80}
-                  className="rounded-sm w-full object-cover"
+                  width={270}
+                  height={160}
+                  className="object-cover w-full h-full"
                 />
+                <div className="absolute bottom-0 left-0 top-0 right-0 flex justify-center items-center bg-black/20">
+                  <p className="text-tertiary text-sm font-bold">
+                    {state.name}
+                  </p>
+                </div>
               </Link>
             ))
           ) : (
@@ -82,11 +88,11 @@ const Menu = () => {
               className="w-full h-full"
             >
               <Image
-                src={`${config.IMAGE_URL}/${categoryHover?.image_path}`}
+                src={`${config.IMAGE_URL}?path=${categoryHover?.image_path}`}
                 alt={categoryHover?.name ?? ""}
-                width={135}
-                height={80}
-                className="rounded-sm w-full object-cover"
+                width={600}
+                height={800}
+                className="rounded-sm object-cover w-[300px] h-[400px]"
               />
             </Link>
           )}
