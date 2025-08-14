@@ -3,9 +3,11 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserRole } from './userRole.entity';
+import { Favorite } from './favorite.entity';
 
 @Entity('User')
 export class User {
@@ -25,4 +27,7 @@ export class User {
   @ManyToOne(() => UserRole, (userRole) => userRole.users)
   @JoinColumn({ name: 'roleId' })
   role: UserRole;
+
+  @OneToMany(() => Favorite, (favorite) => favorite.user)
+  favorites: Favorite[];
 }

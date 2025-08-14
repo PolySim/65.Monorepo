@@ -9,9 +9,10 @@ import {
 } from 'typeorm';
 import { Category } from './category.entity';
 import { Difficulty } from './difficulty.entity';
+import { HikeGPX } from './higeGPX.entity';
 import { Image } from './image.entity';
 import { State } from './state.entity';
-import { HikeGPX } from './higeGPX.entity';
+import { Favorite } from './favorite.entity';
 
 @Entity('Hike')
 export class Hike {
@@ -75,4 +76,7 @@ export class Hike {
 
   @OneToMany(() => HikeGPX, (gpx) => gpx.hike)
   gpxFiles: HikeGPX[];
+
+  @OneToMany(() => Favorite, (favorite) => favorite.hike)
+  favorites: Favorite[];
 }

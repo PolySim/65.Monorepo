@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HikeSearchDto } from 'src/DTO/hike.dto';
+import { Favorite } from 'src/entities/favorite.entity';
 import { DataSource, Like, Repository } from 'typeorm';
 import { Hike } from '../entities/hike.entity';
 
@@ -71,5 +72,43 @@ export class HikeRepository extends Repository<Hike> {
         gpxFiles: true,
       },
     });
+  }
+
+  async getHikeWithFavorites(id: string): Promise<Hike[]> {
+    return await this.find({
+      where: { favorites: { userId: id } },
+      relations: {
+        favorites: true,
+        category: true,
+        state: true,
+        difficulty: true,
+        mainImage: true,
+      },
+      select: {
+        id: true,
+        title: true,
+        difficulty: true,
+        mainImage: true,
+        category: true,
+        state: true,
+        elevation: true,
+        distance: true,
+        duration: true,
+      },
+    });
+  }
+
+  async toggleFavorite(hikeId: string, userId: string): Promise<void> {
+    const favorite = await this.dataSource.getRepository(Favorite).findOne({
+      where: { hikeId, userId },
+    });
+    if (favorite) {
+      await this.dataSource.getRepository(Favorite).delete({ hikeId, userId });
+    } else {
+      const newFavorite = new Favorite();
+      newFavorite.hikeId = hikeId;
+      newFavorite.userId = userId;
+      await this.dataSource.getRepository(Favorite).save(newFavorite);
+    }
   }
 }

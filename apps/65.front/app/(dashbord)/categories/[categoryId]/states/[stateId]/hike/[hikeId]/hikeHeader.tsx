@@ -6,14 +6,17 @@ import { config } from "@/config/config";
 import { cn } from "@/lib/utils";
 import { DifficultyEnum } from "@/model/difficulty.model";
 import { Hike } from "@/model/hike.model";
+import { useHikeFavorites, useToggleFavorite } from "@/queries/hike.queries";
 import { ArrowLeft, Heart } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 const HikeHeader = ({ hike }: { hike: Hike }) => {
   const router = useRouter();
-  const [isFavorite, setIsFavorite] = useState(false);
+  const { data: hikeFavorites } = useHikeFavorites(true);
+  const { mutate: toggleFavorite } = useToggleFavorite();
+  const isFavorite = hikeFavorites?.some((h) => h.id === hike.id);
+
   return (
     <div className="relative w-full h-[350px] bg-gray-400">
       {/* Image */}
@@ -39,7 +42,7 @@ const HikeHeader = ({ hike }: { hike: Hike }) => {
             className={cn({
               "text-red-500": isFavorite,
             })}
-            // onClick={() => setIsFavorite(!isFavorite)}
+            onClick={() => toggleFavorite()}
           >
             <Heart size={20} fill={isFavorite ? "red" : "none"} />
           </Button>

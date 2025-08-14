@@ -1,9 +1,22 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { HikeSearchDto } from 'src/DTO/hike.dto';
 import { Hike } from 'src/entities/hike.entity';
 import { AuthGuard } from 'src/middleware/AuthGuard';
 import { HikeService } from 'src/services/hike.service';
+
+interface AuthenticatedRequest extends Request {
+  user: { userId: string };
+}
 
 @ApiTags('hikes')
 @Controller('hikes')
@@ -22,6 +35,26 @@ export class HikeController {
     return this.hikeService.findAllWithFilters(filters);
   }
 
+  @Get('favorites')
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: "Récupérer les randonnées favorites d'un utilisateur",
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Randonnées favorites récupérées avec succès',
+    type: [Hike],
+  })
+  async getHikeWithFavorites(
+    @Req() req: AuthenticatedRequest,
+  ): Promise<Hike[]> {
+    const subId = req.user.userId;
+    if (!subId) {
+      throw new UnauthorizedException('User not authenticated');
+    }
+    return this.hikeService.getHikeWithFavorites(subId);
+  }
+
   @Get(':id')
   @UseGuards(AuthGuard)
   @ApiOperation({ summary: 'Récupérer une randonnée par son id' })
@@ -32,5 +65,23 @@ export class HikeController {
   })
   async getHikeById(@Param('id') id: string): Promise<Hike> {
     return this.hikeService.getHikeById(id);
+  }
+
+  @Post('toggle-favorite')
+  @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Ajouter ou supprimer une randonnée des favoris' })
+  @ApiResponse({
+    status: 200,
+    description: 'Randonnée ajoutée ou supprimée des favoris avec succès',
+  })
+  async toggleFavorite(
+    @Body() body: { hikeId: string },
+    @Req() req: AuthenticatedRequest,
+  ): Promise<void> {
+    const subId = req.user.userId;
+    if (!subId) {
+      throw new UnauthorizedException('User not authenticated');
+    }
+    return this.hikeService.toggleFavorite(body.hikeId, subId);
   }
 }

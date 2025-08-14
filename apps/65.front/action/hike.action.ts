@@ -73,3 +73,65 @@ export const getHikeById = async (id: string) => {
     return { success: false };
   }
 };
+
+export const getHikeFavorites = async () => {
+  try {
+    const { getToken } = await auth();
+    const token = await getToken();
+
+    if (!token) {
+      console.error("Unauthorized for fetching hike favorites");
+      return { success: false };
+    }
+
+    const res = await fetch(`${config.API_URL}/hikes/favorites`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      console.error("Error in fetching hike favorites", res.statusText);
+      return { success: false };
+    }
+
+    const data = (await res.json()) as HikeSearch[];
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error in fetching hike favorites", error);
+    return { success: false };
+  }
+};
+
+export const toggleFavorite = async (hikeId: string) => {
+  try {
+    const { getToken } = await auth();
+    const token = await getToken();
+
+    if (!token) {
+      console.error("Unauthorized for toggling favorite");
+      return { success: false };
+    }
+
+    const res = await fetch(`${config.API_URL}/hikes/toggle-favorite`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ hikeId }),
+    });
+
+    if (!res.ok) {
+      console.error("Error in toggling favorite", res.statusText);
+      return { success: false };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error in toggling favorite", error);
+    return { success: false };
+  }
+};

@@ -73,6 +73,14 @@ CREATE TABLE IF NOT EXISTS HikeGPX (
   FOREIGN KEY (hikeId) REFERENCES Hike(id)
 );
 
+CREATE TABLE IF NOT EXISTS Favorite (
+  userId VARCHAR(255) NOT NULL,
+  hikeId VARCHAR(255) NOT NULL,
+  PRIMARY KEY (userId, hikeId),
+  FOREIGN KEY (userId) REFERENCES User(id),
+  FOREIGN KEY (hikeId) REFERENCES Hike(id)
+);
+
 -- Création d'un index sur l'email pour améliorer les performances
 CREATE INDEX IF NOT EXISTS idx_users_email ON User(email);
 CREATE INDEX IF NOT EXISTS idx_hikes_name ON Hike(title);
