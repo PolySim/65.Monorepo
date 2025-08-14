@@ -1,9 +1,15 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { UserRole } from './userRole.entity';
 
 @Entity('User')
 export class User {
-  @PrimaryColumn('varchar', { length: 255 })
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column('varchar', { length: 255, unique: true })

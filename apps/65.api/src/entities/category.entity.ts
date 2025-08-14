@@ -1,9 +1,17 @@
-import { Entity, PrimaryColumn, Column, ManyToMany, JoinTable } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Hike } from './hike.entity';
 import { State } from './state.entity';
 
 @Entity('Category')
 export class Category {
-  @PrimaryColumn('varchar', { length: 255 })
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column('varchar', { length: 255 })
@@ -25,4 +33,7 @@ export class Category {
     },
   })
   states: State[];
+
+  @OneToMany(() => Hike, (hike) => hike.category)
+  hikes: Hike[];
 }

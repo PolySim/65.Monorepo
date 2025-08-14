@@ -1,9 +1,16 @@
-import { Entity, PrimaryColumn, Column, ManyToMany } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToMany,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Category } from './category.entity';
+import { Hike } from './hike.entity';
 
 @Entity('State')
 export class State {
-  @PrimaryColumn('varchar', { length: 255 })
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column('varchar', { length: 255 })
@@ -14,4 +21,7 @@ export class State {
 
   @ManyToMany(() => Category, (category) => category.states)
   categories: Category[];
+
+  @OneToMany(() => Hike, (hike) => hike.state)
+  hikes: Hike[];
 }
