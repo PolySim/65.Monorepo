@@ -1,3 +1,5 @@
 export class HikeSearchDto {
-  title: string;
+  title?: string;
+  categoryId?: string;
+  stateId?: string;
 }

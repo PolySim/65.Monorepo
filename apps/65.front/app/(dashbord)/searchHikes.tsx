@@ -19,6 +19,10 @@ const SearchHikes = () => {
 
   const onChange = useDebounce(onSearch, 500);
 
+  const onBlur = useDebounce(() => {
+    setSearch("");
+  }, 250);
+
   return (
     <div className="flex flex-col relative">
       <div className="flex items-center gap-2 rounded-full border border-gray-300 p-2 w-[40rem] max-w-[95vw] bg-white z-20">
@@ -27,7 +31,7 @@ const SearchHikes = () => {
           type="text"
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setSearch(inputRef.current?.value ?? "")}
-          onBlur={() => setSearch("")}
+          onBlur={onBlur}
           placeholder="Recherche des randos, escalades, refuges ..."
           className="text-sm text-gray-900 placeholder:text-gray-400 focus:outline-hidden w-full"
           ref={inputRef}
@@ -43,7 +47,7 @@ const SearchHikes = () => {
             (hikes || []).map((hike) => (
               <Link
                 key={hike.id}
-                href={`/category/${hike.category.id}/state/${hike.state.id}/hike/${hike.id}`}
+                href={`/categories/${hike.category.id}/states/${hike.state.id}/hike/${hike.id}`}
                 className="w-full p-2 hover:bg-primary/10 cursor-pointer flex justify-between items-center"
               >
                 <p className="font-semibold">{hike.title}</p>

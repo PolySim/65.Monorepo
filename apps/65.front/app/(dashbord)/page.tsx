@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Caroussel from "./caroussel";
 import SearchHikes from "./searchHikes";
 
@@ -9,7 +10,9 @@ export default function Home() {
         <h1 className="text-tertiary font-rubik font-semibold text-3xl md:text-5xl text-center z-10">
           Trouve ton bonheur
         </h1>
-        <SearchHikes />
+        <Suspense>
+          <SearchHikes />
+        </Suspense>
       </div>
     </div>
   );
