@@ -20,3 +20,19 @@ export type HikeSearch = {
   duration?: string;
   elevation?: number;
 };
+
+export type Hike = {
+  id: string;
+  title: string;
+  content: string;
+  indication: string;
+  difficulty: Difficulty;
+  distance?: number;
+  duration?: string;
+  elevation?: number;
+  mainImage: Image;
+  mainImagePosition: number;
+  images: Image[];
+  category: Category;
+  state: State;
+};

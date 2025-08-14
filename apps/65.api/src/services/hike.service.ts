@@ -10,4 +10,8 @@ export class HikeService {
   async findAllWithFilters(filters: HikeSearchDto): Promise<Hike[]> {
     return this.hikeRepository.findAllWithFilters(filters);
   }
+
+  async getHikeById(id: string): Promise<Hike> {
+    return this.hikeRepository.getHikeById(id);
+  }
 }

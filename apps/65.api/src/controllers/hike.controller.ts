@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { HikeSearchDto } from 'src/DTO/hike.dto';
 import { Hike } from 'src/entities/hike.entity';
@@ -20,5 +20,17 @@ export class HikeController {
   })
   async findAllWithFilters(@Body() filters: HikeSearchDto): Promise<Hike[]> {
     return this.hikeService.findAllWithFilters(filters);
+  }
+
+  @Get(':id')
+  @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Récupérer une randonnée par son id' })
+  @ApiResponse({
+    status: 200,
+    description: 'Randonnée récupérée avec succès',
+    type: Hike,
+  })
+  async getHikeById(@Param('id') id: string): Promise<Hike> {
+    return this.hikeService.getHikeById(id);
   }
 }

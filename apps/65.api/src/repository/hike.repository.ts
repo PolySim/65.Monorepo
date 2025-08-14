@@ -42,4 +42,32 @@ export class HikeRepository extends Repository<Hike> {
       },
     });
   }
+
+  async getHikeById(id: string): Promise<Hike> {
+    return await this.findOne({
+      where: { id },
+      relations: {
+        category: true,
+        state: true,
+        difficulty: true,
+        mainImage: true,
+        images: true,
+      },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        indication: true,
+        difficulty: true,
+        mainImage: true,
+        images: true,
+        elevation: true,
+        distance: true,
+        duration: true,
+        category: true,
+        state: true,
+        mainImagePosition: true,
+      },
+    });
+  }
 }

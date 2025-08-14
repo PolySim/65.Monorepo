@@ -7,20 +7,19 @@ import { Clock, MapPin, Mountain } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-const HikeElement = ({ hike }: { hike: HikeSearch }) => {
-  const getDifficultyColor = (difficulty: DifficultyEnum) => {
-    const colors = {
-      [DifficultyEnum.PROMENEUR]:
-        "bg-green-100 text-green-800 border-green-200",
-      [DifficultyEnum.MARCHEUR]:
-        "bg-yellow-100 text-yellow-800 border-yellow-200",
-      [DifficultyEnum.RANDONNEUR]:
-        "bg-orange-100 text-orange-800 border-orange-200",
-      [DifficultyEnum.EXPERIMENTE]: "bg-red-100 text-red-800 border-red-200",
-    };
-    return colors[difficulty] || "bg-gray-100 text-gray-800 border-gray-200";
+export const getDifficultyColor = (difficulty: DifficultyEnum) => {
+  const colors = {
+    [DifficultyEnum.PROMENEUR]: "bg-green-100 text-green-800 border-green-200",
+    [DifficultyEnum.MARCHEUR]:
+      "bg-yellow-100 text-yellow-800 border-yellow-200",
+    [DifficultyEnum.RANDONNEUR]:
+      "bg-orange-100 text-orange-800 border-orange-200",
+    [DifficultyEnum.EXPERIMENTE]: "bg-red-100 text-red-800 border-red-200",
   };
+  return colors[difficulty] || "bg-gray-100 text-gray-800 border-gray-200";
+};
 
+const HikeElement = ({ hike }: { hike: HikeSearch }) => {
   return (
     <Link
       key={hike.id}
