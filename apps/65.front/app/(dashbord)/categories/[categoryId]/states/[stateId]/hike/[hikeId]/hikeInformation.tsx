@@ -4,9 +4,9 @@ import { useHikeById } from "@/queries/hike.queries";
 import { Loader2 } from "lucide-react";
 import HikeDescription from "./hikeDescription";
 import HikeGlobalInformation from "./hikeGlobalInformation";
+import HikeGPXContainer from "./hikeGPXContainer";
 import HikeHeader from "./hikeHeader";
 import HikePhoto from "./hikePhoto";
-import HikeGPX from "./hikeGPX";
 
 const HikeInformation = () => {
   const { data: hike, isPending } = useHikeById();
@@ -21,7 +21,7 @@ const HikeInformation = () => {
       <HikeGlobalInformation hike={hike!} />
       <HikeDescription hike={hike!} />
       <HikePhoto hike={hike!} />
-      <HikeGPX hike={hike!} />
+      <HikeGPXContainer hike={hike!} />
     </div>
   );
 };

@@ -52,6 +52,7 @@ export class HikeRepository extends Repository<Hike> {
         difficulty: true,
         mainImage: true,
         images: true,
+        gpxFiles: true,
       },
       select: {
         id: true,
@@ -67,6 +68,7 @@ export class HikeRepository extends Repository<Hike> {
         category: true,
         state: true,
         mainImagePosition: true,
+        gpxFiles: true,
       },
     });
   }

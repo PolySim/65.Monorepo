@@ -1,5 +1,6 @@
 import { Category } from "./category.model";
 import { Difficulty } from "./difficulty.model";
+import { GPX } from "./gpx.model";
 import { Image } from "./image.model";
 import { State } from "./state.model";
 
@@ -35,4 +36,5 @@ export type Hike = {
   images: Image[];
   category: Category;
   state: State;
+  gpxFiles: [GPX] | [];
 };

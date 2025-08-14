@@ -11,6 +11,7 @@ import { Category } from './category.entity';
 import { Difficulty } from './difficulty.entity';
 import { Image } from './image.entity';
 import { State } from './state.entity';
+import { HikeGPX } from './higeGPX.entity';
 
 @Entity('Hike')
 export class Hike {
@@ -71,4 +72,7 @@ export class Hike {
   // Relation One-to-Many pour toutes les images de la randonnée
   @OneToMany(() => Image, (image) => image.hike)
   images: Image[];
+
+  @OneToMany(() => HikeGPX, (gpx) => gpx.hike)
+  gpxFiles: HikeGPX[];
 }
