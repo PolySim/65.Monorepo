@@ -19,11 +19,21 @@ export const getDifficultyColor = (difficulty: DifficultyEnum) => {
   return colors[difficulty] || "bg-gray-100 text-gray-800 border-gray-200";
 };
 
-const HikeElement = ({ hike }: { hike: HikeSearch }) => {
+const HikeElement = ({
+  hike,
+  isAdmin,
+}: {
+  hike: HikeSearch;
+  isAdmin?: boolean;
+}) => {
   return (
     <Link
       key={hike.id}
-      href={`/categories/${hike.category.id}/states/${hike.state.id}/hike/${hike.id}`}
+      href={
+        isAdmin
+          ? `/admin/categories/${hike.category.id}/hike/${hike.id}`
+          : `/categories/${hike.category.id}/states/${hike.state.id}/hike/${hike.id}`
+      }
       className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden"
     >
       <div className="flex">
@@ -76,11 +86,13 @@ const HikeElement = ({ hike }: { hike: HikeSearch }) => {
             </div>
           </div>
 
-          <div className="flex justify-between items-center mt-3">
-            <span className="text-sm text-gray-500">
-              Secteur: {hike.state.name}
-            </span>
-          </div>
+          {hike.state?.name && (
+            <div className="flex justify-between items-center mt-3">
+              <span className="text-sm text-gray-500">
+                Secteur: {hike.state.name}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </Link>

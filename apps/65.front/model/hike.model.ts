@@ -38,3 +38,10 @@ export type Hike = {
   state: State;
   gpxFiles: [GPX] | [];
 };
+
+export type CreateHikeDto = {
+  title: string;
+  difficultyId: string;
+  stateId: string;
+  categoryId: string;
+};

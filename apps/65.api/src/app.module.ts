@@ -4,11 +4,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { databaseConfig } from './config/database.config';
 import { CategoryController } from './controllers/category.controller';
+import { DifficultyController } from './controllers/difficulty.controller';
 import { GpxController } from './controllers/gpx.controller';
 import { HikeController } from './controllers/hike.controller';
 import { ImageController } from './controllers/image.controller';
 import { UserController } from './controllers/user.controller';
 import { CategoryRepository } from './repository/category.repository';
+import { GpxRepository } from './repository/gpx.repository';
 import { HikeRepository } from './repository/hike.repository';
 import { ImageRepository } from './repository/image.repository';
 import { UserRepository } from './repository/user.repository';
@@ -17,7 +19,8 @@ import { GpxService } from './services/gpx.service';
 import { HikeService } from './services/hike.service';
 import { ImageService } from './services/image.service';
 import { UserService } from './services/user.service';
-import { GpxRepository } from './repository/gpx.repository';
+import { DifficultyRepository } from './repository/difficulty.repository';
+import { DifficultyService } from './services/difficulty.service';
 
 @Module({
   imports: [TypeOrmModule.forRoot(databaseConfig)],
@@ -28,6 +31,7 @@ import { GpxRepository } from './repository/gpx.repository';
     ImageController,
     HikeController,
     GpxController,
+    DifficultyController,
   ],
   providers: [
     AppService,
@@ -41,6 +45,8 @@ import { GpxRepository } from './repository/gpx.repository';
     HikeRepository,
     GpxService,
     GpxRepository,
+    DifficultyService,
+    DifficultyRepository,
   ],
 })
 export class AppModule {}

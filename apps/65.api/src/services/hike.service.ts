@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { HikeSearchDto } from 'src/DTO/hike.dto';
+import { CreateHikeDto, HikeSearchDto } from 'src/DTO/hike.dto';
 import { Hike } from 'src/entities/hike.entity';
 import { HikeRepository } from 'src/repository/hike.repository';
 import { UserRepository } from 'src/repository/user.repository';
@@ -33,5 +33,9 @@ export class HikeService {
       throw new Error('User not found');
     }
     return this.hikeRepository.toggleFavorite(hikeId, user.id);
+  }
+
+  async createHike(hike: CreateHikeDto): Promise<Hike> {
+    return this.hikeRepository.createHike(hike);
   }
 }

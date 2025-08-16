@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { HikeSearchDto } from 'src/DTO/hike.dto';
+import { CreateHikeDto, HikeSearchDto } from 'src/DTO/hike.dto';
 import { Favorite } from 'src/entities/favorite.entity';
 import { DataSource, Like, Repository } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { Hike } from '../entities/hike.entity';
 
 @Injectable()
@@ -110,5 +111,16 @@ export class HikeRepository extends Repository<Hike> {
       newFavorite.userId = userId;
       await this.dataSource.getRepository(Favorite).save(newFavorite);
     }
+  }
+
+  async createHike(hike: CreateHikeDto): Promise<Hike> {
+    const newHike = new Hike();
+    newHike.id = uuidv4();
+    newHike.title = hike.title;
+    newHike.difficultyId = hike.difficultyId;
+    newHike.stateId = hike.stateId;
+    newHike.categoryId = hike.categoryId;
+    newHike.mainImagePosition = 0;
+    return await this.save(newHike);
   }
 }

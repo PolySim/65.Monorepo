@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import EmptyHikes from "./emptyHikes";
 import HikeElement from "./hikeElement";
 
-const GridHikes = (props: { isFavorites?: boolean }) => {
+const GridHikes = (props: { isFavorites?: boolean; isAdmin?: boolean }) => {
   const { data: hikesFilters, isPending: isPendingFilters } = useHikeFilters();
   const { data: hikesFavorites, isPending: isPendingFavorites } =
     useHikeFavorites(props.isFavorites);
@@ -20,7 +20,7 @@ const GridHikes = (props: { isFavorites?: boolean }) => {
   ) : hikes && hikes.length > 0 ? (
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 p-4">
       {hikes.map((hike) => (
-        <HikeElement key={hike.id} hike={hike} />
+        <HikeElement key={hike.id} hike={hike} isAdmin={props.isAdmin} />
       ))}
     </div>
   ) : (

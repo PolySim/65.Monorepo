@@ -1,8 +1,14 @@
 "use server";
 
 import { config } from "@/config/config";
-import { Hike, HikeFilter, HikeSearch } from "@/model/hike.model";
+import {
+  CreateHikeDto,
+  Hike,
+  HikeFilter,
+  HikeSearch,
+} from "@/model/hike.model";
 import { auth } from "@clerk/nextjs/server";
+import { revalidateTag } from "next/cache";
 
 export const getHikes = async (filters: HikeFilter) => {
   try {
@@ -132,6 +138,40 @@ export const toggleFavorite = async (hikeId: string) => {
     return { success: true };
   } catch (error) {
     console.error("Error in toggling favorite", error);
+    return { success: false };
+  }
+};
+
+export const createHike = async (hike: CreateHikeDto) => {
+  try {
+    const { getToken } = await auth();
+    const token = await getToken();
+
+    if (!token) {
+      console.error("Unauthorized for creating hike");
+      return { success: false };
+    }
+
+    const res = await fetch(`${config.API_URL}/hikes/create`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(hike),
+    });
+
+    if (!res.ok) {
+      console.error("Error in creating hike", res.statusText);
+      return { success: false };
+    }
+
+    revalidateTag("hikes");
+
+    const data = (await res.json()) as Hike;
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error in creating hike", error);
     return { success: false };
   }
 };

@@ -1,12 +1,14 @@
 import {
+  createHike,
   getHikeById,
   getHikeFavorites,
   getHikes,
   toggleFavorite,
 } from "@/action/hike.action";
 import { useAppParams } from "@/hook/useAppParams";
-import { HikeFilter, HikeSearch } from "@/model/hike.model";
+import { CreateHikeDto, HikeFilter, HikeSearch } from "@/model/hike.model";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export const useHikeFilters = (
@@ -87,6 +89,34 @@ export const useToggleFavorite = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["hikes", "favorites"] });
+    },
+  });
+};
+
+export const useCreateHike = () => {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: (hike: CreateHikeDto) => createHike(hike),
+    onMutate: () => {
+      queryClient.cancelQueries({ queryKey: ["hikes"] });
+    },
+    onSuccess: (data, variables) => {
+      if (!data.success) {
+        toast.error("Erreur lors de la création de la randonnée");
+      } else {
+        console.log(data.data);
+        router.push(
+          `/admin/categories/${variables.categoryId}/hikes/${data.data?.id}`
+        );
+      }
+    },
+    onError: (error) => {
+      toast.error("Erreur lors de la création de la randonnée");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["hikes"] });
     },
   });
 };

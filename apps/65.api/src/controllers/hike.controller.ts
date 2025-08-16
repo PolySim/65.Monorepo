@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { HikeSearchDto } from 'src/DTO/hike.dto';
+import { CreateHikeDto, HikeSearchDto } from 'src/DTO/hike.dto';
 import { Hike } from 'src/entities/hike.entity';
 import { AuthGuard } from 'src/middleware/AuthGuard';
 import { HikeService } from 'src/services/hike.service';
@@ -83,5 +83,17 @@ export class HikeController {
       throw new UnauthorizedException('User not authenticated');
     }
     return this.hikeService.toggleFavorite(body.hikeId, subId);
+  }
+
+  @Post('create')
+  @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Créer une randonnée' })
+  @ApiResponse({
+    status: 200,
+    description: 'Randonnée créée avec succès',
+    type: Hike,
+  })
+  async createHike(@Body() hike: CreateHikeDto): Promise<Hike> {
+    return this.hikeService.createHike(hike);
   }
 }
