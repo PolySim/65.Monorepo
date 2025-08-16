@@ -11,19 +11,12 @@ import {
 } from "../ui/form";
 import { Input } from "../ui/input";
 
-type FormInputProps = {
+type FormInputProps = React.ComponentProps<"input"> & {
   name: string;
   label?: string;
   description?: string;
-  disabled?: boolean;
-  type?: string;
   onChange?: (value: string) => void;
   onFilesChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  className?: string;
-  placeholder?: string;
-  required?: boolean;
-  multiple?: boolean;
-  accept?: string;
 };
 
 const FormInput = ({
