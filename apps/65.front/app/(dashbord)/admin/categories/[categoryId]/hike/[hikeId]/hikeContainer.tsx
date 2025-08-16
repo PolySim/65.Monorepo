@@ -2,6 +2,7 @@
 
 import { useHikeById } from "@/queries/hike.queries";
 import { Loader2 } from "lucide-react";
+import HikeDescription from "./hikeDescription";
 import HikeGlobalInformation from "./hikeGlobalInformation";
 import HikeHeader from "./hikeHeader";
 
@@ -16,10 +17,11 @@ export default function HikeContainer() {
     <div className="w-11/12 max-w-6xl mx-auto rounded-lg bg-white overflow-hidden shadow">
       <HikeHeader />
       <HikeGlobalInformation />
-      {/*<HikeGlobalInformation hike={hike!} />
-      <HikeDescription hike={hike!} />
+      <HikeDescription />
+      {/*
       <HikePhoto hike={hike!} />
-      <HikeGPXContainer hike={hike!} /> */}
+      <HikeGPXContainer hike={hike!} />
+       */}
     </div>
   );
 }
