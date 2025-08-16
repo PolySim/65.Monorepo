@@ -45,3 +45,18 @@ export type CreateHikeDto = {
   stateId: string;
   categoryId: string;
 };
+
+export type UpdateHikeDto = {
+  id: string;
+  title?: string;
+  content?: string;
+  indication?: string;
+  distance?: number;
+  duration?: string;
+  elevation?: number;
+  mainImageId?: string;
+  mainImagePosition?: number;
+  difficultyId?: string;
+  stateId?: string;
+  categoryId?: string;
+};

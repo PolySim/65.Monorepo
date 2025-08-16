@@ -8,7 +8,7 @@ import { Form } from "@/components/ui/form";
 import { useAppParams } from "@/hook/useAppParams";
 import { useCategories } from "@/queries/categories.queries";
 import { useDifficulties } from "@/queries/difficulty.query";
-import { useCreateHike } from "@/queries/hike.queries";
+import { useHikeById, useUpdateHike } from "@/queries/hike.queries";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import z from "zod";
@@ -21,8 +21,9 @@ const formSchema = z.object({
 
 type FormSchema = z.infer<typeof formSchema>;
 
-export default function CreateCategory() {
+export default function HikeUpdateInformation() {
   const { data: categories } = useCategories();
+  const { data: hike } = useHikeById();
   const { categoryId } = useAppParams();
   const { data: difficulties } = useDifficulties();
   const states = categories?.find(
@@ -32,19 +33,18 @@ export default function CreateCategory() {
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      difficulty: difficulties?.[0]?.id ?? "",
-      state: states?.[0]?.id ?? "",
+      name: hike?.title ?? "",
+      difficulty: hike?.difficulty.id ?? "",
+      state: hike?.state.id ?? "",
     },
   });
-  const { mutate: createHike, isPending } = useCreateHike();
+  const { mutate: updateHike } = useUpdateHike();
 
   const onSubmit = (data: FormSchema) => {
-    createHike({
+    updateHike({
       title: data.name,
       difficultyId: data.difficulty ?? "-1",
       stateId: data.state ?? "-1",
-      categoryId,
     });
   };
 
@@ -55,18 +55,12 @@ export default function CreateCategory() {
           onSubmit={(e) => e.preventDefault()}
           className="grid grid-cols-3 gap-4"
         >
-          <FormInput
-            name="name"
-            label="Nom"
-            placeholder="Nom de l'activité"
-            disabled={isPending}
-          />
+          <FormInput name="name" label="Nom" placeholder="Nom de l'activité" />
           {difficulties && (
             <FormSelect
               name="difficulty"
               label="Difficulté"
               className="w-full"
-              disabled={isPending}
               options={difficulties.map((difficulty) => ({
                 value: difficulty.id,
                 label: difficulty.name,
@@ -78,7 +72,6 @@ export default function CreateCategory() {
               name="state"
               label="Massif"
               className="w-full"
-              disabled={isPending}
               options={states.map((state) => ({
                 value: state.id,
                 label: state.name,
@@ -88,21 +81,13 @@ export default function CreateCategory() {
         </form>
       </Form>
       <DialogFooter>
-        <Button
-          disabled={isPending}
-          onClick={() => onSubmit(form.getValues())}
-          type="button"
-        >
-          Créer
-        </Button>
         <DialogClose asChild>
-          <Button
-            onClick={() => console.log("hiii")}
-            variant="outline"
-            disabled={isPending}
-          >
-            Annuler
+          <Button onClick={() => onSubmit(form.getValues())} type="button">
+            Modifier
           </Button>
+        </DialogClose>
+        <DialogClose asChild>
+          <Button variant="outline">Annuler</Button>
         </DialogClose>
       </DialogFooter>
     </>

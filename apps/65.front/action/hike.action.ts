@@ -6,6 +6,7 @@ import {
   Hike,
   HikeFilter,
   HikeSearch,
+  UpdateHikeDto,
 } from "@/model/hike.model";
 import { auth } from "@clerk/nextjs/server";
 import { revalidateTag } from "next/cache";
@@ -172,6 +173,41 @@ export const createHike = async (hike: CreateHikeDto) => {
     return { success: true, data };
   } catch (error) {
     console.error("Error in creating hike", error);
+    return { success: false };
+  }
+};
+
+export const updateHike = async (hike: UpdateHikeDto) => {
+  try {
+    const { getToken } = await auth();
+    const token = await getToken();
+
+    if (!token) {
+      console.error("Unauthorized for updating hike");
+      return { success: false };
+    }
+
+    const res = await fetch(`${config.API_URL}/hikes/update`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(hike),
+    });
+
+    if (!res.ok) {
+      console.error("Error in updating hike", res.statusText);
+      return { success: false };
+    }
+
+    revalidateTag("hikes");
+    revalidateTag(`hike-${hike.id}`);
+
+    const data = (await res.json()) as Hike;
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error in updating hike", error);
     return { success: false };
   }
 };

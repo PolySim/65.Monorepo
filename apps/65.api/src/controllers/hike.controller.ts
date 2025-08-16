@@ -4,12 +4,13 @@ import {
   Get,
   Param,
   Post,
+  Put,
   Req,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CreateHikeDto, HikeSearchDto } from 'src/DTO/hike.dto';
+import { CreateHikeDto, HikeSearchDto, UpdateHikeDto } from 'src/DTO/hike.dto';
 import { Hike } from 'src/entities/hike.entity';
 import { AuthGuard } from 'src/middleware/AuthGuard';
 import { HikeService } from 'src/services/hike.service';
@@ -95,5 +96,17 @@ export class HikeController {
   })
   async createHike(@Body() hike: CreateHikeDto): Promise<Hike> {
     return this.hikeService.createHike(hike);
+  }
+
+  @Put('update')
+  @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Mettre à jour une randonnée' })
+  @ApiResponse({
+    status: 200,
+    description: 'Randonnée mise à jour avec succès',
+    type: Hike,
+  })
+  async updateHike(@Body() hike: UpdateHikeDto): Promise<Hike> {
+    return this.hikeService.updateHike(hike);
   }
 }

@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { CreateHikeDto, HikeSearchDto } from 'src/DTO/hike.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { CreateHikeDto, HikeSearchDto, UpdateHikeDto } from 'src/DTO/hike.dto';
 import { Favorite } from 'src/entities/favorite.entity';
 import { DataSource, Like, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
@@ -122,5 +122,22 @@ export class HikeRepository extends Repository<Hike> {
     newHike.categoryId = hike.categoryId;
     newHike.mainImagePosition = 0;
     return await this.save(newHike);
+  }
+
+  async updateHike(hike: UpdateHikeDto): Promise<Hike> {
+    const { id, ...updateData } = hike;
+
+    // Filtre les valeurs undefined
+    const cleanUpdateData = Object.fromEntries(
+      Object.entries(updateData).filter(([_, value]) => value !== undefined),
+    );
+
+    const result = await this.update(id, cleanUpdateData);
+
+    if (result.affected === 0) {
+      throw new NotFoundException('Hike not found');
+    }
+
+    return await this.findOne({ where: { id } });
   }
 }

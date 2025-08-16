@@ -4,9 +4,16 @@ import {
   getHikeFavorites,
   getHikes,
   toggleFavorite,
+  updateHike,
 } from "@/action/hike.action";
 import { useAppParams } from "@/hook/useAppParams";
-import { CreateHikeDto, HikeFilter, HikeSearch } from "@/model/hike.model";
+import {
+  CreateHikeDto,
+  Hike,
+  HikeFilter,
+  HikeSearch,
+  UpdateHikeDto,
+} from "@/model/hike.model";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -106,9 +113,8 @@ export const useCreateHike = () => {
       if (!data.success) {
         toast.error("Erreur lors de la création de la randonnée");
       } else {
-        console.log(data.data);
         router.push(
-          `/admin/categories/${variables.categoryId}/hikes/${data.data?.id}`
+          `/admin/categories/${variables.categoryId}/hike/${data.data?.id}`
         );
       }
     },
@@ -116,6 +122,38 @@ export const useCreateHike = () => {
       toast.error("Erreur lors de la création de la randonnée");
     },
     onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["hikes"] });
+    },
+  });
+};
+
+export const useUpdateHike = () => {
+  const queryClient = useQueryClient();
+  const { hikeId } = useAppParams();
+
+  return useMutation({
+    mutationFn: (hike: Omit<UpdateHikeDto, "id">) =>
+      updateHike({ ...hike, id: hikeId }),
+    onMutate: (hike) => {
+      queryClient.cancelQueries({ queryKey: ["hike", hikeId] });
+      const previousHike = queryClient.getQueryData(["hike", hikeId]);
+      queryClient.setQueryData(["hike", hikeId], (old: Hike) => {
+        return { ...old, ...hike };
+      });
+      return { previousHike };
+    },
+    onSuccess: (data, variables, context) => {
+      if (!data.success) {
+        toast.error("Erreur lors de la mise à jour de la randonnée");
+        queryClient.setQueryData(["hike", hikeId], context?.previousHike);
+      }
+    },
+    onError: (error, variables, context) => {
+      toast.error("Erreur lors de la mise à jour de la randonnée");
+      queryClient.setQueryData(["hike", hikeId], context?.previousHike);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["hike", hikeId] });
       queryClient.invalidateQueries({ queryKey: ["hikes"] });
     },
   });
