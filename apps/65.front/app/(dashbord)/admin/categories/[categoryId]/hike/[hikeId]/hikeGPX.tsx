@@ -3,15 +3,13 @@
 import { Button } from "@/components/ui/button";
 import { config } from "@/config/config";
 import { SimpleGPXParser } from "@/lib/gpx";
-import { useCreateGpxFile } from "@/queries/gpx.queries";
 import { useHikeById } from "@/queries/hike.queries";
 import { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Download, Navigation, Upload } from "lucide-react";
-import { useRef } from "react";
+import { Download, Navigation } from "lucide-react";
 import { MapContainer, Polyline, TileLayer } from "react-leaflet";
 
-const HikeGPX = ({ gpx, isAdmin }: { gpx: string; isAdmin?: boolean }) => {
+const HikeGPX = ({ gpx }: { gpx: string }) => {
   const { data: hike } = useHikeById();
   const parser = new SimpleGPXParser();
   const data = parser.parse(gpx);
@@ -27,17 +25,6 @@ const HikeGPX = ({ gpx, isAdmin }: { gpx: string; isAdmin?: boolean }) => {
     )
     .map((elt) => elt / data.tracks[0].points.length);
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const { mutate: createGpxFile, isPending: isCreatingGpxFile } =
-    useCreateGpxFile();
-
-  const onSubmit = (file?: File) => {
-    if (!file) return;
-    const formData = new FormData();
-    formData.append("gpx", file);
-    createGpxFile(formData);
-  };
-
   if (typeof window === "undefined") return null;
 
   return (
@@ -47,32 +34,15 @@ const HikeGPX = ({ gpx, isAdmin }: { gpx: string; isAdmin?: boolean }) => {
           <Navigation size={24} />
           Tracé GPX
         </h2>
-        <div className="flex items-center gap-2">
-          {isAdmin && (
-            <>
-              <input
-                type="file"
-                className="hidden"
-                accept=".gpx"
-                ref={inputRef}
-                onChange={(e) => onSubmit(e.target.files?.[0])}
-              />
-              <Button onClick={() => inputRef.current?.click()}>
-                <Upload size={20} />
-                Télécharger un nouveau fichier GPX
-              </Button>
-            </>
-          )}
-          <Button asChild>
-            <a
-              href={`${config.API_URL}/gpx?path=${hike?.gpxFiles[0]?.path}`}
-              download={`${hike?.title}.gpx`}
-            >
-              <Download size={20} />
-              Télécharger
-            </a>
-          </Button>
-        </div>
+        <Button asChild>
+          <a
+            href={`${config.API_URL}/gpx?path=${hike?.gpxFiles[0]?.path}`}
+            download={`${hike?.title}.gpx`}
+          >
+            <Download size={20} />
+            Télécharger
+          </a>
+        </Button>
       </div>
       <div className="bg-gray-100 rounded-lg h-96 flex items-center justify-center">
         <MapContainer

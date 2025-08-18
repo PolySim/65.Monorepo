@@ -6,6 +6,7 @@ import HikeDescription from "./hikeDescription";
 import HikeGlobalInformation from "./hikeGlobalInformation";
 import HikeHeader from "./hikeHeader";
 import dynamic from "next/dynamic";
+import HikeGPXContainer from "./hikeGPXContainer";
 
 const HikePhoto = dynamic(() => import("./hikePhoto"), { ssr: false });
 
@@ -22,9 +23,7 @@ export default function HikeContainer() {
       <HikeGlobalInformation />
       <HikeDescription />
       <HikePhoto />
-      {/*
-      <HikeGPXContainer hike={hike!} />
-       */}
+      <HikeGPXContainer />
     </div>
   );
 }

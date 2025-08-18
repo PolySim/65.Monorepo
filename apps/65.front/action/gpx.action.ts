@@ -2,6 +2,7 @@
 
 import { config } from "@/config/config";
 import { auth } from "@clerk/nextjs/server";
+import { revalidateTag } from "next/cache";
 
 export const getGpxFile = async (path: string) => {
   try {
@@ -25,6 +26,38 @@ export const getGpxFile = async (path: string) => {
     return { success: true, data: await response.text() };
   } catch (error) {
     console.error("Error in fetching gpx file", error);
+    return { success: false };
+  }
+};
+
+export const createGpxFile = async (hikeId: string, file: FormData) => {
+  try {
+    const { getToken } = await auth();
+    const token = await getToken();
+
+    if (!token) {
+      console.error("Unauthorized for creating gpx file");
+      return { success: false };
+    }
+
+    const response = await fetch(`${config.API_URL}/gpx/create/${hikeId}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: file,
+    });
+
+    if (!response.ok) {
+      console.error("Error in creating gpx file", response.statusText);
+      return { success: false };
+    }
+
+    revalidateTag(`hike-${hikeId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error in creating gpx file", error);
     return { success: false };
   }
 };

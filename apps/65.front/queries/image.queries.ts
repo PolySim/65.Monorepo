@@ -65,7 +65,8 @@ export const useDeleteImage = () => {
 
 export const useRotateImage = () => {
   const queryClient = useQueryClient();
-  const { hikeId } = useAppParams();
+  const { hikeId, categoryId, stateId } = useAppParams();
+  const newFilter = { categoryId, stateId };
 
   return useMutation({
     mutationFn: (imageId: string) => rotateImage(imageId, hikeId),
@@ -106,6 +107,7 @@ export const useRotateImage = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["hike", hikeId] });
+      queryClient.invalidateQueries({ queryKey: ["hikes", newFilter] });
     },
   });
 };

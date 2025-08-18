@@ -40,12 +40,11 @@ const HikeElement = ({
         {/* Image */}
         <div className="w-48 h-40 bg-primary">
           <Image
-            src={`${config.IMAGE_URL}?path=${hike.mainImage?.path ?? ""}`}
+            src={`${config.IMAGE_URL}?path=${hike.mainImage?.path ?? ""}&rotate=${hike.mainImage?.rotate ?? 0}`}
             alt={hike.title}
             width={384}
             height={256}
             className="w-full h-full object-cover"
-            unoptimized
           />
         </div>
 

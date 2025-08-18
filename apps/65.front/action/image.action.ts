@@ -94,6 +94,7 @@ export const rotateImage = async (imageId: string, hikeId: string) => {
     }
 
     revalidateTag(`hike-${hikeId}`);
+    revalidateTag("hikes");
 
     return { success: true };
   } catch (error) {

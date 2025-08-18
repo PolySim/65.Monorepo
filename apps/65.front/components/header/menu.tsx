@@ -69,7 +69,7 @@ const Menu = () => {
                 className="relative rounded-sm w-[135px] h-[80px] overflow-hidden hover:scale-105 transition-all duration-300"
               >
                 <Image
-                  src={`${config.IMAGE_URL}?path=${state.image_path}`}
+                  src={`${config.IMAGE_URL}?path=${state.image_path}&rotate=0`}
                   alt={state.name}
                   width={270}
                   height={160}
@@ -88,7 +88,7 @@ const Menu = () => {
               className="w-full h-full"
             >
               <Image
-                src={`${config.IMAGE_URL}?path=${categoryHover?.image_path}`}
+                src={`${config.IMAGE_URL}?path=${categoryHover?.image_path}&rotate=0`}
                 alt={categoryHover?.name ?? ""}
                 width={600}
                 height={800}
