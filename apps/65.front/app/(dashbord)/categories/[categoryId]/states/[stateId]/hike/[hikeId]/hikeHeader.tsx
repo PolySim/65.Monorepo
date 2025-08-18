@@ -21,7 +21,7 @@ const HikeHeader = ({ hike }: { hike: Hike }) => {
     <div className="relative w-full h-[350px] bg-gray-400">
       {/* Image */}
       <Image
-        src={`${config.IMAGE_URL}?path=${hike?.mainImage.path}`}
+        src={`${config.IMAGE_URL}?path=${hike?.mainImage.path}&rotate=${hike?.mainImage.rotate ?? 0}`}
         alt={hike?.title ?? ""}
         className="w-full h-[350px] object-cover"
         width={1000}
