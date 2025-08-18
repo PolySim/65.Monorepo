@@ -1,0 +1,57 @@
+# Dépendances
+node_modules
+npm-debug.log*
+pnpm-debug.log*
+
+# Build outputs
+dist
+build
+.turbo
+
+# Tests
+coverage
+.nyc_output
+*.lcov
+
+# Environnement et cache
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.cache
+
+# Logs
+logs
+*.log
+
+# Git
+.git
+.gitignore
+
+# Éditeurs
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Développement
+README.md
+.prettierrc
+eslint.config.mjs
+
+# Tests
+test
+*.spec.ts
+*.test.ts
+
+# Base de données locale de développement
+src/db/database.db
