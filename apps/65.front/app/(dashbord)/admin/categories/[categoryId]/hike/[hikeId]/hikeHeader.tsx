@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { config } from "@/config/config";
 import { DifficultyEnum } from "@/model/difficulty.model";
 import { useHikeById, useUpdateHike } from "@/queries/hike.queries";
-import { ArrowDown, ArrowLeft, ArrowUp, Edit, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Edit } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import HikeDelete from "./hikeDelete";
 import UpdateInformationContainer from "./hikeUpdateInformationContainer";
 
 const HikeHeader = () => {
@@ -63,12 +64,7 @@ const HikeHeader = () => {
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="destructive" onClick={() => {}}>
-            <Trash2 size={20} />
-            <span>Supprime l&apos;activité</span>
-          </Button>
-        </div>
+        <HikeDelete />
       </div>
 
       {/* Titre */}

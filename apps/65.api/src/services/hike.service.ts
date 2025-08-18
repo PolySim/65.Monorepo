@@ -42,4 +42,8 @@ export class HikeService {
   async updateHike(hike: UpdateHikeDto): Promise<Hike> {
     return this.hikeRepository.updateHike(hike);
   }
+
+  async deleteHike(id: string): Promise<void> {
+    return this.hikeRepository.deleteHike(id);
+  }
 }

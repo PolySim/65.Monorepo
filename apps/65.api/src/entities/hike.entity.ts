@@ -9,10 +9,10 @@ import {
 } from 'typeorm';
 import { Category } from './category.entity';
 import { Difficulty } from './difficulty.entity';
+import { Favorite } from './favorite.entity';
 import { HikeGPX } from './higeGPX.entity';
 import { Image } from './image.entity';
 import { State } from './state.entity';
-import { Favorite } from './favorite.entity';
 
 @Entity('Hike')
 export class Hike {
@@ -71,12 +71,18 @@ export class Hike {
   mainImage: Image;
 
   // Relation One-to-Many pour toutes les images de la randonnée
-  @OneToMany(() => Image, (image) => image.hike)
+  @OneToMany(() => Image, (image) => image.hike, {
+    onDelete: 'CASCADE',
+  })
   images: Image[];
 
-  @OneToMany(() => HikeGPX, (gpx) => gpx.hike)
+  @OneToMany(() => HikeGPX, (gpx) => gpx.hike, {
+    onDelete: 'CASCADE',
+  })
   gpxFiles: HikeGPX[];
 
-  @OneToMany(() => Favorite, (favorite) => favorite.hike)
+  @OneToMany(() => Favorite, (favorite) => favorite.hike, {
+    onDelete: 'CASCADE',
+  })
   favorites: Favorite[];
 }

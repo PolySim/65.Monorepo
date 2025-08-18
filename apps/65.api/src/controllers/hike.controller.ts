@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -108,5 +109,16 @@ export class HikeController {
   })
   async updateHike(@Body() hike: UpdateHikeDto): Promise<Hike> {
     return this.hikeService.updateHike(hike);
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Supprimer une randonnée' })
+  @ApiResponse({
+    status: 200,
+    description: 'Randonnée supprimée avec succès',
+  })
+  async deleteHike(@Param('id') id: string): Promise<void> {
+    return this.hikeService.deleteHike(id);
   }
 }

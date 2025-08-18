@@ -1,6 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import * as fs from 'fs';
+import { config } from 'src/config/config';
 import { CreateHikeDto, HikeSearchDto, UpdateHikeDto } from 'src/DTO/hike.dto';
 import { Favorite } from 'src/entities/favorite.entity';
+import { HikeGPX } from 'src/entities/higeGPX.entity';
+import { Image } from 'src/entities/image.entity';
 import { DataSource, Like, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { Hike } from '../entities/hike.entity';
@@ -139,5 +143,35 @@ export class HikeRepository extends Repository<Hike> {
     }
 
     return await this.findOne({ where: { id } });
+  }
+
+  async deleteHike(id: string): Promise<void> {
+    const hike = await this.findOne({ where: { id } });
+    if (!hike) {
+      throw new NotFoundException('Hike not found');
+    }
+    const images = await this.dataSource.getRepository(Image).find({
+      where: { hikeId: id },
+    });
+    const gpxFiles = await this.dataSource.getRepository(HikeGPX).find({
+      where: { hikeId: id },
+    });
+
+    for (const image of images) {
+      try {
+        await fs.promises.unlink(`${config.image_path}/${image.path}`);
+      } catch (error) {
+        console.error('Error deleting image', error);
+      }
+    }
+    for (const gpxFile of gpxFiles) {
+      try {
+        await fs.promises.unlink(`${config.gpx_path}/${gpxFile.path}`);
+      } catch (error) {
+        console.error('Error deleting gpx file', error);
+      }
+    }
+    await this.delete(id);
+    return;
   }
 }

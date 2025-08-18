@@ -211,3 +211,34 @@ export const updateHike = async (hike: UpdateHikeDto) => {
     return { success: false };
   }
 };
+
+export const deleteHike = async (id: string) => {
+  try {
+    const { getToken } = await auth();
+    const token = await getToken();
+
+    if (!token) {
+      console.error("Unauthorized for deleting hike");
+      return { success: false };
+    }
+
+    const res = await fetch(`${config.API_URL}/hikes/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      console.error("Error in deleting hike", res.statusText);
+      return { success: false };
+    }
+
+    revalidateTag("hikes");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error in deleting hike", error);
+    return { success: false };
+  }
+};

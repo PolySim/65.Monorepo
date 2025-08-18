@@ -1,5 +1,6 @@
 import {
   createHike,
+  deleteHike,
   getHikeById,
   getHikeFavorites,
   getHikes,
@@ -159,6 +160,51 @@ export const useUpdateHike = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["hike", hikeId] });
+      queryClient.invalidateQueries({ queryKey: ["hikes"] });
+    },
+  });
+};
+
+export const useDeleteHike = () => {
+  const queryClient = useQueryClient();
+  const { hikeId, categoryId } = useAppParams();
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: () => deleteHike(hikeId),
+    onMutate: () => {
+      queryClient.cancelQueries({ queryKey: ["hike", hikeId] });
+      const previousHikes = queryClient.getQueryData(["hikes", { categoryId }]);
+      if (previousHikes) {
+        queryClient.setQueryData(
+          ["hikes", { categoryId }],
+          (old: { data: HikeSearch[] }) => {
+            return {
+              data: old.data.filter((hike) => hike.id !== hikeId),
+            };
+          }
+        );
+      }
+      // router.replace(`/admin/categories/${categoryId}`);
+      return { previousHikes };
+    },
+    onSuccess: (data, variables, context) => {
+      if (!data.success) {
+        toast.error("Erreur lors de la suppression de la randonnée");
+        queryClient.setQueryData(
+          ["hikes", { categoryId }],
+          context?.previousHikes
+        );
+      }
+    },
+    onError: (error, variables, context) => {
+      toast.error("Erreur lors de la suppression de la randonnée");
+      queryClient.setQueryData(
+        ["hikes", { categoryId }],
+        context?.previousHikes
+      );
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["hikes"] });
     },
   });

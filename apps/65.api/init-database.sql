@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS Image (
   hikeId VARCHAR(255) NOT NULL,
   ordered INTEGER NOT NULL,
   rotate INTEGER DEFAULT 0,
-  FOREIGN KEY (hikeId) REFERENCES Hike(id)
+  FOREIGN KEY (hikeId) REFERENCES Hike(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Difficulty (
@@ -61,25 +61,25 @@ CREATE TABLE IF NOT EXISTS Hike (
   distance INTEGER,
   duration VARCHAR(255),
   elevation INTEGER,
-  FOREIGN KEY (categoryId) REFERENCES Category(id),
-  FOREIGN KEY (stateId) REFERENCES State(id),
+  FOREIGN KEY (categoryId) REFERENCES Category(id) ON DELETE CASCADE,
+  FOREIGN KEY (stateId) REFERENCES State(id) ON DELETE CASCADE,
   FOREIGN KEY (mainImageId) REFERENCES Image(id),
-  FOREIGN KEY (difficultyId) REFERENCES Difficulty(id)
+  FOREIGN KEY (difficultyId) REFERENCES Difficulty(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS HikeGPX (
   id VARCHAR(255) PRIMARY KEY,
   path VARCHAR(255) NOT NULL,
   hikeId VARCHAR(255) NOT NULL,
-  FOREIGN KEY (hikeId) REFERENCES Hike(id)
+  FOREIGN KEY (hikeId) REFERENCES Hike(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS Favorite (
   userId VARCHAR(255) NOT NULL,
   hikeId VARCHAR(255) NOT NULL,
   PRIMARY KEY (userId, hikeId),
-  FOREIGN KEY (userId) REFERENCES User(id),
-  FOREIGN KEY (hikeId) REFERENCES Hike(id)
+  FOREIGN KEY (userId) REFERENCES User(id) ON DELETE CASCADE,
+  FOREIGN KEY (hikeId) REFERENCES Hike(id) ON DELETE CASCADE
 );
 
 -- Création d'un index sur l'email pour améliorer les performances
