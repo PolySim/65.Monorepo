@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -14,6 +13,7 @@ import { useHikeById } from "@/queries/hike.queries";
 import { ChevronLeft, ChevronRight, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import ImagesCarroussel from "./ImagesCarroussel";
 
 const FixedCloseButton = ({ onClose }: { onClose: () => void }) => {
   return createPortal(
@@ -143,7 +143,7 @@ const ImageContainer = ({
           <DialogHeader className="sr-only">
             <DialogTitle>{hike?.title ?? "Images"}</DialogTitle>
           </DialogHeader>
-          <ImagesCarrousshel />
+          <ImagesCarroussel />
         </DialogContent>
       </Dialog>
     </>

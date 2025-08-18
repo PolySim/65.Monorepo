@@ -76,10 +76,10 @@ const HikeHeader = () => {
               <h1 className="text-4xl font-bold mb-2 opacity-0">
                 {hike?.title}
               </h1>
-              <p className="text-xl opacity-0">{hike?.state.name}</p>
+              <p className="text-xl opacity-0">{hike?.state?.name}</p>
               <div className="absolute top-0 left-0 size-full">
                 <h1 className="text-4xl font-bold mb-2">{hike?.title}</h1>
-                <p className="text-xl">{hike?.state.name}</p>
+                <p className="text-xl">{hike?.state?.name}</p>
               </div>
             </div>
             <span

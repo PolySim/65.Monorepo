@@ -32,7 +32,7 @@ const HikeElement = ({
       href={
         isAdmin
           ? `/admin/categories/${hike.category.id}/hike/${hike.id}`
-          : `/categories/${hike.category.id}/states/${hike.state.id}/hike/${hike.id}`
+          : `/categories/${hike.category.id}/states/${hike.state?.id ?? -1}/hike/${hike.id}`
       }
       className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden"
     >
