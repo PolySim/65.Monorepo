@@ -4,8 +4,8 @@ import { getDifficultyColor } from "@/components/hikes/hikeElement";
 import { Button } from "@/components/ui/button";
 import { config } from "@/config/config";
 import { DifficultyEnum } from "@/model/difficulty.model";
-import { useHikeById, useHikeFavorites } from "@/queries/hike.queries";
-import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { useHikeById, useUpdateHike } from "@/queries/hike.queries";
+import { ArrowDown, ArrowLeft, ArrowUp, Edit, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import UpdateInformationContainer from "./hikeUpdateInformationContainer";
@@ -13,8 +13,15 @@ import UpdateInformationContainer from "./hikeUpdateInformationContainer";
 const HikeHeader = () => {
   const { data: hike } = useHikeById();
   const router = useRouter();
-  const { data: hikeFavorites } = useHikeFavorites(true);
-  const isFavorite = hikeFavorites?.some((h) => h.id === hike?.id);
+
+  const { mutate: updateHike } = useUpdateHike();
+
+  const onUpdateMainImagePosition = (direction: "up" | "down") => {
+    updateHike({
+      mainImagePosition:
+        (hike?.mainImagePosition ?? 0) + (direction === "up" ? -1 : 1),
+    });
+  };
 
   return (
     <div className="relative w-full h-[350px] bg-gray-400">
@@ -40,6 +47,20 @@ const HikeHeader = () => {
               <Edit size={20} />
             </Button>
           </UpdateInformationContainer>
+          <div className="flex flex-col gap-2 text-white ml-2">
+            <button
+              className="cursor-pointer"
+              onClick={() => onUpdateMainImagePosition("up")}
+            >
+              <ArrowUp size={16} />
+            </button>
+            <button
+              className="cursor-pointer"
+              onClick={() => onUpdateMainImagePosition("down")}
+            >
+              <ArrowDown size={16} />
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-2">

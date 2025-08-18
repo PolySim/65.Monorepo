@@ -27,7 +27,7 @@ export default function AdminPage() {
                 {/* Image */}
                 <div className="w-48 h-40 bg-primary">
                   <Image
-                    src={`${config.IMAGE_URL}?path=${category?.image_path ?? ""}&rotate=0`}
+                    src={`${config.IMAGE_URL}?rotate=0&path=${category?.image_path ?? ""}`}
                     alt={category.name}
                     width={384}
                     height={256}

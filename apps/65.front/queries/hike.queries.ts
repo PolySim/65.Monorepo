@@ -137,8 +137,13 @@ export const useUpdateHike = () => {
     onMutate: (hike) => {
       queryClient.cancelQueries({ queryKey: ["hike", hikeId] });
       const previousHike = queryClient.getQueryData(["hike", hikeId]);
-      queryClient.setQueryData(["hike", hikeId], (old: Hike) => {
-        return { ...old, ...hike };
+      queryClient.setQueryData(["hike", hikeId], (old: { data: Hike }) => {
+        return {
+          data: {
+            ...old.data,
+            ...hike,
+          },
+        };
       });
       return { previousHike };
     },

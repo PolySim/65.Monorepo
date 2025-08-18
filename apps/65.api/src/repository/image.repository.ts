@@ -18,9 +18,9 @@ export class ImageRepository extends Repository<Image> {
     const image = await this.findOne({
       where: { path },
     });
-    if (!image) throw new NotFoundException('Image not found');
+    if (path === 'undefined') throw new NotFoundException('Image not found');
     const globalPath = `${config.image_path}/${path}`;
-    const globalRotate = Number(rotate) ?? image.rotate ?? 0;
+    const globalRotate = Number(rotate) ?? image?.rotate ?? 0;
     const rotatedFile = await sharp(globalPath).rotate(globalRotate).toBuffer();
 
     const ext = extname(globalPath).toLowerCase();
