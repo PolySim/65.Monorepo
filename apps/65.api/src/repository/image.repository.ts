@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
 import * as fs from 'fs';
 import { File } from 'multer';
+import { extname } from 'path';
 import * as sharp from 'sharp';
 import { config } from 'src/config/config';
 import { DataSource, Repository } from 'typeorm';
@@ -13,8 +14,28 @@ export class ImageRepository extends Repository<Image> {
     super(Image, dataSource.createEntityManager());
   }
 
-  async sendImage(path: string) {
-    return `${config.image_path}/${path}`;
+  async sendImage(path: string, rotate: number) {
+    const image = await this.findOne({
+      where: { path },
+    });
+    if (!image) throw new NotFoundException('Image not found');
+    const globalPath = `${config.image_path}/${path}`;
+    const globalRotate = Number(rotate) ?? image.rotate ?? 0;
+    const rotatedFile = await sharp(globalPath).rotate(globalRotate).toBuffer();
+
+    const ext = extname(globalPath).toLowerCase();
+    const mimeTypes = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+    };
+
+    return new StreamableFile(rotatedFile, {
+      type: mimeTypes[ext] || 'application/octet-stream',
+      disposition: 'inline',
+    });
   }
 
   async createImage(hikeId: string, files: File[]): Promise<Image[]> {
@@ -38,6 +59,37 @@ export class ImageRepository extends Repository<Image> {
         return saved;
       }),
     );
+  }
+
+  async deleteImage(imageId: string) {
+    const image = await this.findOne({
+      where: {
+        id: imageId,
+      },
+    });
+    if (!image) {
+      throw new NotFoundException('Image not found');
+    }
+    const directoryPath = `${config.image_path}/${image.path}`;
+    if (fs.existsSync(directoryPath)) {
+      fs.unlinkSync(directoryPath);
+    }
+    await this.delete(image);
+  }
+
+  async rotateImage(imageId: string) {
+    const image = await this.findOne({
+      where: {
+        id: imageId,
+      },
+    });
+    if (!image) {
+      throw new NotFoundException('Image not found');
+    }
+    const rotate = (image.rotate ?? 0) + 90;
+    return await this.update(image.id, {
+      rotate: rotate >= 360 ? 0 : rotate,
+    });
   }
 
   private async uploadImage({ name, file }: { name: string; file: File }) {

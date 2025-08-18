@@ -1,17 +1,19 @@
 import {
   Controller,
+  Delete,
   Get,
+  Header,
   Param,
   Post,
+  Put,
   Query,
-  Res,
+  StreamableFile,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
 import { File } from 'multer';
 import { AuthGuard } from 'src/middleware/AuthGuard';
 import { ImageService } from 'src/services/image.service';
@@ -22,12 +24,13 @@ export class ImageController {
   constructor(private readonly imageService: ImageService) {}
 
   @Get()
+  @Header('Cache-Control', 'max-age=3600')
   @ApiOperation({ summary: 'Récupérer une image' })
-  async sendImage(@Res() res: Response, @Query('path') path: string) {
-    if (path === 'undefined') {
-      return res.status(404).send('Image not found');
-    }
-    return res.sendFile(await this.imageService.sendImage(path));
+  async sendImage(
+    @Query('path') path: string,
+    @Query('rotate') rotate: number,
+  ): Promise<StreamableFile> {
+    return this.imageService.sendImage(path, rotate);
   }
 
   @Post('hike/:hikeId')
@@ -39,5 +42,20 @@ export class ImageController {
     @Param('hikeId') hikeId: string,
   ) {
     return this.imageService.createImage(hikeId, files);
+  }
+
+  @Delete(':imageId')
+  @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Supprimer une image' })
+  async deleteImage(@Param('imageId') imageId: string) {
+    return this.imageService.deleteImage(imageId);
+  }
+
+  @Put('rotate/:imageId')
+  @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Tourner une image' })
+  async rotateImage(@Param('imageId') imageId: string) {
+    console.log(imageId);
+    return this.imageService.rotateImage(imageId);
   }
 }

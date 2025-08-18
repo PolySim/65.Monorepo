@@ -3,4 +3,5 @@ export type Image = {
   path: string;
   hikeId: string;
   ordered: number;
+  rotate?: number;
 };

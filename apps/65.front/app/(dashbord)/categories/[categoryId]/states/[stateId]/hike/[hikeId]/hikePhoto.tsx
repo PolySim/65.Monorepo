@@ -20,7 +20,7 @@ const HikePhoto = ({ hike }: { hike: Hike }) => {
             <div key={index} className="relative group cursor-pointer">
               <ImageContainer imageId={image.id}>
                 <Image
-                  src={`${config.IMAGE_URL}?path=${image.path}`}
+                  src={`${config.IMAGE_URL}?path=${image.path}&rotate=${image.rotate ?? 0}`}
                   alt={`Photo ${index + 1}`}
                   className="aspect-video object-cover rounded-lg w-full"
                   width={576}

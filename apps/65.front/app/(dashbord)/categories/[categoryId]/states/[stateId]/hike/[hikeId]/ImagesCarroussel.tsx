@@ -16,7 +16,7 @@ const ImagesCarroussel = () => {
         >
           <Image
             className="object-contain h-full w-full"
-            src={`${config.IMAGE_URL}?path=${image.path}`}
+            src={`${config.IMAGE_URL}?path=${image.path}&rotate=${image.rotate ?? 0}`}
             alt={`image-${image.id}`}
             width={3840}
             height={2160}

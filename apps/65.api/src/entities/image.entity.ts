@@ -22,6 +22,9 @@ export class Image {
   @Column('integer')
   ordered: number;
 
+  @Column('integer', { default: 0, nullable: true })
+  rotate: number;
+
   // Relation Many-to-One : plusieurs images appartiennent à une randonnée
   @ManyToOne(() => Hike, (hike) => hike.images)
   @JoinColumn({ name: 'hikeId' })

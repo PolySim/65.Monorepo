@@ -1,6 +1,5 @@
 import {
   createHike,
-  createImage,
   getHikeById,
   getHikeFavorites,
   getHikes,
@@ -156,29 +155,6 @@ export const useUpdateHike = () => {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["hike", hikeId] });
       queryClient.invalidateQueries({ queryKey: ["hikes"] });
-    },
-  });
-};
-
-export const useCreateImage = () => {
-  const queryClient = useQueryClient();
-  const { hikeId } = useAppParams();
-
-  return useMutation({
-    mutationFn: (formData: FormData) => createImage({ hikeId, formData }),
-    onMutate: () => {
-      queryClient.cancelQueries({ queryKey: ["hike", hikeId] });
-    },
-    onSuccess: (data, variables, context) => {
-      if (!data.success) {
-        toast.error("Erreur lors de la création de l'image");
-      }
-    },
-    onError: (error, variables, context) => {
-      toast.error("Erreur lors de la création de l'image");
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["hike", hikeId] });
     },
   });
 };
