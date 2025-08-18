@@ -185,7 +185,7 @@ export const useDeleteHike = () => {
           }
         );
       }
-      // router.replace(`/admin/categories/${categoryId}`);
+      router.replace(`/admin/categories/${categoryId}`);
       return { previousHikes };
     },
     onSuccess: (data, variables, context) => {
