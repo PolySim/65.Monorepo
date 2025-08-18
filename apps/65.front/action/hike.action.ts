@@ -211,3 +211,41 @@ export const updateHike = async (hike: UpdateHikeDto) => {
     return { success: false };
   }
 };
+
+export const createImage = async ({
+  hikeId,
+  formData,
+}: {
+  hikeId: string;
+  formData: FormData;
+}) => {
+  try {
+    const { getToken } = await auth();
+    const token = await getToken();
+
+    if (!token) {
+      console.error("Unauthorized for creating image");
+      return { success: false };
+    }
+
+    const res = await fetch(`${config.API_URL}/images/hike/${hikeId}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!res.ok) {
+      console.error("Error in creating image", res.statusText);
+      return { success: false };
+    }
+
+    revalidateTag(`hike-${hikeId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error in creating image", error);
+    return { success: false };
+  }
+};

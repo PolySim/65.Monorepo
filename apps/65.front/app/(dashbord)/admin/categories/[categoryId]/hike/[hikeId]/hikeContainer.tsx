@@ -5,6 +5,9 @@ import { Loader2 } from "lucide-react";
 import HikeDescription from "./hikeDescription";
 import HikeGlobalInformation from "./hikeGlobalInformation";
 import HikeHeader from "./hikeHeader";
+import dynamic from "next/dynamic";
+
+const HikePhoto = dynamic(() => import("./hikePhoto"), { ssr: false });
 
 export default function HikeContainer() {
   const { isPending } = useHikeById();
@@ -18,8 +21,8 @@ export default function HikeContainer() {
       <HikeHeader />
       <HikeGlobalInformation />
       <HikeDescription />
+      <HikePhoto />
       {/*
-      <HikePhoto hike={hike!} />
       <HikeGPXContainer hike={hike!} />
        */}
     </div>
