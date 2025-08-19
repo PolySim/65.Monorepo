@@ -1,135 +1,178 @@
-# Turborepo starter
+# 65 Passion Montagne 🏔️
 
-This Turborepo starter is maintained by the Turborepo core team.
+65 Passion Montagne est une application web dédiée à la découverte et au partage d'activités de montagne dans les Hautes-Pyrénées (département 65). L'application permet de répertorier, consulter et gérer différents types d'activités de montagne avec des informations détaillées, des photos et des tracés GPS.
 
-## Using this example
+## 🎯 À propos du projet
 
-Run the following command:
+Cette plateforme digitale a été conçue pour les passionnés de montagne souhaitant explorer les richesses des Hautes-Pyrénées. Elle propose un catalogage complet des activités de montagne organisées par catégories (randonnées, refuges, circuits, etc.) et par massifs géographiques.
 
-```sh
-npx create-turbo@latest
-```
+### 🏃‍♂️ Fonctionnalités principales
 
-## What's inside?
+- **📍 Géolocalisation des activités** : Chaque activité est géoréférencée avec des informations précises sur sa localisation
+- **🗺️ Tracés GPS** : Fichiers GPX téléchargeables pour suivre les itinéraires avec précision
+- **📸 Galeries photos** : Images haute qualité pour découvrir les paysages et points d'intérêt
+- **📊 Informations détaillées** :
+  - Distance et dénivelé
+  - Durée estimée
+  - Niveau de difficulté (Promeneur, Marcheur, Randonneur, Expérimenté)
+  - Indications et conseils pratiques
+- **🏔️ Organisation par massifs** : Navigation intuitive par zones géographiques
+- **⭐ Système de favoris** : Sauvegarde des activités préférées
+- **🔍 Recherche avancée** : Filtrage par catégorie, difficulté, massif
+- **👤 Gestion des utilisateurs** : Authentification sécurisée avec Clerk
 
-This Turborepo includes the following packages/apps:
+### 🎾 Types d'activités
 
-### Apps and Packages
+L'application répertorie différentes catégories d'activités de montagne :
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+- **Randonnées pédestres** : Sentiers de tous niveaux
+- **Refuges de montagne** : Hébergements en altitude
+- **Circuits thématiques** : Parcours découverte
+- **Points d'intérêt** : Sites remarquables et panoramas
+- **Activités spécialisées** : Selon les spécificités locales
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+## 🌐 Accès à l'application
 
-### Utilities
+L'application est accessible à l'adresse : **[65PassionMontagne.simondesdevises.com](https://65PassionMontagne.simondesdevises.com)**
 
-This Turborepo has some additional tools already setup for you:
+> ⚠️ **Accès restreint** : L'application nécessite un compte utilisateur pour accéder au contenu.
+>
+> Pour tester l'application, veuillez envoyer un email à : **[simondesdevises@gmail.com](mailto:simondesdevises@gmail.com)**
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+## 🛠️ Technologies utilisées
 
-### Build
+Cette application est construite avec un stack technologique moderne et performant.
 
-To build all apps and packages, run the following command:
+### Frontend (65.front)
 
-```
-cd my-turborepo
+- **[Next.js 15](https://nextjs.org/)** - Framework React avec App Router
+- **[React 19](https://reactjs.org/)** - Bibliothèque UI avec les dernières fonctionnalités
+- **[TypeScript](https://www.typescriptlang.org/)** - Typage statique pour plus de fiabilité
+- **[Tailwind CSS 4](https://tailwindcss.com/)** - Framework CSS utilitaire
+- **[Clerk](https://clerk.dev/)** - Authentification et gestion des utilisateurs
+- **[TanStack Query](https://tanstack.com/query)** - Gestion d'état et cache pour les données serveur
+- **[React Hook Form](https://react-hook-form.com/)** - Gestion des formulaires performante
+- **[Zod](https://zod.dev/)** - Validation de schémas TypeScript
+- **[Leaflet](https://leafletjs.com/)** & **[React Leaflet](https://react-leaflet.js.org/)** - Cartes interactives
+- **[Zustand](https://github.com/pmndrs/zustand)** - Gestion d'état client légère
+- **[Radix UI](https://www.radix-ui.com/)** - Composants UI accessibles
+- **[Lucide React](https://lucide.dev/)** - Icônes modernes
+- **[Sonner](https://sonner.emilkowal.ski/)** - Notifications toast
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
+### Backend (65.api)
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
+- **[NestJS](https://nestjs.com/)** - Framework Node.js progressif et modulaire
+- **[TypeORM](https://typeorm.io/)** - ORM TypeScript pour la base de données
+- **[SQLite](https://www.sqlite.org/)** - Base de données relationnelle légère
+- **[Swagger](https://swagger.io/)** - Documentation automatique de l'API
+- **[Multer](https://github.com/expressjs/multer)** - Gestion des uploads de fichiers
+- **[Sharp](https://sharp.pixelplumbing.com/)** - Traitement d'images optimisé
+- **[UUID](https://github.com/uuidjs/uuid)** - Génération d'identifiants uniques
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+### Outils de développement
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+- **[Turborepo](https://turbo.build/repo)** - Système de build monorepo haute performance
+- **[pnpm](https://pnpm.io/)** - Gestionnaire de paquets efficace
+- **[ESLint](https://eslint.org/)** - Linting du code
+- **[Prettier](https://prettier.io/)** - Formatage automatique du code
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+## 📁 Architecture du projet
 
 ```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+65.Monorepo/
+├── apps/
+│   ├── 65.api/          # API NestJS
+│   │   ├── src/
+│   │   │   ├── controllers/  # Contrôleurs REST
+│   │   │   ├── services/     # Logique métier
+│   │   │   ├── repository/   # Accès aux données
+│   │   │   ├── entities/     # Modèles de données TypeORM
+│   │   │   └── middleware/   # Middlewares (Auth, etc.)
+│   │   └── database.db       # Base de données SQLite
+│   └── 65.front/        # Application Next.js
+│       ├── app/         # App Router (Pages)
+│       ├── components/  # Composants React réutilisables
+│       ├── lib/         # Utilitaires et helpers
+│       ├── queries/     # Requêtes TanStack Query
+│       └── model/       # Types TypeScript
+├── packages/
+│   ├── ui/              # Composants UI partagés
+│   ├── eslint-config/   # Configuration ESLint
+│   └── typescript-config/ # Configuration TypeScript
+└── data/                # Données statiques
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+## 🚀 Installation et développement
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+### Prérequis
 
+- Node.js 18+
+- pnpm
+
+### Installation
+
+```bash
+# Cloner le repository
+git clone [url-du-repo]
+cd 65.Monorepo
+
+# Installer les dépendances
+pnpm install
+
+# Lancer en mode développement
+pnpm dev
 ```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+### Scripts disponibles
+
+```bash
+# Développement (tous les apps)
+pnpm dev
+
+# Build de production
+pnpm build
+
+# Linter
+pnpm lint
+
+# Développement frontend uniquement
+pnpm dev --filter=65.front
+
+# Développement API uniquement
+pnpm dev --filter=65.api
 ```
 
-## Useful Links
+## 📊 Base de données
 
-Learn more about the power of Turborepo:
+L'application utilise SQLite avec TypeORM et comprend les entités principales :
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+- **Users** : Gestion des utilisateurs et rôles
+- **Categories** : Types d'activités de montagne
+- **States** : Massifs et zones géographiques
+- **Hikes** : Activités avec toutes leurs informations
+- **Images** : Galeries photos associées aux activités
+- **HikeGPX** : Fichiers GPS pour les tracés
+- **Difficulties** : Niveaux de difficulté
+- **Favorites** : Activités favorites des utilisateurs
+
+## 🗺️ Fonctionnalités cartographiques
+
+- **Cartes interactives** avec Leaflet
+- **Affichage des tracés GPX** sur la carte
+- **Markers géolocalisés** pour chaque activité
+- **Export des fichiers GPX** pour utilisation sur appareils GPS
+- **Analyse des profils d'élévation**
+
+## 👥 Contribution
+
+Ce projet est maintenu par Simon Desdevises. Pour toute question ou suggestion d'amélioration, n'hésitez pas à prendre contact.
+
+## 📧 Contact
+
+**Développeur** : Simon Desdevises  
+**Email** : [simondesdevises@gmail.com](mailto:simondesdevises@gmail.com)  
+**Site web** : [65PassionMontagne.simondesdevises.com](https://65PassionMontagne.simondesdevises.com)
+
+---
+
+_Explorez les Hautes-Pyrénées comme jamais auparavant avec 65 Passion Montagne !_ 🏔️✨
