@@ -13,4 +13,8 @@ export class GpxService {
   async createGpxFile(hikeId: string, file: File) {
     return this.gpxRepository.createGpxFile(hikeId, file);
   }
+
+  async deleteGpxFile(hikeId: string) {
+    return this.gpxRepository.deleteGpxFile(hikeId);
+  }
 }

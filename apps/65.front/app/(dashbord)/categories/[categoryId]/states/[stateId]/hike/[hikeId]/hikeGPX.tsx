@@ -3,11 +3,11 @@
 import { Button } from "@/components/ui/button";
 import { config } from "@/config/config";
 import { SimpleGPXParser } from "@/lib/gpx";
-import { useCreateGpxFile } from "@/queries/gpx.queries";
+import { useCreateGpxFile, useDeleteGpxFile } from "@/queries/gpx.queries";
 import { useHikeById } from "@/queries/hike.queries";
 import { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Download, Navigation, Upload } from "lucide-react";
+import { Download, Navigation, Trash2, Upload } from "lucide-react";
 import { useRef } from "react";
 import { MapContainer, Polyline, TileLayer } from "react-leaflet";
 
@@ -30,6 +30,7 @@ const HikeGPX = ({ gpx, isAdmin }: { gpx: string; isAdmin?: boolean }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const { mutate: createGpxFile, isPending: isCreatingGpxFile } =
     useCreateGpxFile();
+  const { mutate: deleteGpxFile } = useDeleteGpxFile();
 
   const onSubmit = (file?: File) => {
     if (!file) return;
@@ -50,6 +51,9 @@ const HikeGPX = ({ gpx, isAdmin }: { gpx: string; isAdmin?: boolean }) => {
         <div className="flex items-center gap-2">
           {isAdmin && (
             <>
+              <Button variant="destructive" onClick={() => deleteGpxFile()}>
+                <Trash2 size={20} />
+              </Button>
               <input
                 type="file"
                 className="hidden"

@@ -61,3 +61,34 @@ export const createGpxFile = async (hikeId: string, file: FormData) => {
     return { success: false };
   }
 };
+
+export const deleteGpxFile = async (hikeId: string) => {
+  try {
+    const { getToken } = await auth();
+    const token = await getToken();
+
+    if (!token) {
+      console.error("Unauthorized for deleting gpx file");
+      return { success: false };
+    }
+
+    const response = await fetch(`${config.API_URL}/gpx/delete/${hikeId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      console.error("Error in deleting gpx file", response.statusText);
+      return { success: false };
+    }
+
+    revalidateTag(`hike-${hikeId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error in deleting gpx file", error);
+    return { success: false };
+  }
+};

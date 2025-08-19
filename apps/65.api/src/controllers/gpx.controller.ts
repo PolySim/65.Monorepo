@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -35,5 +36,11 @@ export class GpxController {
     @Param('hikeId') hikeId: string,
   ) {
     return this.gpxService.createGpxFile(hikeId, file);
+  }
+
+  @Delete('delete/:hikeId')
+  @ApiOperation({ summary: 'Supprimer un fichier GPX' })
+  async deleteGpxFile(@Param('hikeId') hikeId: string) {
+    return this.gpxService.deleteGpxFile(hikeId);
   }
 }

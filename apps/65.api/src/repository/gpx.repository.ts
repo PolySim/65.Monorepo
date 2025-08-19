@@ -34,6 +34,22 @@ export class GpxRepository extends Repository<HikeGPX> {
     return await this.save(gpxFile);
   }
 
+  async deleteGpxFile(hikeId: string) {
+    const gpxFile = await this.findOne({
+      where: { hikeId },
+    });
+    if (gpxFile) {
+      try {
+        await fs.promises.unlink(`${config.gpx_path}/${gpxFile.path}`);
+      } catch (error) {
+        console.error(error);
+      }
+      await this.delete(gpxFile.id);
+      return true;
+    }
+    return false;
+  }
+
   private async uploadGpxFile(path: string, file: File) {
     const directoryPath = `${config.gpx_path}`;
     if (!fs.existsSync(directoryPath)) {
