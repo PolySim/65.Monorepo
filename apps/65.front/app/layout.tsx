@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { ReactQueryProvider } from "@/lib/react-query";
+import WindowSizeInitializer from "@/lib/WindowSizeInitializer";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import "./globals.css";
@@ -25,6 +26,7 @@ export default function RootLayout({
             {children}
           </body>
         </html>
+        <WindowSizeInitializer />
         <Toaster richColors closeButton />
       </ReactQueryProvider>
     </ClerkProvider>
