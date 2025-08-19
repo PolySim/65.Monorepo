@@ -4,7 +4,7 @@ import { File } from 'multer';
 import { extname } from 'path';
 import * as sharp from 'sharp';
 import { config } from 'src/config/config';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { Image } from '../entities/image.entity';
 
@@ -90,6 +90,22 @@ export class ImageRepository extends Repository<Image> {
     return await this.update(image.id, {
       rotate: rotate >= 360 ? 0 : rotate,
     });
+  }
+
+  async reorderImage(hikeId: string, imageIds: string[]) {
+    const images = await this.find({
+      where: {
+        hikeId,
+        id: In(imageIds),
+      },
+    });
+    await Promise.all(
+      images.map(async (image) =>
+        this.update(image.id, {
+          ordered: imageIds.indexOf(image.id),
+        }),
+      ),
+    );
   }
 
   private async uploadImage({ name, file }: { name: string; file: File }) {

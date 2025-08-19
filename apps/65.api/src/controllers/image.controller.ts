@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
@@ -57,5 +58,15 @@ export class ImageController {
   async rotateImage(@Param('imageId') imageId: string) {
     console.log(imageId);
     return this.imageService.rotateImage(imageId);
+  }
+
+  @Put('reorder/:hikeId')
+  @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Réordonner les images' })
+  async reorderImage(
+    @Param('hikeId') hikeId: string,
+    @Body() body: { imageIds: string[] },
+  ) {
+    return this.imageService.reorderImage(hikeId, body.imageIds);
   }
 }

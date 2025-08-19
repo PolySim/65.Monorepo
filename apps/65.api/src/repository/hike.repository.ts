@@ -60,6 +60,11 @@ export class HikeRepository extends Repository<Hike> {
         images: true,
         gpxFiles: true,
       },
+      order: {
+        images: {
+          ordered: 'ASC',
+        },
+      },
       select: {
         id: true,
         title: true,

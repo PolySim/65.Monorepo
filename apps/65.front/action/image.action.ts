@@ -102,3 +102,34 @@ export const rotateImage = async (imageId: string, hikeId: string) => {
     return { success: false };
   }
 };
+
+export const reorderImage = async (hikeId: string, imageIds: string[]) => {
+  try {
+    const { getToken } = await auth();
+    const token = await getToken();
+
+    if (!token) {
+      console.error("Unauthorized for reordering image");
+      return { success: false };
+    }
+
+    const res = await fetch(`${config.API_URL}/images/reorder/${hikeId}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ imageIds }),
+    });
+
+    if (!res.ok) {
+      console.error("Error in reordering image", res.statusText);
+      return { success: false };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error in reordering image", error);
+    return { success: false };
+  }
+};

@@ -1,4 +1,9 @@
-import { createImage, deleteImage, rotateImage } from "@/action/image.action";
+import {
+  createImage,
+  deleteImage,
+  reorderImage,
+  rotateImage,
+} from "@/action/image.action";
 import { useAppParams } from "@/hook/useAppParams";
 import { Hike } from "@/model/hike.model";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -103,6 +108,46 @@ export const useRotateImage = () => {
     },
     onError: (error, variables, context) => {
       toast.error("Erreur lors de la rotation de l'image");
+      queryClient.setQueryData(["hike", hikeId], context?.previousHike);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["hike", hikeId] });
+      queryClient.invalidateQueries({ queryKey: ["hikes", newFilter] });
+    },
+  });
+};
+
+export const useReorderImage = () => {
+  const queryClient = useQueryClient();
+  const { hikeId, categoryId, stateId } = useAppParams();
+  const newFilter = { categoryId, stateId };
+
+  return useMutation({
+    mutationFn: (imageIds: string[]) => reorderImage(hikeId, imageIds),
+    onMutate: (imageIds) => {
+      queryClient.cancelQueries({ queryKey: ["hike", hikeId] });
+      const previousHike = queryClient.getQueryData(["hike", hikeId]);
+      queryClient.setQueryData(["hike", hikeId], (old: { data: Hike }) => {
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            images: old.data.images.sort(
+              (a, b) => imageIds.indexOf(a.id) - imageIds.indexOf(b.id)
+            ),
+          },
+        };
+      });
+      return { previousHike };
+    },
+    onSuccess: (data, variables, context) => {
+      if (!data.success) {
+        toast.error("Erreur lors du réordonnement des images");
+        queryClient.setQueryData(["hike", hikeId], context?.previousHike);
+      }
+    },
+    onError: (error, variables, context) => {
+      toast.error("Erreur lors du réordonnement des images");
       queryClient.setQueryData(["hike", hikeId], context?.previousHike);
     },
     onSettled: () => {

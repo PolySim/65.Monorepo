@@ -22,4 +22,8 @@ export class ImageService {
   async rotateImage(imageId: string) {
     return this.imageRepository.rotateImage(imageId);
   }
+
+  async reorderImage(hikeId: string, imageIds: string[]) {
+    return this.imageRepository.reorderImage(hikeId, imageIds);
+  }
 }
