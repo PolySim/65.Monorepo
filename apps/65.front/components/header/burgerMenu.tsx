@@ -25,6 +25,7 @@ const BurgerMenu = () => {
     }
     useMenuStore.getState().toggleOpen();
     router.push(`/categories/${category.id}`);
+    setCategoryOpen(null);
   };
 
   const onClickState = (state: State | null) => {
@@ -35,6 +36,13 @@ const BurgerMenu = () => {
     } else {
       router.push(`/categories/${categoryOpen.id}`);
     }
+    setCategoryOpen(null);
+  };
+
+  const onClickFavorites = () => {
+    useMenuStore.getState().toggleOpen();
+    router.push("/favorites");
+    setCategoryOpen(null);
   };
 
   return (
@@ -42,7 +50,7 @@ const BurgerMenu = () => {
       <BurgerMenuTrigger />
       <div
         className={cn(
-          "max-h-screen overflow-y-scroll flex flex-col items-start gap-4 absolute top-0 left-0 w-full h-full overflow-x-hidden transition-transform duration-300 bg-white font-bold font-helvetica text-md text-center z-20",
+          "max-h-screen overflow-y-scroll flex flex-col items-start gap-4 fixed top-0 left-0 w-full h-full overflow-x-hidden transition-transform duration-300 bg-white font-bold font-helvetica text-md text-center z-20",
           {
             "-translate-x-full": !isOpen,
           }
@@ -53,65 +61,77 @@ const BurgerMenu = () => {
             <Loader2 className="w-10 h-10 animate-spin text-primary" />
           </div>
         ) : (
-          (categories ?? []).map((category) => (
-            <React.Fragment key={category.id}>
-              <div
-                onClick={() => onClickCategory(category)}
-                className="flex items-center gap-2 w-full p-2 border-b border-gray-200 cursor-pointer"
-              >
-                <Image
-                  src={`${config.IMAGE_URL}?path=${category.image_path}&rotate=0`}
-                  alt={category.name}
-                  width={100}
-                  height={100}
-                  className="w-12 h-12 object-cover rounded-md"
-                />
-                <p>{category.name}</p>
-                {category.states && category.states.length > 0 && (
-                  <ChevronRight
-                    className={cn("w-4 h-4 transition-transform duration-300", {
-                      "rotate-90": categoryOpen?.id === category.id,
-                    })}
+          <>
+            <div
+              onClick={onClickFavorites}
+              className="flex items-center gap-2 w-full p-2 border-b border-gray-200 cursor-pointer"
+            >
+              <span className="w-12 h-12" />
+              <p>Voir mes favoris</p>
+            </div>
+            {(categories ?? []).map((category) => (
+              <React.Fragment key={category.id}>
+                <div
+                  onClick={() => onClickCategory(category)}
+                  className="flex items-center gap-2 w-full p-2 border-b border-gray-200 cursor-pointer"
+                >
+                  <Image
+                    src={`${config.IMAGE_URL}?path=${category.image_path}&rotate=0`}
+                    alt={category.name}
+                    width={100}
+                    height={100}
+                    className="w-12 h-12 object-cover rounded-md"
                   />
-                )}
-              </div>
-              {category.states &&
-                category.states.length > 0 &&
-                categoryOpen?.id === category.id && (
-                  <div>
-                    <div
-                      onClick={() => onClickState(null)}
-                      className="flex items-center gap-2 w-full ml-4 p-2 border-b border-gray-200 cursor-pointer"
-                    >
-                      <Image
-                        src={`${config.IMAGE_URL}?path=${category.image_path}&rotate=0`}
-                        alt={category.name}
-                        width={100}
-                        height={100}
-                        className="w-12 h-12 object-cover rounded-md"
-                      />
-                      <p>Voir tous pour {category.name}</p>
-                    </div>
-                    {category.states.map((state) => (
+                  <p>{category.name}</p>
+                  {category.states && category.states.length > 0 && (
+                    <ChevronRight
+                      className={cn(
+                        "w-4 h-4 transition-transform duration-300",
+                        {
+                          "rotate-90": categoryOpen?.id === category.id,
+                        }
+                      )}
+                    />
+                  )}
+                </div>
+                {category.states &&
+                  category.states.length > 0 &&
+                  categoryOpen?.id === category.id && (
+                    <div>
                       <div
-                        onClick={() => onClickState(state)}
-                        key={state.id}
+                        onClick={() => onClickState(null)}
                         className="flex items-center gap-2 w-full ml-4 p-2 border-b border-gray-200 cursor-pointer"
                       >
                         <Image
-                          src={`${config.IMAGE_URL}?path=${state.image_path}&rotate=0`}
+                          src={`${config.IMAGE_URL}?path=${category.image_path}&rotate=0`}
                           alt={category.name}
                           width={100}
                           height={100}
                           className="w-12 h-12 object-cover rounded-md"
                         />
-                        <p>{state.name}</p>
+                        <p>Voir tous pour {category.name}</p>
                       </div>
-                    ))}
-                  </div>
-                )}
-            </React.Fragment>
-          ))
+                      {category.states.map((state) => (
+                        <div
+                          onClick={() => onClickState(state)}
+                          key={state.id}
+                          className="flex items-center gap-2 w-full ml-4 p-2 border-b border-gray-200 cursor-pointer"
+                        >
+                          <Image
+                            src={`${config.IMAGE_URL}?path=${state.image_path}&rotate=0`}
+                            alt={category.name}
+                            width={100}
+                            height={100}
+                            className="w-12 h-12 object-cover rounded-md"
+                          />
+                          <p>{state.name}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+              </React.Fragment>
+            ))}
+          </>
         )}
       </div>
     </>

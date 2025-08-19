@@ -36,9 +36,9 @@ const HikeElement = ({
       }
       className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden"
     >
-      <div className="flex">
+      <div className="flex max-md:flex-col">
         {/* Image */}
-        <div className="w-48 h-40 bg-primary">
+        <div className="w-48 max-md:w-full h-40 bg-primary">
           <Image
             src={`${config.IMAGE_URL}?path=${hike.mainImage?.path ?? ""}&rotate=${hike.mainImage?.rotate ?? 0}`}
             alt={hike.title}

@@ -7,7 +7,7 @@ const HikeGlobalInformation = ({ hike }: { hike: Hike }) => {
   return (
     !!(hike.distance || hike.duration || hike.elevation) && (
       <div className="p-6 bg-white">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-6">
           {!!hike.distance && (
             <div className="flex items-center gap-3">
               <div className="p-3 bg-blue-100 rounded-lg">
