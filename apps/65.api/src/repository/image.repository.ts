@@ -54,7 +54,6 @@ export class ImageRepository extends Repository<Image> {
 
       // Si l'image existe en base mais pas sur le disque, la supprimer de la base
       if (image) {
-        console.log(`Suppression de l'image orpheline de la base: ${image.id}`);
         await this.delete(image);
       }
 
@@ -89,7 +88,6 @@ export class ImageRepository extends Repository<Image> {
 
       // Si l'image est corrompue et existe en base, la supprimer
       if (image) {
-        console.log(`Suppression de l'image corrompue de la base: ${image.id}`);
         await this.delete(image);
       }
 
@@ -186,15 +184,12 @@ export class ImageRepository extends Repository<Image> {
       chunkSize = 512 * 1024,
     } = initiateUploadDto; // 512KB en prod, 1MB en dev
 
-    console.log('Initiation upload:', { fileHash, fileName, fileSize, hikeId });
-
     const totalChunks = Math.ceil(fileSize / chunkSize);
 
     // Créer le répertoire temporaire pour les chunks
     const tempDir = join(config.image_path, 'temp', fileHash);
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true });
-      console.log('Répertoire temporaire créé:', tempDir);
     }
 
     const session: ChunkUploadSession = {
@@ -209,11 +204,6 @@ export class ImageRepository extends Repository<Image> {
     };
 
     this.uploadSessions.set(fileHash, session);
-    console.log('Session créée:', {
-      fileHash,
-      totalChunks,
-      sessionsCount: this.uploadSessions.size,
-    });
 
     return {
       fileHash,
@@ -229,17 +219,6 @@ export class ImageRepository extends Repository<Image> {
     // Convertir les chaînes en nombres
     const chunkIndex = parseInt(chunkUploadDto.chunkIndex.toString(), 10);
     const totalChunks = parseInt(chunkUploadDto.totalChunks.toString(), 10);
-
-    console.log('Upload chunk:', {
-      fileHash,
-      chunkIndex,
-      totalChunks,
-      chunkSize: chunk.size,
-      originalTypes: {
-        chunkIndexType: typeof chunkUploadDto.chunkIndex,
-        totalChunksType: typeof chunkUploadDto.totalChunks,
-      },
-    });
 
     const session = this.uploadSessions.get(fileHash);
     if (!session) {
@@ -266,13 +245,6 @@ export class ImageRepository extends Repository<Image> {
 
     session.uploadedChunks.add(chunkIndex);
     session.chunkPaths.set(chunkIndex, chunkPath); // Utiliser l'index numérique comme clé
-
-    console.log('Chunk sauvegardé:', {
-      chunkIndex,
-      chunkPath,
-      uploadedCount: session.uploadedChunks.size,
-      totalChunks: session.totalChunks,
-    });
 
     return {
       success: true,
@@ -301,19 +273,10 @@ export class ImageRepository extends Repository<Image> {
   ): Promise<Image> {
     const { fileHash, hikeId } = completeUploadDto;
 
-    console.log('Tentative de finalisation pour fileHash:', fileHash);
-    console.log('Sessions actives:', Array.from(this.uploadSessions.keys()));
-
     const session = this.uploadSessions.get(fileHash);
     if (!session) {
       throw new BadRequestException("Session d'upload non trouvée");
     }
-
-    console.log('Session trouvée:', {
-      uploadedChunks: session.uploadedChunks.size,
-      totalChunks: session.totalChunks,
-      chunkPaths: Array.from(session.chunkPaths.keys()),
-    });
 
     if (session.uploadedChunks.size !== session.totalChunks) {
       throw new BadRequestException(
@@ -322,82 +285,54 @@ export class ImageRepository extends Repository<Image> {
     }
 
     try {
-      console.log('Début assemblage des chunks...');
-
       // Assembler les chunks
       const finalFileName = `${uuidv4()}.${session.fileName.split('.').pop()}`;
       const finalPath = join(config.image_path, 'Hike', finalFileName);
-
-      console.log('Fichier final:', { finalFileName, finalPath });
 
       // Créer le répertoire de destination si nécessaire
       const hikeDir = join(config.image_path, 'Hike');
       if (!fs.existsSync(hikeDir)) {
         fs.mkdirSync(hikeDir, { recursive: true });
-        console.log('Répertoire créé:', hikeDir);
       }
 
-      console.log('Assemblage des chunks...');
       // Assembler les chunks dans l'ordre
       const writeStream = fs.createWriteStream(finalPath);
       for (let i = 0; i < session.totalChunks; i++) {
         // Les clés peuvent être des chaînes, essayer les deux
         const chunkPath =
           session.chunkPaths.get(i) || session.chunkPaths.get(i.toString());
-        console.log(`Vérification chunk ${i}:`, {
-          chunkPath,
-          exists: chunkPath ? fs.existsSync(chunkPath) : false,
-          lookupNumber: session.chunkPaths.get(i),
-          lookupString: session.chunkPaths.get(i.toString()),
-        });
 
         if (!chunkPath || !fs.existsSync(chunkPath)) {
-          console.error(`ERREUR: Chunk ${i} manquant`, {
-            chunkPath,
-            chunkPathsKeys: Array.from(session.chunkPaths.keys()),
-            chunkPathsEntries: Array.from(session.chunkPaths.entries()),
-          });
           throw new BadRequestException(`Chunk ${i} manquant`);
         }
         const chunkData = fs.readFileSync(chunkPath);
-        console.log(`Chunk ${i} lu:`, { size: chunkData.length });
         writeStream.write(chunkData);
       }
       writeStream.end();
-      console.log('Écriture terminée, attente de la finalisation...');
 
       // Attendre que l'écriture soit terminée
       await new Promise((resolve, reject) => {
         writeStream.on('finish', resolve as () => void);
         writeStream.on('error', reject);
       });
-      console.log('Fichier assemblé avec succès');
 
       // Vérifier que le fichier final existe et sa taille
       if (!fs.existsSync(finalPath)) {
         throw new BadRequestException('Fichier final non créé');
       }
-      const finalStats = fs.statSync(finalPath);
-      console.log('Fichier final:', { path: finalPath, size: finalStats.size });
 
-      // Traiter l'image avec Sharp pour validation et optimisation
-      console.log('Traitement Sharp...');
       try {
         const processedBuffer = await sharp(finalPath).toBuffer();
         await sharp(processedBuffer).toFile(finalPath);
-        console.log('Traitement Sharp terminé');
       } catch (sharpError) {
         console.error('Erreur Sharp:', sharpError);
         throw new BadRequestException("Erreur lors du traitement de l'image");
       }
 
       // Obtenir le nombre d'images existantes pour l'ordre
-      console.log('Comptage des images existantes...');
       const numberMax = (await this.count({ where: { hikeId } })) + 1;
-      console.log('Ordre calculé:', numberMax);
 
       // Créer l'entrée en base de données
-      console.log('Création en base de données...');
       const newImage = new Image();
       newImage.id = uuidv4();
       newImage.hikeId = hikeId;
@@ -405,13 +340,10 @@ export class ImageRepository extends Repository<Image> {
       newImage.ordered = numberMax;
 
       const savedImage = await this.save(newImage);
-      console.log('Image sauvegardée:', savedImage.id);
 
       // Nettoyer les fichiers temporaires
-      console.log('Nettoyage des fichiers temporaires...');
       this.cleanupTempFiles(fileHash);
       this.uploadSessions.delete(fileHash);
-      console.log('Upload finalisé avec succès');
 
       return savedImage;
     } catch (error) {
@@ -431,11 +363,9 @@ export class ImageRepository extends Repository<Image> {
     const session = this.uploadSessions.get(fileHash);
     if (!session) {
       // Session déjà supprimée, pas d'erreur
-      console.log('Session déjà supprimée pour:', fileHash);
       return { success: true, message: 'Upload déjà annulé' };
     }
 
-    console.log('Annulation upload pour:', fileHash);
     this.cleanupTempFiles(fileHash);
     this.uploadSessions.delete(fileHash);
 
@@ -463,8 +393,6 @@ export class ImageRepository extends Repository<Image> {
 
   // Méthode utilitaire pour nettoyer les images orphelines
   async cleanupOrphanImages() {
-    console.log('Début du nettoyage des images orphelines...');
-
     try {
       // 1. Nettoyer les images en base qui n'existent plus sur le disque
       const allImages = await this.find();
@@ -473,9 +401,6 @@ export class ImageRepository extends Repository<Image> {
       for (const image of allImages) {
         const filePath = join(config.image_path, image.path);
         if (!fs.existsSync(filePath)) {
-          console.log(
-            `Image orpheline supprimée de la base: ${image.id} - ${image.path}`,
-          );
           await this.delete(image);
           deletedFromDb++;
         }
@@ -493,14 +418,10 @@ export class ImageRepository extends Repository<Image> {
           if (!pathsInDb.includes(filePath)) {
             const fullPath = join(hikeDir, file);
             fs.unlinkSync(fullPath);
-            console.log(`Fichier orphelin supprimé du disque: ${filePath}`);
             deletedFromDisk++;
           }
         }
 
-        console.log(
-          `Nettoyage terminé: ${deletedFromDb} images supprimées de la base, ${deletedFromDisk} fichiers supprimés du disque`,
-        );
         return { deletedFromDb, deletedFromDisk };
       }
 
