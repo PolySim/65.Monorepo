@@ -29,7 +29,13 @@ export class GpxController {
   }
 
   @Post('create/:hikeId')
-  @UseInterceptors(FileInterceptor('gpx'))
+  @UseInterceptors(
+    FileInterceptor('gpx', {
+      limits: {
+        fieldSize: 1024 * 1024 * 50,
+      },
+    }),
+  )
   @ApiOperation({ summary: 'Créer un fichier GPX' })
   async createGpxFile(
     @UploadedFile() file: File,
