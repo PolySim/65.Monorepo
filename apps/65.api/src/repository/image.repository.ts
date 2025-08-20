@@ -183,8 +183,8 @@ export class ImageRepository extends Repository<Image> {
       fileName,
       hikeId,
       fileSize,
-      chunkSize = 1024 * 1024,
-    } = initiateUploadDto; // 1MB par défaut
+      chunkSize = 512 * 1024,
+    } = initiateUploadDto; // 512KB en prod, 1MB en dev
 
     console.log('Initiation upload:', { fileHash, fileName, fileSize, hikeId });
 

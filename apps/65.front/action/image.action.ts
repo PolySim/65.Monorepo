@@ -383,11 +383,17 @@ export const createImageByChunks = async ({
       fileSize: file.size,
     });
 
-    const CHUNK_SIZE = 1024 * 1024; // 1MB
+    // Adapter la taille des chunks selon l'environnement
+    // Vercel Hobby limite à 1MB, donc utiliser 512KB pour être sûr
+    const CHUNK_SIZE = 512 * 1024; // 512KB pour production (Vercel)
     const fileHash = await calculateFileHash(file);
     const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
 
-    console.log("Hash calculé:", { fileHash, totalChunks });
+    console.log("Hash calculé:", {
+      fileHash,
+      totalChunks,
+      chunkSize: CHUNK_SIZE,
+    });
 
     // Étape 1: Initier l'upload
     const initiateResult = await initiateChunkUpload({
@@ -400,6 +406,7 @@ export const createImageByChunks = async ({
     console.log("Résultat initiation:", initiateResult);
 
     if (!initiateResult.success) {
+      console.error("Échec initiation:", initiateResult);
       return { success: false, error: "Échec de l'initiation de l'upload" };
     }
 
@@ -424,7 +431,8 @@ export const createImageByChunks = async ({
       console.log(`Résultat chunk ${i}:`, uploadResult);
 
       if (!uploadResult.success) {
-        console.error(`Échec upload chunk ${i}`);
+        console.error(`Échec upload chunk ${i}:`, uploadResult);
+        console.log("Annulation de l'upload à cause d'un échec de chunk...");
         await cancelChunkUpload(fileHash);
         return { success: false, error: `Échec de l'upload du chunk ${i}` };
       }
@@ -448,7 +456,18 @@ export const createImageByChunks = async ({
 
     return { success: true, data: completeResult.data };
   } catch (error) {
-    console.error("Error in createImageByChunks", error);
+    console.error("Error in createImageByChunks - Exception non gérée:", error);
+    console.error("Stack trace:", error instanceof Error ? error.stack : "N/A");
+    console.log("Annulation de l'upload à cause d'une exception...");
+
+    // Essayer d'annuler si on a le fileHash
+    try {
+      const fileHash = await calculateFileHash(file);
+      await cancelChunkUpload(fileHash);
+    } catch (cancelError) {
+      console.error("Erreur lors de l'annulation:", cancelError);
+    }
+
     return { success: false, error: "Erreur inattendue lors de l'upload" };
   }
 };
