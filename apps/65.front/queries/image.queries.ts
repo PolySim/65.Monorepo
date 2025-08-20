@@ -145,6 +145,8 @@ export const useReorderImage = () => {
       if (!data.success) {
         toast.error("Erreur lors du réordonnement des images");
         queryClient.setQueryData(["hike", hikeId], context?.previousHike);
+      } else {
+        toast.success("Images réordonnées avec succès");
       }
     },
     onError: (error, variables, context) => {

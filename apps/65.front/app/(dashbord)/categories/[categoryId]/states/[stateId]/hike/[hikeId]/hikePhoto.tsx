@@ -15,27 +15,25 @@ const HikePhoto = () => {
         Photos ({hike?.images?.length ?? 0})
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {hike?.images
-          ?.sort((a, b) => a.ordered - b.ordered)
-          .map((image, index) => (
-            <div key={index} className="relative group cursor-pointer">
-              <ImageContainer imageId={image.id}>
-                <Image
-                  src={`${config.IMAGE_URL}?path=${image.path}&rotate=${image.rotate ?? 0}`}
-                  alt={`Photo ${index + 1}`}
-                  className="aspect-video object-cover rounded-lg w-full"
-                  width={576}
-                  height={384}
+        {hike?.images?.map((image, index) => (
+          <div key={index} className="relative group cursor-pointer">
+            <ImageContainer imageId={image.id}>
+              <Image
+                src={`${config.IMAGE_URL}?path=${image.path}&rotate=${image.rotate ?? 0}`}
+                alt={`Photo ${index + 1}`}
+                className="aspect-video object-cover rounded-lg w-full"
+                width={576}
+                height={384}
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all rounded-lg flex items-center justify-center">
+                <ZoomIn
+                  size={20}
+                  className="text-white opacity-0 group-hover:opacity-100 transition-opacity"
                 />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all rounded-lg flex items-center justify-center">
-                  <ZoomIn
-                    size={20}
-                    className="text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  />
-                </div>
-              </ImageContainer>
-            </div>
-          ))}
+              </div>
+            </ImageContainer>
+          </div>
+        ))}
       </div>
     </div>
   );
