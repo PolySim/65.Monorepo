@@ -83,7 +83,7 @@ const HikeGPX = ({ gpx, isAdmin }: { gpx: string; isAdmin?: boolean }) => {
           center={center as LatLngExpression}
           zoom={12}
           scrollWheelZoom={true}
-          className="w-full h-96 rounded-lg"
+          className="w-full h-96 rounded-lg !z-0"
         >
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
           <Polyline
