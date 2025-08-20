@@ -22,14 +22,12 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.next();
   }
 
-  const token = await getToken();
-  const user = await getUser({ token });
-
-  if (
-    isAdminRoute(req) &&
-    (!user.success || user.data?.roleId !== UserRole.ADMIN)
-  ) {
-    return NextResponse.redirect(new URL("/", req.url));
+  if (isAdminRoute(req)) {
+    const token = await getToken();
+    const user = await getUser({ token });
+    if (!user.success || user.data?.roleId !== UserRole.ADMIN)
+      return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.next();
   }
 
   if (!isAuthRoute(req)) {
