@@ -36,7 +36,7 @@ const HikeGPX = ({ gpx }: { gpx: string }) => {
         </h2>
         <Button asChild>
           <a
-            href={`${config.API_URL}/gpx?path=${hike?.gpxFiles[0]?.path}`}
+            href={`${config.API_URL}/gpx?path=${hike?.gpxFiles?.[0]?.path ?? ""}`}
             download={`${hike?.title}.gpx`}
           >
             <Download size={20} />

@@ -5,23 +5,27 @@ import { Button } from "@/components/ui/button";
 import { config } from "@/config/config";
 import { cn } from "@/lib/utils";
 import { DifficultyEnum } from "@/model/difficulty.model";
-import { Hike } from "@/model/hike.model";
-import { useHikeFavorites, useToggleFavorite } from "@/queries/hike.queries";
+import {
+  useHikeById,
+  useHikeFavorites,
+  useToggleFavorite,
+} from "@/queries/hike.queries";
 import { ArrowLeft, Heart } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-const HikeHeader = ({ hike }: { hike: Hike }) => {
+const HikeHeader = () => {
+  const { data: hike } = useHikeById();
   const router = useRouter();
   const { data: hikeFavorites } = useHikeFavorites(true);
   const { mutate: toggleFavorite } = useToggleFavorite();
-  const isFavorite = hikeFavorites?.some((h) => h.id === hike.id);
+  const isFavorite = hikeFavorites?.some((h) => h.id === hike?.id);
 
   return (
     <div className="relative w-full h-[350px] bg-gray-400">
       {/* Image */}
       <Image
-        src={`${config.IMAGE_URL}?path=${hike?.mainImage.path}&rotate=${hike?.mainImage.rotate ?? 0}`}
+        src={`${config.IMAGE_URL}?path=${hike?.mainImage?.path}&rotate=${hike?.mainImage?.rotate ?? 0}`}
         alt={hike?.title ?? ""}
         className="w-full h-[350px] object-cover"
         width={1000}
@@ -64,11 +68,13 @@ const HikeHeader = ({ hike }: { hike: Hike }) => {
                 <p className="text-xl">{hike?.state?.name}</p>
               </div>
             </div>
-            <span
-              className={`px-4 py-2 rounded-full text-sm font-medium border ${getDifficultyColor(hike?.difficulty.id ?? DifficultyEnum.MARCHEUR)}`}
-            >
-              {hike?.difficulty.name}
-            </span>
+            {hike?.difficulty && (
+              <span
+                className={`px-4 py-2 rounded-full text-sm font-medium border ${getDifficultyColor(hike?.difficulty?.id ?? DifficultyEnum.MARCHEUR)}`}
+              >
+                {hike?.difficulty?.name}
+              </span>
+            )}
           </div>
         </div>
       </div>

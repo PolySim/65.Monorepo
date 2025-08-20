@@ -34,7 +34,13 @@ const formSchema = z.object({
 type FormSchema = z.infer<typeof formSchema>;
 
 const ImageReorderContainer = () => {
-  const { data: hike } = useHikeById();
+  const { data: hike } = useHikeById({
+    select: (data) => {
+      return {
+        images: data.data?.images,
+      };
+    },
+  });
   const mainImageId = hike?.mainImage?.id;
   const [parent, imagesSorted, setImages] = useDragAndDrop<
     HTMLDivElement,
@@ -71,7 +77,7 @@ const ImageReorderContainer = () => {
   });
 
   const onSort = (images: ImageType[]) => {
-    if (images.every((image, index) => hike?.images[index]?.id === image.id))
+    if (images.every((image, index) => hike?.images?.[index]?.id === image.id))
       return;
     reorderImage(images.map((image) => image.id));
   };
@@ -90,7 +96,7 @@ const ImageReorderContainer = () => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const getRotate = (image: ImageType) => {
-    return hike?.images.find((i) => i.id === image.id)?.rotate ?? 0;
+    return hike?.images?.find((i) => i.id === image.id)?.rotate ?? 0;
   };
 
   return (

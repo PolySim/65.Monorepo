@@ -7,9 +7,15 @@ import { Loader2, Navigation } from "lucide-react";
 import { useRef } from "react";
 
 const HikeGPXContainer = () => {
-  const { data: hike } = useHikeById();
+  const { data: hike } = useHikeById({
+    select: (data) => {
+      return {
+        gpxFiles: data.data?.gpxFiles,
+      };
+    },
+  });
   const { data: gpxFile, isPending } = useGpxFile(
-    hike?.gpxFiles[0]?.path ?? ""
+    hike?.gpxFiles?.[0]?.path ?? ""
   );
   const inputRef = useRef<HTMLInputElement>(null);
   const { mutate: createGpxFile, isPending: isCreatingGpxFile } =
@@ -22,7 +28,7 @@ const HikeGPXContainer = () => {
     createGpxFile(formData);
   };
 
-  return hike?.gpxFiles[0]?.path && isPending ? (
+  return hike?.gpxFiles?.[0]?.path && isPending ? (
     <div className="p-6 bg-white mt-2 flex items-center justify-center">
       <Loader2 className="animate-spin w-8 h-8 text-primary" />
     </div>

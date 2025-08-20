@@ -72,7 +72,7 @@ const ImageContainer = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const onOpen = () => {
-    const index = hike?.images.findIndex((image) => image.id === imageId) ?? 0;
+    const index = hike?.images?.findIndex((image) => image.id === imageId) ?? 0;
 
     const element = containerRef.current;
     if (element) {

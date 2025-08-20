@@ -9,7 +9,7 @@ const ImagesCarroussel = () => {
 
   return (
     <>
-      {hike?.images.map((image) => (
+      {hike?.images?.map((image) => (
         <div
           key={image.id}
           className="h-screen w-screen bg-transparent snap-center min-w-screen pointer-none:"

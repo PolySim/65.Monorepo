@@ -1,11 +1,12 @@
 "use client";
 
-import { Hike } from "@/model/hike.model";
+import { useHikeById } from "@/queries/hike.queries";
 import { Clock, MapPin, Mountain } from "lucide-react";
 
-const HikeGlobalInformation = ({ hike }: { hike: Hike }) => {
+const HikeGlobalInformation = () => {
+  const { data: hike } = useHikeById();
   return (
-    !!(hike.distance || hike.duration || hike.elevation) && (
+    !!(hike?.distance || hike?.duration || hike?.elevation) && (
       <div className="p-6 bg-white">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-6">
           {!!hike.distance && (

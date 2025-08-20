@@ -12,7 +12,17 @@ import HikeDelete from "./hikeDelete";
 import UpdateInformationContainer from "./hikeUpdateInformationContainer";
 
 const HikeHeader = () => {
-  const { data: hike } = useHikeById();
+  const { data: hike } = useHikeById({
+    select: (data) => {
+      return {
+        title: data.data?.title,
+        mainImage: data.data?.mainImage,
+        mainImagePosition: data.data?.mainImagePosition,
+        difficulty: data.data?.difficulty,
+        state: data.data?.state,
+      };
+    },
+  });
   const router = useRouter();
 
   const { mutate: updateHike } = useUpdateHike();
@@ -82,11 +92,13 @@ const HikeHeader = () => {
                 <p className="text-xl">{hike?.state?.name}</p>
               </div>
             </div>
-            <span
-              className={`px-4 py-2 rounded-full text-sm font-medium border ${getDifficultyColor(hike?.difficulty.id ?? DifficultyEnum.MARCHEUR)}`}
-            >
-              {hike?.difficulty.name}
-            </span>
+            {hike?.difficulty && (
+              <span
+                className={`px-4 py-2 rounded-full text-sm font-medium border ${getDifficultyColor(hike?.difficulty?.id ?? DifficultyEnum.MARCHEUR)}`}
+              >
+                {hike.difficulty.name}
+              </span>
+            )}
           </div>
         </div>
       </div>

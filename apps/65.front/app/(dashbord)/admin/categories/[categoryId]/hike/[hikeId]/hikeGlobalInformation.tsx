@@ -18,7 +18,15 @@ const formSchema = z.object({
 type FormSchema = z.infer<typeof formSchema>;
 
 const HikeGlobalInformation = () => {
-  const { data: hike } = useHikeById();
+  const { data: hike } = useHikeById({
+    select: (data) => {
+      return {
+        distance: data.data?.distance,
+        duration: data.data?.duration,
+        elevation: data.data?.elevation,
+      };
+    },
+  });
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {

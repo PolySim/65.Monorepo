@@ -38,13 +38,15 @@ export const useHikeFilters = (
   });
 };
 
-export const useHikeById = () => {
+export const useHikeById = (props?: {
+  select?: (data: { data?: Hike }) => Partial<Hike>;
+}) => {
   const { hikeId } = useAppParams();
 
   return useQuery({
     queryKey: ["hike", hikeId],
     queryFn: () => getHikeById(hikeId),
-    select: (data) => data.data,
+    select: (data) => (props?.select ? props.select(data) : data.data),
     enabled: !!hikeId,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,

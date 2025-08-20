@@ -21,7 +21,14 @@ const HikeDescription = () => {
   const [activeTab, setActiveTab] = useState<"description" | "indications">(
     "description"
   );
-  const { data: hike } = useHikeById();
+  const { data: hike } = useHikeById({
+    select: (data) => {
+      return {
+        content: data.data?.content,
+        indication: data.data?.indication,
+      };
+    },
+  });
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),

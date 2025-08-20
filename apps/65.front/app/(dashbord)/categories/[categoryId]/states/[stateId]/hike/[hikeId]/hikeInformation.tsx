@@ -9,7 +9,7 @@ import HikeHeader from "./hikeHeader";
 import HikePhoto from "./hikePhoto";
 
 const HikeInformation = () => {
-  const { data: hike, isPending } = useHikeById();
+  const { isPending } = useHikeById();
 
   return isPending ? (
     <div className="flex-1 flex items-center justify-center">
@@ -17,11 +17,11 @@ const HikeInformation = () => {
     </div>
   ) : (
     <div className="w-11/12 max-w-6xl mx-auto rounded-lg bg-white overflow-hidden shadow">
-      <HikeHeader hike={hike!} />
-      <HikeGlobalInformation hike={hike!} />
-      <HikeDescription hike={hike!} />
-      <HikePhoto hike={hike!} />
-      <HikeGPXContainer hike={hike!} />
+      <HikeHeader />
+      <HikeGlobalInformation />
+      <HikeDescription />
+      <HikePhoto />
+      <HikeGPXContainer />
     </div>
   );
 };

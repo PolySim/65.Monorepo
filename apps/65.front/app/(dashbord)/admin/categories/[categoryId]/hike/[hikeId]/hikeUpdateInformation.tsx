@@ -34,8 +34,8 @@ export default function HikeUpdateInformation() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: hike?.title ?? "",
-      difficulty: hike?.difficulty.id ?? "",
-      state: hike?.state.id ?? "",
+      difficulty: hike?.difficulty?.id ?? "",
+      state: hike?.state?.id ?? "",
     },
   });
   const { mutate: updateHike } = useUpdateHike();

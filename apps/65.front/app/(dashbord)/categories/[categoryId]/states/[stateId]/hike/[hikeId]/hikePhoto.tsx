@@ -1,21 +1,22 @@
 "use client";
 
 import { config } from "@/config/config";
-import { Hike } from "@/model/hike.model";
+import { useHikeById } from "@/queries/hike.queries";
 import { Camera, ZoomIn } from "lucide-react";
 import Image from "next/image";
 import ImageContainer from "./ImageContainer";
 
-const HikePhoto = ({ hike }: { hike: Hike }) => {
+const HikePhoto = () => {
+  const { data: hike } = useHikeById();
   return (
     <div className="p-6 bg-white mt-6">
       <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
         <Camera size={24} />
-        Photos ({hike.images.length})
+        Photos ({hike?.images?.length ?? 0})
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {hike.images
-          .sort((a, b) => a.ordered - b.ordered)
+        {hike?.images
+          ?.sort((a, b) => a.ordered - b.ordered)
           .map((image, index) => (
             <div key={index} className="relative group cursor-pointer">
               <ImageContainer imageId={image.id}>

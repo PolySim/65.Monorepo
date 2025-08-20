@@ -1,15 +1,16 @@
 "use client";
 
-import { Hike } from "@/model/hike.model";
+import { useHikeById } from "@/queries/hike.queries";
 import { AlertTriangle, Info } from "lucide-react";
 import { useState } from "react";
 
-const HikeDescription = ({ hike }: { hike: Hike }) => {
+const HikeDescription = () => {
+  const { data: hike } = useHikeById();
   const [activeTab, setActiveTab] = useState<"description" | "indications">(
-    hike.content ? "description" : "indications"
+    hike?.content ? "description" : "indications"
   );
   return (
-    !!(hike.content || hike.indication) && (
+    !!(hike?.content || hike?.indication) && (
       <>
         <div className="px-4 bg-white">
           <div className="border-b border-gray-200 mb-6">
@@ -51,7 +52,7 @@ const HikeDescription = ({ hike }: { hike: Hike }) => {
           {/* Contenu des onglets */}
           {activeTab === "description" && (
             <div className="prose max-w-none">
-              {hike.content.split("\n").map((line, index) => (
+              {hike?.content?.split("\n").map((line, index) => (
                 <p
                   key={index}
                   className="text-gray-700 leading-relaxed text-lg"
@@ -64,7 +65,7 @@ const HikeDescription = ({ hike }: { hike: Hike }) => {
 
           {activeTab === "indications" && (
             <div className="prose max-w-none">
-              {hike.indication.split("\n").map((line, index) => (
+              {hike?.indication?.split("\n").map((line, index) => (
                 <p
                   key={index}
                   className="text-gray-700 leading-relaxed text-lg"
