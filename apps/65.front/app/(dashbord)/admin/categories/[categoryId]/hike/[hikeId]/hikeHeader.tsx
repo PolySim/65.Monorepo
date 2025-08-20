@@ -30,7 +30,7 @@ const HikeHeader = () => {
   const onUpdateMainImagePosition = (direction: "up" | "down") => {
     updateHike({
       mainImagePosition:
-        (hike?.mainImagePosition ?? 0) + (direction === "up" ? -1 : 1),
+        (hike?.mainImagePosition ?? 0) + (direction === "up" ? -10 : 10),
     });
   };
 
@@ -41,8 +41,8 @@ const HikeHeader = () => {
         src={`${config.IMAGE_URL}?path=${hike?.mainImage?.path}&rotate=${hike?.mainImage?.rotate ?? 0}`}
         alt={hike?.title ?? ""}
         className="w-full h-[350px] object-cover"
-        width={1000}
-        height={1000}
+        width={2560}
+        height={1440}
         style={{ objectPosition: `50% ${hike?.mainImagePosition}%` }}
       />
 
