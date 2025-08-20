@@ -4,11 +4,10 @@ import { FormInput } from "@/components/form/formInput";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { config } from "@/config/config";
-import { compressor } from "@/lib/compressor";
 import { Image as ImageType } from "@/model/image.model";
 import { useHikeById, useUpdateHike } from "@/queries/hike.queries";
 import {
-  useCreateImage,
+  useCreateImageByChunks,
   useDeleteImage,
   useReorderImage,
   useRotateImage,
@@ -56,7 +55,7 @@ const ImageReorderContainer = () => {
   const { mutate: deleteImage } = useDeleteImage();
   const { mutate: rotateImage } = useRotateImage();
   const { mutate: updateHike } = useUpdateHike();
-  const { mutate: createImage } = useCreateImage();
+  const { mutate: createImage } = useCreateImageByChunks();
   const { mutate: reorderImage } = useReorderImage();
   const onSetMainImage = (imageId: string) => {
     updateHike({
@@ -78,31 +77,26 @@ const ImageReorderContainer = () => {
   const onSubmit = (data: FileList | null) => {
     if (!data || isPending) return;
     startTransition(async () => {
-      const compressedImages = await Promise.all(
+      await Promise.all(
         Array.from(data).map(async (image) => {
-          return await compressor({
-            file: image,
-            maxSize: 2_000_000,
-            quality: 0.95,
-          });
+          await createImage(image);
         })
       );
-      const formData = new FormData();
-      compressedImages.forEach((compressedImage) => {
-        formData.append("images", compressedImage);
-      });
-      await createImage(formData);
     });
   };
 
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const getRotate = (image: ImageType) => {
+    return hike?.images.find((i) => i.id === image.id)?.rotate ?? 0;
+  };
 
   return (
     <div ref={parent} className="grid grid-cols-2 md:grid-cols-3 gap-4">
       {imagesSorted.map((image) => (
         <div key={image.id} className="relative group cursor-pointer">
           <Image
-            src={`${config.IMAGE_URL}?path=${image.path}&rotate=${image.rotate ?? 0}`}
+            src={`${config.IMAGE_URL}?path=${image.path}&rotate=${getRotate(image)}`}
             alt={`Photo ${image.id}`}
             className="aspect-video object-cover rounded-lg w-full"
             width={576}

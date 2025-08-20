@@ -1,5 +1,6 @@
 import {
   createImage,
+  createImageByChunks,
   deleteImage,
   reorderImage,
   rotateImage,
@@ -153,6 +154,37 @@ export const useReorderImage = () => {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["hike", hikeId] });
       queryClient.invalidateQueries({ queryKey: ["hikes", newFilter] });
+    },
+  });
+};
+
+// Hook pour l'upload par chunks avec progression
+export const useCreateImageByChunks = () => {
+  const queryClient = useQueryClient();
+  const { hikeId } = useAppParams();
+
+  return useMutation({
+    mutationFn: (file: File) => {
+      return createImageByChunks({
+        hikeId,
+        file,
+      });
+    },
+    onMutate: () => {
+      queryClient.cancelQueries({ queryKey: ["hike", hikeId] });
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success("Image uploadée avec succès");
+      } else {
+        toast.error(data.error || "Erreur lors de l'upload de l'image");
+      }
+    },
+    onError: () => {
+      toast.error("Erreur lors de l'upload de l'image");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["hike", hikeId] });
     },
   });
 };
