@@ -71,6 +71,8 @@ const ImageReorderContainer = () => {
   });
 
   const onSort = (images: ImageType[]) => {
+    if (images.every((image, index) => hike?.images[index]?.id === image.id))
+      return;
     reorderImage(images.map((image) => image.id));
   };
 
