@@ -38,7 +38,7 @@ export const useDeleteImage = () => {
   const { hikeId } = useAppParams();
 
   return useMutation({
-    mutationFn: (imageId: string) => deleteImage(imageId),
+    mutationFn: (imageId: string) => deleteImage(imageId, hikeId),
     onMutate: (imageId) => {
       queryClient.cancelQueries({ queryKey: ["hike", hikeId] });
       const previousHike = queryClient.getQueryData(["hike", hikeId]);
@@ -160,7 +160,6 @@ export const useReorderImage = () => {
   });
 };
 
-// Hook pour l'upload par chunks avec progression
 export const useCreateImageByChunks = () => {
   const queryClient = useQueryClient();
   const { hikeId } = useAppParams();
@@ -178,6 +177,14 @@ export const useCreateImageByChunks = () => {
     onSuccess: (data) => {
       if (data.success) {
         toast.success("Image uploadée avec succès");
+        if (data.data) {
+          queryClient.setQueryData(["hike", hikeId], (old: { data: Hike }) => ({
+            data: {
+              ...old.data,
+              images: [...old.data.images, data.data],
+            },
+          }));
+        }
       } else {
         toast.error(data.error || "Erreur lors de l'upload de l'image");
       }

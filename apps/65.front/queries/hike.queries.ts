@@ -145,10 +145,9 @@ export const useUpdateHike = () => {
           data: {
             ...old.data,
             ...hike,
-            mainImage: {
-              ...old.data.mainImage,
-              id: hike.mainImageId ?? old.data.mainImage?.id,
-            },
+            mainImage:
+              old.data.images?.find((image) => image.id === hike.mainImageId) ??
+              old.data.mainImage,
           },
         };
       });

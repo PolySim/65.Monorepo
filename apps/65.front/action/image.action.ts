@@ -1,32 +1,28 @@
 "use server";
 
 import { config } from "@/config/config";
+import { Image } from "@/model/image.model";
 import { auth } from "@clerk/nextjs/server";
 import { revalidateTag } from "next/cache";
 
-// Utilitaire pour calculer un hash simple d'un fichier
-async function calculateFileHash(file: File): Promise<string> {
-  // Pour un contexte server-side, utilisons une méthode plus simple
-  // basée sur le nom, la taille et la date de modification
+const calculateFileHash = async (file: File) => {
   const buffer = await file.arrayBuffer();
   const uint8Array = new Uint8Array(buffer);
 
-  // Calculer un hash simple basé sur les premiers et derniers bytes
   let hash = 0;
-  const sampleSize = Math.min(1024, uint8Array.length); // Échantillon de 1KB
+  const sampleSize = Math.min(1024, uint8Array.length);
 
   for (let i = 0; i < sampleSize; i++) {
     hash = ((hash << 5) - hash + uint8Array[i]) & 0xffffffff;
   }
 
-  // Ajouter la taille et le nom du fichier au hash
   const fileInfo = `${file.name}_${file.size}_${file.lastModified}`;
   for (let i = 0; i < fileInfo.length; i++) {
     hash = ((hash << 5) - hash + fileInfo.charCodeAt(i)) & 0xffffffff;
   }
 
   return Math.abs(hash).toString(16);
-}
+};
 
 export const createImage = async ({
   hikeId,
@@ -66,7 +62,7 @@ export const createImage = async ({
   }
 };
 
-export const deleteImage = async (imageId: string) => {
+export const deleteImage = async (imageId: string, hikeId: string) => {
   try {
     const { getToken } = await auth();
     const token = await getToken();
@@ -87,6 +83,8 @@ export const deleteImage = async (imageId: string) => {
       console.error("Error in deleting image", res.statusText);
       return { success: false };
     }
+
+    revalidateTag(`hike-${hikeId}`);
 
     return { success: true };
   } catch (error) {
@@ -328,7 +326,7 @@ export const completeChunkUpload = async ({
       return { success: false };
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as Image;
     revalidateTag(`hike-${hikeId}`);
     return { success: true, data };
   } catch (error) {
@@ -369,7 +367,6 @@ export const cancelChunkUpload = async (fileHash: string) => {
   }
 };
 
-// Fonction principale pour créer une image par chunks
 export const createImageByChunks = async ({
   hikeId,
   file,
@@ -378,7 +375,7 @@ export const createImageByChunks = async ({
   file: File;
 }) => {
   try {
-    const CHUNK_SIZE = 512 * 1024; // 512KB pour production (Vercel)
+    const CHUNK_SIZE = 512 * 1024; // 512KB
     const fileHash = await calculateFileHash(file);
     const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
 
@@ -426,7 +423,6 @@ export const createImageByChunks = async ({
 
     if (!completeResult.success) {
       console.error("Échec finalisation");
-      // Ne pas annuler car tous les chunks sont déjà uploadés
       return { success: false, error: "Échec de la finalisation de l'upload" };
     }
 
