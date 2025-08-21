@@ -38,6 +38,7 @@ const ImageReorderContainer = () => {
     select: (data) => {
       return {
         images: data.data?.images,
+        mainImage: data.data?.mainImage,
       };
     },
   });
