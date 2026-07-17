@@ -1,9 +1,11 @@
+import { MountainSnow } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Connection",
-  description: "",
+  title: "Connexion",
+  description: "Connectez-vous à votre espace 65 Passion Montagne.",
 };
 
 export default function SignInLayout({
@@ -12,22 +14,61 @@ export default function SignInLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex-1 w-full px-4 lg:px-12 flex flex-col items-center justify-center">
-      <div className="flex rounded-lg overflow-hidden items-center justify-center w-full max-w-7xl h-[min(90vh,720px)]">
-        <div className="h-[100%] my-auto hidden lg:flex flex-col flex-1 relative">
-          <Image
-            src="/fond_ecran.png"
-            alt="Login image"
-            width={1920}
-            height={1440}
-            className="absolute top-0 left-0 z-0 object-cover w-full h-full"
-          />
-          <span className="absolute top-0 left-0 z-10 object-cover w-full h-full bg-black/10" />
+    <main
+      id="contenu-principal"
+      className="grid min-h-screen bg-background lg:grid-cols-[1.08fr_0.92fr]"
+    >
+      <section
+        className="relative hidden min-h-screen overflow-hidden bg-primary-dark lg:block"
+        aria-label="Paysage des Hautes-Pyrénées"
+      >
+        <Image
+          src="/fond_ecran.png"
+          alt="Panorama enneigé des Hautes-Pyrénées"
+          fill
+          priority
+          sizes="55vw"
+          className="object-cover outline outline-1 -outline-offset-1 outline-black/10"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/75" />
+        <Link
+          href="/"
+          className="absolute top-8 left-8 flex items-center gap-3 rounded-lg text-white outline-none focus-visible:ring-[3px] focus-visible:ring-white/35"
+          aria-label="65 Passion Montagne — Accueil"
+        >
+          <span className="flex size-11 items-center justify-center rounded-lg bg-white text-primary-dark">
+            <MountainSnow className="size-5" aria-hidden="true" />
+          </span>
+          <span className="font-bold">65 Passion Montagne</span>
+        </Link>
+        <div className="absolute inset-x-0 bottom-0 max-w-2xl p-8 text-white xl:p-12">
+          <p className="text-3xl font-bold leading-tight tracking-[-0.03em] xl:text-4xl">
+            Préparez la sortie. Gardez l’essentiel sous la main.
+          </p>
+          <p className="mt-4 max-w-xl text-base leading-7 text-white/80">
+            Itinéraires, photos, traces GPX et favoris réunis dans votre espace
+            personnel.
+          </p>
         </div>
-        <div className="flex flex-col justify-center gap-6 px-4 lg:px-12 bg-primary/20 w-[min(500px,100%)] h-[100%] min-h-[min(90vh,500px)] rounded-xl lg:rounded-none">
+      </section>
+
+      <section className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-8 lg:px-12">
+        <div className="w-full max-w-md">
+          <Link
+            href="/"
+            className="mb-10 flex w-fit items-center gap-3 rounded-lg text-primary-dark outline-none focus-visible:ring-[3px] focus-visible:ring-ring/25 lg:hidden"
+          >
+            <span className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              65
+            </span>
+            <span className="font-bold">Passion Montagne</span>
+          </Link>
           {children}
+          <p className="mt-8 text-center text-xs leading-5 text-muted-foreground">
+            Accès réservé aux membres de 65 Passion Montagne.
+          </p>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

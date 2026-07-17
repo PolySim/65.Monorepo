@@ -1,56 +1,40 @@
-"use client";
+import { Button } from "@/components/ui/button";
+import { Compass, Heart, Plus } from "lucide-react";
+import Link from "next/link";
 
-import { Clock, Compass, MapPin, Mountain, TreePine } from "lucide-react";
+export default function EmptyHikes({
+  isFavorites,
+  isAdmin,
+}: {
+  isFavorites?: boolean;
+  isAdmin?: boolean;
+}) {
+  const Icon = isFavorites ? Heart : isAdmin ? Plus : Compass;
+  const title = isFavorites
+    ? "Aucun favori enregistré"
+    : isAdmin
+      ? "Aucune activité dans cette catégorie"
+      : "Aucune activité trouvée";
+  const description = isFavorites
+    ? "Enregistrez les sorties qui vous intéressent pour les retrouver rapidement ici."
+    : isAdmin
+      ? "Créez une première activité avec le bouton situé en haut de la page."
+      : "Cette sélection ne contient pas encore d’activité. Explorez une autre catégorie ou un autre massif.";
 
-export default function EmptyHikes() {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-6 flex-1">
-      <div className="relative mb-8">
-        <div className="w-32 h-32 bg-gradient-to-br from-blue-100 to-green-100 rounded-full flex items-center justify-center mb-4 mx-auto">
-          <div className="relative">
-            <Compass size={48} className="text-blue-500 mb-2" />
-            <TreePine
-              size={24}
-              className="text-green-500 absolute -bottom-1 -right-1"
-            />
-          </div>
-        </div>
-        <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full animate-pulse"></div>
-        <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-400 rounded-full animate-pulse delay-1000"></div>
-      </div>
-
-      <h2 className="text-2xl font-semibold text-gray-800 mb-3">
-        Aucune activité pour le moment
-      </h2>
-      <p className="text-gray-600 text-center mb-8 max-w-md">
-        Commencez votre aventure !
+    <div className="surface flex min-h-80 flex-col items-center justify-center px-6 py-12 text-center">
+      <span className="flex size-14 items-center justify-center rounded-xl bg-secondary text-primary-dark">
+        <Icon className="size-6" aria-hidden="true" />
+      </span>
+      <h2 className="mt-5 text-xl font-bold">{title}</h2>
+      <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">
+        {description}
       </p>
-
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl">
-        <div className="text-center p-4">
-          <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-            <Mountain size={24} className="text-green-600" />
-          </div>
-          <h3 className="font-medium text-gray-800 mb-1">Randonnées</h3>
-          <p className="text-sm text-gray-600">
-            Explorez les sentiers et sommets
-          </p>
-        </div>
-        <div className="text-center p-4">
-          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-            <MapPin size={24} className="text-blue-600" />
-          </div>
-          <h3 className="font-medium text-gray-800 mb-1">Circuits</h3>
-          <p className="text-sm text-gray-600">Découvrez de nouvelles routes</p>
-        </div>
-        <div className="text-center p-4">
-          <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-            <Clock size={24} className="text-purple-600" />
-          </div>
-          <h3 className="font-medium text-gray-800 mb-1">Suivi</h3>
-          <p className="text-sm text-gray-600">Enregistrez vos performances</p>
-        </div>
-      </div>
+      {isFavorites || !isAdmin ? (
+        <Button className="mt-6" asChild>
+          <Link href="/">Explorer les activités</Link>
+        </Button>
+      ) : null}
     </div>
   );
 }

@@ -1,69 +1,135 @@
 "use client";
 
-import useDebounce from "@/hook/useDebonce";
 import { useHikeFilters } from "@/queries/hike.queries";
-import { Loader2, Search } from "lucide-react";
+import { ArrowUpRight, MapPin, Search, X } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { FocusEvent, useDeferredValue, useId, useState } from "react";
 
 const SearchHikes = () => {
   const [search, setSearch] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-  const { data: hikes, isPending } = useHikeFilters({ title: search });
+  const [isOpen, setIsOpen] = useState(false);
+  const deferredSearch = useDeferredValue(search.trim());
+  const resultsId = useId();
+  const shouldSearch = deferredSearch.length >= 2;
+  const {
+    data: hikes,
+    isPending,
+    isError,
+    refetch,
+  } = useHikeFilters({
+    title: shouldSearch ? deferredSearch : "",
+  });
 
-  const onSearch = (value: string) => {
-    const inputValue = inputRef.current?.value;
-    if (value !== inputValue) return;
-    setSearch(value);
+  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+      setIsOpen(false);
+    }
   };
 
-  const onChange = useDebounce(onSearch, 500);
-
-  const onBlur = useDebounce(() => {
-    setSearch("");
-  }, 250);
+  const showResults = isOpen && search.trim().length >= 2;
 
   return (
-    <div className="flex flex-col relative">
-      <div className="flex items-center gap-2 rounded-full border border-gray-300 p-2 w-[40rem] max-w-[95vw] bg-white z-20">
-        <Search className="w-4 h-4" />
-        <input
-          type="text"
-          onChange={(e) => onChange(e.target.value)}
-          onFocus={() => setSearch(inputRef.current?.value ?? "")}
-          onBlur={onBlur}
-          placeholder="Recherche des randos, escalades, refuges ..."
-          className="text-sm text-gray-900 placeholder:text-gray-400 focus:outline-hidden w-full"
-          ref={inputRef}
-        />
-      </div>
-      {!!search && (
-        <div className="absolute top-[1rem] left-0 w-full max-h-72 min-h-20 overflow-y-auto z-10 pt-6 bg-white rounded-b-3xl">
-          {isPending ? (
-            <div className="flex items-center justify-center min-h-[inherit]">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+    <div
+      className="relative"
+      onFocusCapture={() => setIsOpen(true)}
+      onBlurCapture={handleBlur}
+    >
+      <form role="search" onSubmit={(event) => event.preventDefault()}>
+        <label
+          htmlFor="home-search"
+          className="mb-2 block text-sm font-semibold text-white"
+        >
+          Rechercher une activité
+        </label>
+        <div className="flex min-h-14 items-center gap-3 rounded-xl bg-white px-4 text-foreground shadow-[0_6px_8px_-6px_oklch(0.12_0.02_155/0.35)] focus-within:ring-[3px] focus-within:ring-white/35">
+          <Search className="size-5 shrink-0 text-primary" aria-hidden="true" />
+          <input
+            id="home-search"
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Nom, massif ou type d’activité…"
+            autoComplete="off"
+            aria-controls={resultsId}
+            aria-expanded={showResults}
+            className="h-12 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground"
+          />
+          {search ? (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="flex size-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground outline-none transition-[background-color,color,scale] duration-150 hover:bg-muted hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/20 active:scale-[0.96]"
+              aria-label="Effacer la recherche"
+            >
+              <X className="size-4" aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
+      </form>
+
+      {showResults ? (
+        <div
+          id={resultsId}
+          className="absolute inset-x-0 top-[calc(100%+0.5rem)] z-20 max-h-80 overflow-y-auto rounded-xl bg-popover p-2 text-popover-foreground shadow-[0_16px_36px_-16px_oklch(0.12_0.02_155/0.45)]"
+          aria-live="polite"
+        >
+          {isPending || deferredSearch !== search.trim() ? (
+            <div className="space-y-2 p-2" role="status">
+              <span className="sr-only">Recherche en cours</span>
+              <div className="skeleton h-14 rounded-lg" />
+              <div className="skeleton h-14 rounded-lg" />
+              <div className="skeleton h-14 rounded-lg" />
             </div>
-          ) : (hikes || []).length > 0 ? (
-            (hikes || []).map((hike) => (
-              <Link
-                key={hike.id}
-                href={`/categories/${hike.category.id}/states/${hike.state.id}/hike/${hike.id}`}
-                className="w-full p-2 hover:bg-primary/10 cursor-pointer flex justify-between items-center"
+          ) : isError ? (
+            <div className="flex min-h-28 flex-col items-center justify-center gap-3 px-4 text-center">
+              <p className="text-sm text-muted-foreground">
+                La recherche est momentanément indisponible.
+              </p>
+              <button
+                type="button"
+                onClick={() => refetch()}
+                className="min-h-10 rounded-lg px-3 text-sm font-semibold text-primary-dark outline-none hover:bg-secondary focus-visible:ring-[3px] focus-visible:ring-ring/20"
               >
-                <p className="font-semibold">{hike.title}</p>
-                <p className="text-gray-500 text-sm">
-                  <span>{hike.state.name}</span> -{" "}
-                  <span>{hike.category.name}</span>
-                </p>
-              </Link>
-            ))
+                Réessayer
+              </button>
+            </div>
+          ) : (hikes ?? []).length > 0 ? (
+            <ul className="space-y-1">
+              {(hikes ?? []).map((hike) => (
+                <li key={hike.id}>
+                  <Link
+                    href={`/categories/${hike.category.id}/states/${hike.state.id}/hike/${hike.id}`}
+                    className="group flex min-h-14 items-center gap-3 rounded-lg px-3 py-2 outline-none transition-colors duration-150 hover:bg-secondary focus-visible:ring-[3px] focus-visible:ring-ring/20"
+                  >
+                    <MapPin
+                      className="size-4 shrink-0 text-primary"
+                      aria-hidden="true"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold text-foreground">
+                        {hike.title}
+                      </span>
+                      <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                        {hike.state.name} · {hike.category.name}
+                      </span>
+                    </span>
+                    <ArrowUpRight
+                      className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 motion-reduce:transform-none"
+                      aria-hidden="true"
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
           ) : (
-            <div className="flex items-center justify-center h-full min-h-[inherit]">
-              <p className="text-gray-500">Aucun rando trouvé</p>
+            <div className="flex min-h-28 items-center justify-center px-5 text-center">
+              <p className="text-sm text-muted-foreground">
+                Aucune activité ne correspond à « {deferredSearch} ».
+              </p>
             </div>
           )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

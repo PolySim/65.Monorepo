@@ -2,82 +2,76 @@
 
 import { useHikeById } from "@/queries/hike.queries";
 import { AlertTriangle, Info } from "lucide-react";
-import { useState } from "react";
 
 const HikeDescription = () => {
   const { data: hike } = useHikeById();
-  const [activeTab, setActiveTab] = useState<"description" | "indications">(
-    hike?.content ? "description" : "indications"
-  );
+  const description = hike?.content?.trim();
+  const indications = hike?.indication?.trim();
+
+  if (!description && !indications) return null;
+
   return (
-    !!(hike?.content || hike?.indication) && (
-      <>
-        <div className="px-4 bg-white">
-          <div className="border-b border-gray-200 mb-6">
-            <nav className="flex space-x-8">
-              {!!hike.content && (
-                <button
-                  onClick={() => setActiveTab("description")}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === "description"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Info size={16} />
-                    Description
-                  </div>
-                </button>
-              )}
-
-              {!!hike.indication && (
-                <button
-                  onClick={() => setActiveTab("indications")}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === "indications"
-                      ? "border-primary text-primary"
-                      : "border-transparent text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle size={16} />
-                    Indications
-                  </div>
-                </button>
-              )}
-            </nav>
+    <div
+      className={`mt-10 grid gap-8 sm:mt-12 sm:gap-10 ${
+        description && indications
+          ? "lg:grid-cols-[minmax(0,1.55fr)_minmax(18rem,0.8fr)] lg:items-start"
+          : ""
+      }`}
+    >
+      {description && (
+        <section aria-labelledby="hike-description-title">
+          <div className="mb-5 flex items-center gap-3">
+            <Info aria-hidden="true" className="size-6 text-primary" />
+            <h2
+              id="hike-description-title"
+              className="text-2xl font-semibold tracking-[-0.015em] text-foreground"
+            >
+              À propos du parcours
+            </h2>
           </div>
-
-          {/* Contenu des onglets */}
-          {activeTab === "description" && (
-            <div className="prose max-w-none">
-              {hike?.content?.split("\n").map((line, index) => (
+          <div className="max-w-[72ch] space-y-4">
+            {description
+              .split("\n")
+              .filter((line) => line.trim().length > 0)
+              .map((line, index) => (
                 <p
                   key={index}
-                  className="text-gray-700 leading-relaxed text-lg"
+                  className="text-base leading-7 text-foreground/85"
                 >
                   {line}
                 </p>
               ))}
-            </div>
-          )}
+          </div>
+        </section>
+      )}
 
-          {activeTab === "indications" && (
-            <div className="prose max-w-none">
-              {hike?.indication?.split("\n").map((line, index) => (
-                <p
-                  key={index}
-                  className="text-gray-700 leading-relaxed text-lg"
-                >
+      {indications && (
+        <aside
+          className="rounded-xl bg-sunrise-soft p-5 text-accent-foreground sm:p-6"
+          aria-labelledby="hike-indications-title"
+        >
+          <div className="mb-4 flex items-center gap-3">
+            <AlertTriangle aria-hidden="true" className="size-6 text-accent" />
+            <h2
+              id="hike-indications-title"
+              className="text-xl font-semibold tracking-[-0.01em]"
+            >
+              À savoir avant de partir
+            </h2>
+          </div>
+          <div className="space-y-3">
+            {indications
+              .split("\n")
+              .filter((line) => line.trim().length > 0)
+              .map((line, index) => (
+                <p key={index} className="text-sm leading-6 sm:text-base">
                   {line}
                 </p>
               ))}
-            </div>
-          )}
-        </div>
-      </>
-    )
+          </div>
+        </aside>
+      )}
+    </div>
   );
 };
 

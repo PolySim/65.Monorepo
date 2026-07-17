@@ -20,19 +20,26 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export const useHikeFilters = (
-  filter?: HikeFilter & { isFavorites?: boolean }
+  filter?: HikeFilter & { isFavorites?: boolean },
 ) => {
   const { categoryId, stateId } = useAppParams();
   const newFilter = { ...(filter || {}), categoryId, stateId };
 
   return useQuery({
     queryKey: ["hikes", newFilter],
-    queryFn: () => getHikes(newFilter),
+    queryFn: async () => {
+      const response = await getHikes(newFilter);
+      if (!response.success) {
+        throw new Error("Impossible de charger les activités");
+      }
+      return response;
+    },
     select: (data) => data.data ?? [],
     enabled:
       !filter?.isFavorites &&
       (!!newFilter.title || !!newFilter.categoryId || !!newFilter.stateId),
     staleTime: 1000 * 60 * 5,
+    retry: 1,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
@@ -45,10 +52,17 @@ export const useHikeById = (props?: {
 
   return useQuery({
     queryKey: ["hike", hikeId],
-    queryFn: () => getHikeById(hikeId),
+    queryFn: async () => {
+      const response = await getHikeById(hikeId);
+      if (!response.success) {
+        throw new Error("Impossible de charger cette activité");
+      }
+      return response;
+    },
     select: (data) => (props?.select ? props.select(data) : data.data),
     enabled: !!hikeId,
     staleTime: 1000 * 60 * 5,
+    retry: 1,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
@@ -59,9 +73,13 @@ export const useHikeFavorites = (isFavorites?: boolean) => {
     queryKey: ["hikes", "favorites"],
     queryFn: async () => {
       const data = await getHikeFavorites();
+      if (!data.success) {
+        throw new Error("Impossible de charger vos favoris");
+      }
       return data.data ?? [];
     },
     staleTime: 1000 * 60 * 5,
+    retry: 1,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     enabled: isFavorites,
@@ -77,11 +95,13 @@ export const useToggleFavorite = () => {
     onMutate: () => {
       queryClient.cancelQueries({ queryKey: ["hikes", "favorites"] });
       const previousHikes = queryClient.getQueryData(["hikes", "favorites"]);
-      queryClient.setQueryData(["hikes", "favorites"], (old: HikeSearch[]) => {
-        return old.some((hike) => hike.id === hikeId)
-          ? old.filter((hike) => hike.id !== hikeId)
-          : [...old, { id: hikeId }];
-      });
+      queryClient.setQueryData(
+        ["hikes", "favorites"],
+        (old: HikeSearch[] = []) =>
+          old.some((hike) => hike.id === hikeId)
+            ? old.filter((hike) => hike.id !== hikeId)
+            : [...old, { id: hikeId }],
+      );
       return { previousHikes };
     },
     onSuccess: (data, variables, context) => {
@@ -89,7 +109,7 @@ export const useToggleFavorite = () => {
         toast.error("Erreur lors de l'ajout/retrait des favoris");
         queryClient.setQueryData(
           ["hikes", "favorites"],
-          context?.previousHikes
+          context?.previousHikes,
         );
       }
     },
@@ -117,7 +137,7 @@ export const useCreateHike = () => {
         toast.error("Erreur lors de la création de la randonnée");
       } else {
         router.push(
-          `/admin/categories/${variables.categoryId}/hike/${data.data?.id}`
+          `/admin/categories/${variables.categoryId}/hike/${data.data?.id}`,
         );
       }
     },
@@ -187,7 +207,7 @@ export const useDeleteHike = () => {
             return {
               data: old.data.filter((hike) => hike.id !== hikeId),
             };
-          }
+          },
         );
       }
       router.replace(`/admin/categories/${categoryId}`);
@@ -198,7 +218,7 @@ export const useDeleteHike = () => {
         toast.error("Erreur lors de la suppression de la randonnée");
         queryClient.setQueryData(
           ["hikes", { categoryId }],
-          context?.previousHikes
+          context?.previousHikes,
         );
       }
     },
@@ -206,7 +226,7 @@ export const useDeleteHike = () => {
       toast.error("Erreur lors de la suppression de la randonnée");
       queryClient.setQueryData(
         ["hikes", { categoryId }],
-        context?.previousHikes
+        context?.previousHikes,
       );
     },
     onSettled: () => {

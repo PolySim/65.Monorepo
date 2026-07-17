@@ -17,6 +17,7 @@ type FormInputProps = React.ComponentProps<"input"> & {
   description?: string;
   onChange?: (value: string) => void;
   onFilesChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  itemClassName?: string;
 };
 
 const FormInput = ({
@@ -26,6 +27,7 @@ const FormInput = ({
   disabled,
   onChange,
   onFilesChange,
+  itemClassName,
   className,
   ...props
 }: FormInputProps) => {
@@ -36,7 +38,7 @@ const FormInput = ({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem>
+        <FormItem className={itemClassName}>
           {label && <FormLabel>{label}</FormLabel>}
           <FormControl>
             <Input

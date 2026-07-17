@@ -6,22 +6,29 @@ import Image from "next/image";
 
 const ImagesCarroussel = () => {
   const { data: hike } = useHikeById();
+  const images = hike?.images ?? [];
 
   return (
     <>
-      {hike?.images?.map((image) => (
-        <div
+      {images.map((image, index) => (
+        <figure
           key={image.id}
-          className="h-screen w-screen bg-transparent snap-center min-w-screen pointer-none:"
+          className="flex h-dvh w-screen min-w-full snap-center items-center justify-center p-3 sm:p-8"
         >
-          <Image
-            className="object-contain h-full w-full"
-            src={`${config.IMAGE_URL}?path=${image.path}&rotate=${image.rotate ?? 0}`}
-            alt={`image-${image.id}`}
-            width={2560}
-            height={1440}
-          />
-        </div>
+          <div className="relative size-full">
+            <Image
+              className="select-none object-contain"
+              src={`${config.IMAGE_URL}?path=${image.path}&rotate=${image.rotate ?? 0}`}
+              alt={`Photo ${index + 1} de la randonnée ${hike?.title ?? ""}`}
+              fill
+              sizes="100vw"
+              draggable={false}
+            />
+          </div>
+          <figcaption className="sr-only">
+            Photo {index + 1} sur {images.length}
+          </figcaption>
+        </figure>
       ))}
     </>
   );

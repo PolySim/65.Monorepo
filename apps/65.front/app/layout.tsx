@@ -1,6 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
 import { ReactQueryProvider } from "@/lib/react-query";
-import WindowSizeInitializer from "@/lib/WindowSizeInitializer";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import "./globals.css";
@@ -10,7 +9,8 @@ export const metadata: Metadata = {
     default: "65 Passion Montagne",
     template: "%s | 65 Passion Montagne",
   },
-  description: "65 Passion Montagne",
+  description:
+    "Explorez les randonnées, refuges et activités des Hautes-Pyrénées.",
 };
 
 export default function RootLayout({
@@ -21,13 +21,15 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <ReactQueryProvider>
-        <html lang="fr">
-          <body className="antialiased min-h-screen w-screen flex flex-col">
+        <html lang="fr" suppressHydrationWarning>
+          <body className="flex min-h-screen flex-col overflow-x-hidden">
+            <a href="#contenu-principal" className="skip-link">
+              Aller au contenu
+            </a>
             {children}
+            <Toaster richColors closeButton position="top-right" />
           </body>
         </html>
-        <WindowSizeInitializer />
-        <Toaster richColors closeButton />
       </ReactQueryProvider>
     </ClerkProvider>
   );

@@ -30,6 +30,7 @@ type FormSelectType = React.ComponentProps<"select"> & {
   }[];
   name: string;
   onValueChange?: (value: string) => void;
+  itemClassName?: string;
 };
 
 const FormSelect = ({
@@ -41,6 +42,7 @@ const FormSelect = ({
   options,
   className,
   onValueChange,
+  itemClassName,
 }: FormSelectType) => {
   const { control } = useFormContext();
   return (
@@ -48,7 +50,7 @@ const FormSelect = ({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem>
+        <FormItem className={itemClassName}>
           {label && <FormLabel>{label}</FormLabel>}
           <Select
             disabled={disabled}
@@ -58,11 +60,11 @@ const FormSelect = ({
               }
               field.onChange(value);
             }}
-            defaultValue={field.value}
+            value={field.value}
           >
             <FormControl>
               <SelectTrigger
-                className={cn("rounded-[10px] shadow-none", className)}
+                className={cn("rounded-lg shadow-none", className)}
               >
                 <SelectValue placeholder={placeholder}>
                   {options.find((option) => option.value === field.value)

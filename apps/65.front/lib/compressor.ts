@@ -62,7 +62,14 @@ export const compressor = ({
         void reduceSize();
       };
 
-      img.src = (event.target as any).result as string;
+      const source = event.target?.result;
+
+      if (typeof source !== "string") {
+        reject(new Error("Le fichier image n'a pas pu être lu"));
+        return;
+      }
+
+      img.src = source;
     };
 
     reader.onerror = (error) => {

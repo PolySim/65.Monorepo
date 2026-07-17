@@ -7,8 +7,15 @@ import { toast } from "sonner";
 export const useGpxFile = (path: string) => {
   return useQuery({
     queryKey: ["gpx", path],
-    queryFn: () => getGpxFile(path),
+    queryFn: async () => {
+      const response = await getGpxFile(path);
+      if (!response.success) {
+        throw new Error("Impossible de charger le tracé GPX");
+      }
+      return response;
+    },
     enabled: !!path,
+    retry: 1,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,

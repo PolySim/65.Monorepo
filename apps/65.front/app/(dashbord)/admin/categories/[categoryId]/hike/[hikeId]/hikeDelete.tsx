@@ -5,35 +5,50 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useDeleteHike } from "@/queries/hike.queries";
-import { Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 
 const HikeDelete = () => {
-  const { mutate: deleteHike } = useDeleteHike();
+  const { mutate: deleteHike, isPending } = useDeleteHike();
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="destructive">
-          <Trash2 size={20} />
-          <span>Supprime l&apos;activité</span>
+        <Button type="button" variant="destructive">
+          <Trash2 aria-hidden="true" />
+          <span>Supprimer l&apos;activité</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Supprimer l&apos;activité</DialogTitle>
+          <DialogDescription className="leading-6">
+            Cette action supprimera définitivement la randonnée, ses photos et
+            son tracé GPS. Elle ne peut pas être annulée.
+          </DialogDescription>
         </DialogHeader>
-        <DialogFooter>
+        <DialogFooter className="mt-1">
           <DialogClose asChild>
-            <Button variant="outline">Annuler</Button>
+            <Button type="button" variant="outline" disabled={isPending}>
+              Annuler
+            </Button>
           </DialogClose>
-          <Button variant="destructive" onClick={() => deleteHike()}>
-            Supprimer
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => deleteHike()}
+            disabled={isPending}
+          >
+            {isPending && (
+              <Loader2 className="animate-spin" aria-hidden="true" />
+            )}
+            Supprimer définitivement
           </Button>
         </DialogFooter>
       </DialogContent>

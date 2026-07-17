@@ -3,13 +3,14 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useCategories } from "@/queries/categories.queries";
 import { useDifficulties } from "@/queries/difficulty.query";
-import { Loader2 } from "lucide-react";
+import { useState } from "react";
 import HikeUpdateInformation from "./hikeUpdateInformation";
 
 export default function UpdateInformationContainer({
@@ -19,20 +20,31 @@ export default function UpdateInformationContainer({
 }) {
   const { isPending: isPendingDifficulties } = useDifficulties();
   const { isPending: isPendingCategories } = useCategories();
+  const [open, setOpen] = useState(false);
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="w-11/12 max-w-4xl">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Modifier une activité</DialogTitle>
+          <DialogTitle>Informations de l’activité</DialogTitle>
+          <DialogDescription className="leading-6">
+            Modifiez le nom, la difficulté et le secteur, puis enregistrez pour
+            mettre à jour la fiche.
+          </DialogDescription>
         </DialogHeader>
         {isPendingDifficulties || isPendingCategories ? (
-          <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div
+            className="grid gap-4 sm:grid-cols-2"
+            aria-label="Chargement du formulaire"
+            aria-busy="true"
+          >
+            <div className="skeleton h-11 rounded-lg sm:col-span-2" />
+            <div className="skeleton h-11 rounded-lg" />
+            <div className="skeleton h-11 rounded-lg" />
           </div>
         ) : (
-          <HikeUpdateInformation />
+          <HikeUpdateInformation onUpdated={() => setOpen(false)} />
         )}
       </DialogContent>
     </Dialog>

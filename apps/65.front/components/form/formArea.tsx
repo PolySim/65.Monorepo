@@ -16,6 +16,7 @@ type FormAreaProps = React.ComponentProps<"textarea"> & {
   label?: string;
   description?: string;
   onChange?: (value: string) => void;
+  itemClassName?: string;
 };
 
 const FormArea = ({
@@ -24,6 +25,7 @@ const FormArea = ({
   description,
   disabled,
   onChange,
+  itemClassName,
   className,
   ...props
 }: FormAreaProps) => {
@@ -34,7 +36,7 @@ const FormArea = ({
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem>
+        <FormItem className={itemClassName}>
           {label && <FormLabel>{label}</FormLabel>}
           <FormControl>
             <Textarea
