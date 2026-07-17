@@ -4,11 +4,9 @@ import { config } from "@/config/config";
 import { UserRole } from "@/model/user.model";
 import { useCategories } from "@/queries/categories.queries";
 import { useUser } from "@/queries/user.queries";
-import { SignOutButton } from "@clerk/nextjs";
 import {
   ChevronDown,
   Heart,
-  LogOut,
   Menu as MenuIcon,
   Settings,
   X,
@@ -17,6 +15,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "../ui/button";
+import Logout from "./logout";
 import {
   Dialog,
   DialogClose,
@@ -191,12 +190,7 @@ const BurgerMenu = () => {
               </Button>
             </DialogClose>
           ) : null}
-          <SignOutButton>
-            <Button variant="ghost" className="w-full justify-start">
-              <LogOut aria-hidden="true" />
-              Se déconnecter
-            </Button>
-          </SignOutButton>
+          <Logout className="w-full justify-start" />
         </div>
       </DialogContent>
     </Dialog>

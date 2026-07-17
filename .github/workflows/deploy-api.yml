@@ -15,7 +15,7 @@ jobs:
         run: echo "${{ secrets.REGISTRY_TOKEN }}" | docker login ghcr.io -u "${{ secrets.REGISTRY_USER }}" --password-stdin
 
       - name: Build image
-        run: docker build --build-arg CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }} -t ghcr.io/polysim/65-api:latest -f apps/65.api/Dockerfile .
+        run: docker build -t ghcr.io/polysim/65-api:latest -f apps/65.api/Dockerfile .
 
       - name: Push image
         run: docker push ghcr.io/polysim/65-api:latest
@@ -34,5 +34,5 @@ jobs:
             docker run -d --name 65-api \
             -p 5068:5068 \
             -v /usr/src/app/65.Monorepo:/usr/src/app/65.Monorepo \
-            -e CLERK_SECRET_KEY=${{ secrets.CLERK_SECRET_KEY }} \
+            -e BETTER_AUTH_SECRET="${{ secrets.BETTER_AUTH_SECRET }}" \
             ghcr.io/polysim/65-api:latest

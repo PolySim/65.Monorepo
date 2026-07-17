@@ -8,15 +8,14 @@ import {
   HikeSearch,
   UpdateHikeDto,
 } from "@/model/hike.model";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { revalidateTag } from "next/cache";
 
 export const getHikes = async (filters: HikeFilter) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for fetching hikes");
       return { success: false };
     }
@@ -24,7 +23,7 @@ export const getHikes = async (filters: HikeFilter) => {
     const res = await fetch(`${config.API_URL}/hikes/filters`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(filters),
@@ -49,10 +48,9 @@ export const getHikes = async (filters: HikeFilter) => {
 
 export const getHikeById = async (id: string) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for fetching hike");
       return { success: false };
     }
@@ -60,7 +58,7 @@ export const getHikeById = async (id: string) => {
     const res = await fetch(`${config.API_URL}/hikes/${id}`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
       },
       cache: "force-cache",
       next: {
@@ -83,10 +81,9 @@ export const getHikeById = async (id: string) => {
 
 export const getHikeFavorites = async () => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for fetching hike favorites");
       return { success: false };
     }
@@ -94,7 +91,7 @@ export const getHikeFavorites = async () => {
     const res = await fetch(`${config.API_URL}/hikes/favorites`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
       },
       cache: "no-store",
     });
@@ -114,10 +111,9 @@ export const getHikeFavorites = async () => {
 
 export const toggleFavorite = async (hikeId: string) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for toggling favorite");
       return { success: false };
     }
@@ -125,7 +121,7 @@ export const toggleFavorite = async (hikeId: string) => {
     const res = await fetch(`${config.API_URL}/hikes/toggle-favorite`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ hikeId }),
@@ -145,10 +141,9 @@ export const toggleFavorite = async (hikeId: string) => {
 
 export const createHike = async (hike: CreateHikeDto) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for creating hike");
       return { success: false };
     }
@@ -156,7 +151,7 @@ export const createHike = async (hike: CreateHikeDto) => {
     const res = await fetch(`${config.API_URL}/hikes/create`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(hike),
@@ -179,10 +174,9 @@ export const createHike = async (hike: CreateHikeDto) => {
 
 export const updateHike = async (hike: UpdateHikeDto) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for updating hike");
       return { success: false };
     }
@@ -190,7 +184,7 @@ export const updateHike = async (hike: UpdateHikeDto) => {
     const res = await fetch(`${config.API_URL}/hikes/update`, {
       method: "PUT",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(hike),
@@ -214,10 +208,9 @@ export const updateHike = async (hike: UpdateHikeDto) => {
 
 export const deleteHike = async (id: string) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for deleting hike");
       return { success: false };
     }
@@ -225,7 +218,7 @@ export const deleteHike = async (id: string) => {
     const res = await fetch(`${config.API_URL}/hikes/${id}`, {
       method: "DELETE",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
       },
     });
 

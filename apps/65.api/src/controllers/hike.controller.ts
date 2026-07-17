@@ -15,10 +15,7 @@ import { CreateHikeDto, HikeSearchDto, UpdateHikeDto } from 'src/DTO/hike.dto';
 import { Hike } from 'src/entities/hike.entity';
 import { AuthGuard } from 'src/middleware/AuthGuard';
 import { HikeService } from 'src/services/hike.service';
-
-interface AuthenticatedRequest extends Request {
-  user: { userId: string };
-}
+import { AuthenticatedRequest } from 'src/types/authenticated-request';
 
 @ApiTags('hikes')
 @Controller('hikes')
@@ -50,11 +47,11 @@ export class HikeController {
   async getHikeWithFavorites(
     @Req() req: AuthenticatedRequest,
   ): Promise<Hike[]> {
-    const subId = req.user.userId;
-    if (!subId) {
+    const authUserId = req.user.id;
+    if (!authUserId) {
       throw new UnauthorizedException('User not authenticated');
     }
-    return this.hikeService.getHikeWithFavorites(subId);
+    return this.hikeService.getHikeWithFavorites(authUserId);
   }
 
   @Get(':id')
@@ -80,11 +77,11 @@ export class HikeController {
     @Body() body: { hikeId: string },
     @Req() req: AuthenticatedRequest,
   ): Promise<void> {
-    const subId = req.user.userId;
-    if (!subId) {
+    const authUserId = req.user.id;
+    if (!authUserId) {
       throw new UnauthorizedException('User not authenticated');
     }
-    return this.hikeService.toggleFavorite(body.hikeId, subId);
+    return this.hikeService.toggleFavorite(body.hikeId, authUserId);
   }
 
   @Post('create')

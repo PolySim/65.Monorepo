@@ -1,18 +1,14 @@
 "use server";
 
 import { config } from "@/config/config";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { User } from "@/model/user.model";
-import { auth } from "@clerk/nextjs/server";
 
-export const getUser = async (props?: { token: string | null }) => {
+export const getUser = async () => {
   try {
-    let token = props?.token ?? null;
-    if (!token) {
-      const { getToken } = await auth();
-      token = await getToken();
-    }
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for fetching user");
       return { success: false };
     }
@@ -20,12 +16,9 @@ export const getUser = async (props?: { token: string | null }) => {
     const res = await fetch(`${config.API_URL}/users`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
       },
-      cache: "force-cache",
-      next: {
-        tags: ["users"],
-      },
+      cache: "no-store",
     });
 
     if (!res.ok) {

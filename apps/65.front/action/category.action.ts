@@ -1,15 +1,14 @@
 "use server";
 
 import { config } from "@/config/config";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { Category } from "@/model/category.model";
-import { auth } from "@clerk/nextjs/server";
 
 export const getCategories = async () => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for fetching categories");
       return { success: false };
     }
@@ -17,7 +16,7 @@ export const getCategories = async () => {
     const res = await fetch(`${config.API_URL}/categories`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
       },
       cache: "force-cache",
       next: {

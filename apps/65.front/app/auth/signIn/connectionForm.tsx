@@ -3,9 +3,10 @@
 import { FormInput } from "@/components/form/formInput";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { useSignIn } from "@clerk/nextjs";
+import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, LockKeyhole, Mail } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -20,7 +21,7 @@ const connectionFormSchema = z.object({
 });
 
 const ConnectionForm = () => {
-  const { isLoaded, signIn, setActive } = useSignIn();
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const form = useForm<z.infer<typeof connectionFormSchema>>({
     defaultValues: {
@@ -30,8 +31,7 @@ const ConnectionForm = () => {
     resolver: zodResolver(connectionFormSchema),
   });
 
-  const signInError = (e: string) => {
-    console.error(e);
+  const signInError = () => {
     form.setValue("password", "");
     form.setError(
       "password",
@@ -46,27 +46,21 @@ const ConnectionForm = () => {
   const onSubmit = (data: z.infer<typeof connectionFormSchema>) => {
     startTransition(async () => {
       try {
-        if (!signIn) return;
-        const result = await signIn.create({
-          identifier: data.email,
+        const { error } = await authClient.signIn.email({
+          email: data.email,
           password: data.password,
         });
 
-        if (
-          result.status === "complete" &&
-          result.createdSessionId &&
-          setActive
-        ) {
-          await setActive({
-            session: result.createdSessionId,
-            redirectUrl: "/",
-          });
-        } else {
-          signInError("");
+        if (error) {
+          signInError();
           toast.error("Erreur lors de la connexion");
+          return;
         }
-      } catch (err) {
-        signInError(err as string);
+
+        router.replace("/");
+        router.refresh();
+      } catch {
+        signInError();
         toast.error("Erreur lors de la connexion");
       }
     });
@@ -82,7 +76,7 @@ const ConnectionForm = () => {
         <FormInput
           label="Adresse e-mail"
           placeholder="vous@exemple.fr"
-          disabled={isPending || !isLoaded}
+          disabled={isPending}
           name="email"
           type="email"
           autoComplete="email"
@@ -92,7 +86,7 @@ const ConnectionForm = () => {
         <FormInput
           label="Mot de passe"
           placeholder="Votre mot de passe"
-          disabled={isPending || !isLoaded}
+          disabled={isPending}
           name="password"
           type="password"
           autoComplete="current-password"
@@ -101,7 +95,7 @@ const ConnectionForm = () => {
         <Button
           type="submit"
           className="mt-1 w-full"
-          disabled={isPending || !isLoaded}
+          disabled={isPending}
           aria-busy={isPending}
           static={isPending}
         >

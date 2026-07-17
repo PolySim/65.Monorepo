@@ -1,22 +1,21 @@
 "use server";
 
 import { config } from "@/config/config";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { revalidateTag } from "next/cache";
 
 export const getGpxFile = async (path: string) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for fetching gpx file");
       return { success: false };
     }
     const response = await fetch(`${config.API_URL}/gpx?path=${path}`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
       },
     });
     if (!response.ok) {
@@ -32,10 +31,9 @@ export const getGpxFile = async (path: string) => {
 
 export const createGpxFile = async (hikeId: string, file: FormData) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for creating gpx file");
       return { success: false };
     }
@@ -43,7 +41,7 @@ export const createGpxFile = async (hikeId: string, file: FormData) => {
     const response = await fetch(`${config.API_URL}/gpx/create/${hikeId}`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
       },
       body: file,
     });
@@ -64,10 +62,9 @@ export const createGpxFile = async (hikeId: string, file: FormData) => {
 
 export const deleteGpxFile = async (hikeId: string) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for deleting gpx file");
       return { success: false };
     }
@@ -75,7 +72,7 @@ export const deleteGpxFile = async (hikeId: string) => {
     const response = await fetch(`${config.API_URL}/gpx/delete/${hikeId}`, {
       method: "DELETE",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
       },
     });
 

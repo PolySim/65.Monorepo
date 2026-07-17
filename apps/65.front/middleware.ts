@@ -1,44 +1,73 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import { getUser } from "./action/user.action";
+import { NextRequest, NextResponse } from "next/server";
+import { config as appConfig } from "./config/config";
 import { UserRole } from "./model/user.model";
 
-const isAuthRoute = createRouteMatcher(["/auth(.*)"]);
-const isPublicRoute = createRouteMatcher([
-  "/api/(.*)",
-  "/_next/(.*)",
-  "/favicon.ico",
-]);
-const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
+const isAuthRoute = (request: NextRequest) =>
+  request.nextUrl.pathname.startsWith("/auth");
+const isPublicRoute = (request: NextRequest) =>
+  request.nextUrl.pathname.startsWith("/api/") ||
+  request.nextUrl.pathname.startsWith("/_next/") ||
+  request.nextUrl.pathname === "/favicon.ico";
+const isAdminRoute = (request: NextRequest) =>
+  request.nextUrl.pathname.startsWith("/admin");
 
-export default clerkMiddleware(async (auth, req) => {
-  const { userId, getToken } = await auth();
+const getSession = async (request: NextRequest) => {
+  const cookie = request.headers.get("cookie");
+  if (!cookie) return null;
 
-  if (isAuthRoute(req) && userId) {
-    return NextResponse.redirect(new URL("/", req.url));
+  try {
+    const response = await fetch(`${appConfig.API_URL}/api/auth/get-session`, {
+      headers: { cookie },
+      cache: "no-store",
+    });
+
+    if (!response.ok) return null;
+    return response.json();
+  } catch {
+    return null;
   }
+};
 
-  if (isPublicRoute(req)) {
+export default async function middleware(request: NextRequest) {
+  if (isPublicRoute(request)) {
     return NextResponse.next();
   }
 
-  if (isAdminRoute(req)) {
-    const token = await getToken();
-    const user = await getUser({ token });
-    if (!user.success || user.data?.roleId !== UserRole.ADMIN)
-      return NextResponse.redirect(new URL("/", req.url));
-    return NextResponse.next();
+  const session = await getSession(request);
+
+  if (isAuthRoute(request) && session) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
-  if (!isAuthRoute(req)) {
-    if (!userId) {
-      return NextResponse.redirect(new URL("/auth/signIn", req.url));
+  if (!session && !isAuthRoute(request)) {
+    return NextResponse.redirect(new URL("/auth/signIn", request.url));
+  }
+
+  if (isAdminRoute(request)) {
+    const cookie = request.headers.get("cookie");
+    try {
+      const userResponse = await fetch(`${appConfig.API_URL}/users`, {
+        headers: cookie ? { cookie } : {},
+        cache: "no-store",
+      });
+
+      if (!userResponse.ok) {
+        return NextResponse.redirect(new URL("/", request.url));
+      }
+
+      const user = await userResponse.json();
+      if (user.roleId === UserRole.ADMIN) {
+        return NextResponse.next();
+      }
+    } catch {
+      return NextResponse.redirect(new URL("/", request.url));
     }
-    return NextResponse.next();
+
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [

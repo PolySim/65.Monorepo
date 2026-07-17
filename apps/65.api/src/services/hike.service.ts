@@ -19,16 +19,16 @@ export class HikeService {
     return this.hikeRepository.getHikeById(id);
   }
 
-  async getHikeWithFavorites(subId: string): Promise<Hike[]> {
-    const user = await this.userRepository.findBySubId(subId);
+  async getHikeWithFavorites(authUserId: string): Promise<Hike[]> {
+    const user = await this.userRepository.findByAuthUserId(authUserId);
     if (!user) {
       throw new Error('User not found');
     }
     return this.hikeRepository.getHikeWithFavorites(user.id);
   }
 
-  async toggleFavorite(hikeId: string, subId: string): Promise<void> {
-    const user = await this.userRepository.findBySubId(subId);
+  async toggleFavorite(hikeId: string, authUserId: string): Promise<void> {
+    const user = await this.userRepository.findByAuthUserId(authUserId);
     if (!user) {
       throw new Error('User not found');
     }

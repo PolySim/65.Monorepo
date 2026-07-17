@@ -19,7 +19,7 @@ Cette plateforme digitale a été conçue pour les passionnés de montagne souha
 - **🏔️ Organisation par massifs** : Navigation intuitive par zones géographiques
 - **⭐ Système de favoris** : Sauvegarde des activités préférées
 - **🔍 Recherche avancée** : Filtrage par catégorie, difficulté, massif
-- **👤 Gestion des utilisateurs** : Authentification sécurisée avec Clerk
+- **👤 Gestion des utilisateurs** : Authentification sécurisée avec Better Auth
 
 ### 🎾 Types d'activités
 
@@ -49,7 +49,7 @@ Cette application est construite avec un stack technologique moderne et performa
 - **[React 19](https://reactjs.org/)** - Bibliothèque UI avec les dernières fonctionnalités
 - **[TypeScript](https://www.typescriptlang.org/)** - Typage statique pour plus de fiabilité
 - **[Tailwind CSS 4](https://tailwindcss.com/)** - Framework CSS utilitaire
-- **[Clerk](https://clerk.dev/)** - Authentification et gestion des utilisateurs
+- **[Better Auth](https://www.better-auth.com/)** - Authentification et gestion des sessions
 - **[TanStack Query](https://tanstack.com/query)** - Gestion d'état et cache pour les données serveur
 - **[React Hook Form](https://react-hook-form.com/)** - Gestion des formulaires performante
 - **[Zod](https://zod.dev/)** - Validation de schémas TypeScript
@@ -106,7 +106,7 @@ Cette application est construite avec un stack technologique moderne et performa
 
 ### Prérequis
 
-- Node.js 18+
+- Node.js 20+
 - pnpm
 
 ### Installation
@@ -141,6 +141,26 @@ pnpm dev --filter=65.front
 # Développement API uniquement
 pnpm dev --filter=65.api
 ```
+
+### Authentification Better Auth
+
+Copiez les fichiers `.env.example` des deux applications et définissez un
+`BETTER_AUTH_SECRET` aléatoire d'au moins 32 caractères côté API.
+
+```bash
+# Migrer une base existante sans supprimer les utilisateurs, rôles ou favoris
+pnpm --filter 65.api auth:migrate
+
+# Créer les identifiants Better Auth d'un utilisateur métier préautorisé
+AUTH_USER_EMAIL=utilisateur@exemple.fr \
+AUTH_USER_PASSWORD='mot-de-passe-temporaire' \
+AUTH_USER_NAME='Prénom Nom' \
+pnpm --filter 65.api auth:user:create
+```
+
+Les mots de passe de l'ancien fournisseur ne sont pas exportables. Chaque
+utilisateur existant doit donc recevoir un nouveau mot de passe via cette
+commande d'administration. L'inscription publique reste désactivée.
 
 ## 📊 Base de données
 

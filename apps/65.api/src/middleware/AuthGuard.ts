@@ -1,36 +1,32 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { verifyToken } from '@clerk/clerk-sdk-node';
 import {
   CanActivate,
   ExecutionContext,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { config } from 'src/config/config';
+import { fromNodeHeaders } from 'better-auth/node';
+import { auth } from '../auth';
+import { AuthenticatedRequest } from '../types/authenticated-request';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const req = context.switchToHttp().getRequest();
-    const authHeader: string = req.headers.authorization as string;
-
-    if (!authHeader?.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Token manquant');
-    }
-
-    const token: string = authHeader.split(' ')[1];
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
     try {
-      const payload = await verifyToken(token, {
-        secretKey: config.CLERK_SECRET_KEY,
+      const session = await auth.api.getSession({
+        headers: fromNodeHeaders(request.headers),
       });
-      req.user = payload;
+
+      if (!session) {
+        throw new UnauthorizedException('Session manquante ou expirée');
+      }
+
+      request.user = session.user;
+      request.session = session.session;
       return true;
-    } catch (err) {
-      console.error(err);
-      throw new UnauthorizedException('Token invalide');
+    } catch {
+      throw new UnauthorizedException('Session invalide');
     }
   }
 }

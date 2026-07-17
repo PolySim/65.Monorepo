@@ -5,9 +5,62 @@ CREATE TABLE IF NOT EXISTS User (
   id VARCHAR(255) PRIMARY KEY,
   email VARCHAR(255) UNIQUE NOT NULL,
   roleId INTEGER NOT NULL,
-  subId VARCHAR(255) NOT NULL,
+  authUserId VARCHAR(255) UNIQUE NOT NULL,
   FOREIGN KEY (roleId) REFERENCES UserRole(id)
 );
+
+CREATE TABLE IF NOT EXISTS AuthUser (
+  id TEXT PRIMARY KEY NOT NULL,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  emailVerified INTEGER NOT NULL,
+  image TEXT,
+  createdAt DATE NOT NULL,
+  updatedAt DATE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS AuthSession (
+  id TEXT PRIMARY KEY NOT NULL,
+  expiresAt DATE NOT NULL,
+  token TEXT NOT NULL UNIQUE,
+  createdAt DATE NOT NULL,
+  updatedAt DATE NOT NULL,
+  ipAddress TEXT,
+  userAgent TEXT,
+  userId TEXT NOT NULL,
+  FOREIGN KEY (userId) REFERENCES AuthUser(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS AuthAccount (
+  id TEXT PRIMARY KEY NOT NULL,
+  accountId TEXT NOT NULL,
+  providerId TEXT NOT NULL,
+  userId TEXT NOT NULL,
+  accessToken TEXT,
+  refreshToken TEXT,
+  idToken TEXT,
+  accessTokenExpiresAt DATE,
+  refreshTokenExpiresAt DATE,
+  scope TEXT,
+  password TEXT,
+  createdAt DATE NOT NULL,
+  updatedAt DATE NOT NULL,
+  FOREIGN KEY (userId) REFERENCES AuthUser(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS AuthVerification (
+  id TEXT PRIMARY KEY NOT NULL,
+  identifier TEXT NOT NULL,
+  value TEXT NOT NULL,
+  expiresAt DATE NOT NULL,
+  createdAt DATE NOT NULL,
+  updatedAt DATE NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS AuthSession_userId_idx ON AuthSession(userId);
+CREATE INDEX IF NOT EXISTS AuthAccount_userId_idx ON AuthAccount(userId);
+CREATE INDEX IF NOT EXISTS AuthVerification_identifier_idx ON AuthVerification(identifier);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_user_auth_user_id ON User(authUserId);
 
 CREATE TABLE IF NOT EXISTS UserRole (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

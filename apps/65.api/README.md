@@ -35,9 +35,9 @@ pnpm run start:prod
 
 ## Configuration
 
-L'application utilise SQLite avec TypeORM. La base de données sera créée automatiquement dans le fichier `database.sqlite` à la racine du projet.
+L'application utilise SQLite avec TypeORM et Better Auth. En développement, la base par défaut est `database.db` à la racine de l'application.
 
-**Note importante** : Les migrations et la synchronisation automatique sont désactivées comme demandé. Vous devrez créer manuellement vos tables SQL.
+Copiez `.env.example` vers `.env`, puis définissez notamment `BETTER_AUTH_SECRET`. La synchronisation TypeORM reste désactivée ; `pnpm auth:migrate` applique uniquement le schéma Better Auth et le renommage du lien d'identité existant.
 
 ## Endpoints disponibles
 
@@ -46,33 +46,29 @@ L'application utilise SQLite avec TypeORM. La base de données sera créée auto
 - `GET /` - Message de bienvenue
 - `GET /health` - Vérification de la santé de l'API
 
-### Gestion des utilisateurs
+### Authentification et utilisateur courant
 
-- `GET /users` - Récupérer tous les utilisateurs
-- `GET /users/:id` - Récupérer un utilisateur par ID
-- `POST /users` - Créer un nouvel utilisateur
-- `PUT /users/:id` - Mettre à jour un utilisateur
-- `DELETE /users/:id` - Supprimer un utilisateur
+- `ALL /api/auth/*` - Endpoints Better Auth
+- `GET /users` - Récupérer l'utilisateur courant
 
 ## Documentation Swagger
 
-La documentation Swagger est disponible à l'adresse : `http://localhost:3000/api`
+La documentation Swagger est disponible à l'adresse : `http://localhost:3001/api`
 
-## Création de la base de données
+## Migration et provisioning des comptes
 
-Comme les migrations sont désactivées, vous devrez créer manuellement vos tables. Voici un exemple de script SQL pour créer la table `users` :
+Le script est idempotent et conserve les données métier :
 
-```sql
-CREATE TABLE users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  firstName VARCHAR(100) NOT NULL,
-  lastName VARCHAR(100) NOT NULL,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  isActive BOOLEAN DEFAULT 1,
-  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+```bash
+pnpm auth:migrate
+
+AUTH_USER_EMAIL=utilisateur@exemple.fr \
+AUTH_USER_PASSWORD='mot-de-passe-temporaire' \
+AUTH_USER_NAME='Prénom Nom' \
+pnpm auth:user:create
 ```
+
+La création d'identifiants est limitée aux adresses déjà présentes dans la table métier `User`. L'inscription publique Better Auth est désactivée par défaut.
 
 ## Développement
 

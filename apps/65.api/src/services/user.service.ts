@@ -7,7 +7,7 @@ export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
   async findById(id: string): Promise<User> {
-    const user = await this.userRepository.findBySubId(id);
+    const user = await this.userRepository.findByAuthUserId(id);
     if (!user) throw new NotFoundException(`Utilisateur non trouvé`);
 
     return user;

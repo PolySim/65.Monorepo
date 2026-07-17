@@ -1,6 +1,9 @@
 # Stage 1: Build
 FROM node:20-alpine AS builder
 
+# Requis si le binaire précompilé better-sqlite3 n'est pas disponible.
+RUN apk add --no-cache python3 make g++
+
 # Installer pnpm
 RUN npm install -g pnpm@9.0.0
 
@@ -20,13 +23,14 @@ RUN pnpm install --frozen-lockfile
 
 # Copier le code source de l'API
 COPY apps/65.api/src/ ./apps/65.api/src/
+COPY apps/65.api/scripts/ ./apps/65.api/scripts/
 COPY apps/65.api/.env.prod ./apps/65.api/.env
 
 # Build l'application
 RUN pnpm --filter 65.api build
 
 # Stage 2: Production
-FROM node:18-alpine AS production
+FROM node:20-alpine AS production
 
 WORKDIR /app
 
@@ -65,4 +69,4 @@ ENV PORT=5068
 WORKDIR /app/apps/65.api
 
 # Commande de démarrage
-CMD ["node", "/app/apps/65.api/dist/main"]
+CMD ["sh", "-c", "node /app/apps/65.api/dist/scripts/migrate-auth.js && node /app/apps/65.api/dist/src/main.js"]

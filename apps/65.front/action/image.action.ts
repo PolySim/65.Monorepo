@@ -1,8 +1,8 @@
 "use server";
 
 import { config } from "@/config/config";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { Image } from "@/model/image.model";
-import { auth } from "@clerk/nextjs/server";
 import { revalidateTag } from "next/cache";
 
 const calculateFileHash = async (file: File) => {
@@ -32,10 +32,9 @@ export const createImage = async ({
   formData: FormData;
 }) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for creating image");
       return { success: false };
     }
@@ -43,7 +42,7 @@ export const createImage = async ({
     const res = await fetch(`${config.API_URL}/images/hike/${hikeId}`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
       },
       body: formData,
     });
@@ -64,10 +63,9 @@ export const createImage = async ({
 
 export const deleteImage = async (imageId: string, hikeId: string) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for deleting image");
       return { success: false };
     }
@@ -75,7 +73,7 @@ export const deleteImage = async (imageId: string, hikeId: string) => {
     const res = await fetch(`${config.API_URL}/images/${imageId}`, {
       method: "DELETE",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
       },
     });
 
@@ -95,10 +93,9 @@ export const deleteImage = async (imageId: string, hikeId: string) => {
 
 export const rotateImage = async (imageId: string, hikeId: string) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for rotating image");
       return { success: false };
     }
@@ -106,7 +103,7 @@ export const rotateImage = async (imageId: string, hikeId: string) => {
     const res = await fetch(`${config.API_URL}/images/rotate/${imageId}`, {
       method: "PUT",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
       },
     });
 
@@ -127,10 +124,9 @@ export const rotateImage = async (imageId: string, hikeId: string) => {
 
 export const reorderImage = async (hikeId: string, imageIds: string[]) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for reordering image");
       return { success: false };
     }
@@ -138,7 +134,7 @@ export const reorderImage = async (hikeId: string, imageIds: string[]) => {
     const res = await fetch(`${config.API_URL}/images/reorder/${hikeId}`, {
       method: "PUT",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ imageIds }),
@@ -169,10 +165,9 @@ export const initiateChunkUpload = async ({
   fileHash: string;
 }) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for initiating chunk upload");
       return { success: false };
     }
@@ -180,7 +175,7 @@ export const initiateChunkUpload = async ({
     const res = await fetch(`${config.API_URL}/images/chunk/initiate`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -222,10 +217,9 @@ export const uploadChunk = async ({
   fileSize: number;
 }) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for uploading chunk");
       return { success: false };
     }
@@ -242,7 +236,7 @@ export const uploadChunk = async ({
     const res = await fetch(`${config.API_URL}/images/chunk/upload`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
       },
       body: formData,
     });
@@ -262,10 +256,9 @@ export const uploadChunk = async ({
 
 export const getChunkStatus = async (fileHash: string) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for getting chunk status");
       return { success: false };
     }
@@ -275,9 +268,9 @@ export const getChunkStatus = async (fileHash: string) => {
       {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${token}`,
+          ...authHeaders,
         },
-      }
+      },
     );
 
     if (!res.ok) {
@@ -301,10 +294,9 @@ export const completeChunkUpload = async ({
   hikeId: string;
 }) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for completing chunk upload");
       return { success: false };
     }
@@ -312,7 +304,7 @@ export const completeChunkUpload = async ({
     const res = await fetch(`${config.API_URL}/images/chunk/complete`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -337,10 +329,9 @@ export const completeChunkUpload = async ({
 
 export const cancelChunkUpload = async (fileHash: string) => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for cancelling chunk upload");
       return { success: false };
     }
@@ -350,9 +341,9 @@ export const cancelChunkUpload = async (fileHash: string) => {
       {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${token}`,
+          ...authHeaders,
         },
-      }
+      },
     );
 
     if (!res.ok) {

@@ -1,22 +1,21 @@
 "use server";
 
 import { config } from "@/config/config";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { Difficulty } from "@/model/difficulty.model";
-import { auth } from "@clerk/nextjs/server";
 
 export const getDifficulties = async () => {
   try {
-    const { getToken } = await auth();
-    const token = await getToken();
+    const authHeaders = await getAuthHeaders();
 
-    if (!token) {
+    if (!authHeaders) {
       console.error("Unauthorized for fetching difficulties");
       return { success: false };
     }
     const res = await fetch(`${config.API_URL}/difficulties`, {
       method: "GET",
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...authHeaders,
       },
       cache: "force-cache",
       next: {

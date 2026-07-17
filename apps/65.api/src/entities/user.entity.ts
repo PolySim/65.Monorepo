@@ -20,8 +20,8 @@ export class User {
   @Column('integer')
   roleId: number;
 
-  @Column('varchar', { length: 255 })
-  subId: string;
+  @Column('varchar', { length: 255, unique: true })
+  authUserId: string;
 
   // Relation Many-to-One : plusieurs utilisateurs peuvent avoir le même rôle
   @ManyToOne(() => UserRole, (userRole) => userRole.users)

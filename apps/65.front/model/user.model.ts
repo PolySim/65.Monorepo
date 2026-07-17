@@ -1,7 +1,7 @@
 export type User = {
   id: string;
   email: string;
-  subId: string;
+  authUserId: string;
   roleId: UserRole;
 };
 

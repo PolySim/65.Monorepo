@@ -8,7 +8,7 @@ export class UserRepository extends Repository<User> {
     super(User, dataSource.createEntityManager());
   }
 
-  async findBySubId(subId: string): Promise<User | null> {
-    return this.findOne({ where: { subId } });
+  async findByAuthUserId(authUserId: string): Promise<User | null> {
+    return this.findOne({ where: { authUserId } });
   }
 }
