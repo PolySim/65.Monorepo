@@ -1,5 +1,5 @@
 import AdminCategoryHeader from "@/components/admin/adminCategoryHeader";
-import GridHikes from "@/components/hikes/gridHikes";
+import AdminHikeList from "@/components/admin/adminHikeList";
 import { Suspense } from "react";
 import CreateCategoryContainer from "./createCategoryContainer";
 
@@ -13,7 +13,7 @@ export default function CategoryAdminPage() {
         </Suspense>
       </div>
       <Suspense fallback={<div className="skeleton min-h-80 rounded-xl" />}>
-        <GridHikes isAdmin />
+        <AdminHikeList />
       </Suspense>
     </div>
   );

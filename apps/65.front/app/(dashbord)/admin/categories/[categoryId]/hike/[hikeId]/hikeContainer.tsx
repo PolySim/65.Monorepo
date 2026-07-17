@@ -8,8 +8,22 @@ import HikeDescription from "./hikeDescription";
 import HikeGPXContainer from "./hikeGPXContainer";
 import HikeGlobalInformation from "./hikeGlobalInformation";
 import HikeHeader from "./hikeHeader";
+import HikeReadiness from "./hikeReadiness";
 
-const HikePhoto = dynamic(() => import("./hikePhoto"), { ssr: false });
+const HikePhoto = dynamic(() => import("./hikePhoto"), {
+  ssr: false,
+  loading: () => (
+    <section
+      id="hike-photos"
+      className="surface scroll-mt-24 p-5 sm:p-6"
+      aria-label="Chargement de la galerie photos"
+      aria-busy="true"
+    >
+      <div className="skeleton h-8 w-48 rounded-lg" />
+      <div className="skeleton mt-5 h-64 rounded-xl" />
+    </section>
+  ),
+});
 
 const HikeEditorSkeleton = () => (
   <div
@@ -61,6 +75,7 @@ export default function HikeContainer() {
   return (
     <div className="page-container flex flex-1 flex-col gap-5 py-4 sm:py-6 lg:py-8">
       <HikeHeader />
+      <HikeReadiness hike={hike} />
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <HikeGlobalInformation />
         <HikeDescription />

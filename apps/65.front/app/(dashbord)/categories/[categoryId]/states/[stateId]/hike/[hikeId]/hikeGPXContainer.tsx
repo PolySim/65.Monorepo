@@ -1,11 +1,22 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { config } from "@/config/config";
+import { getGpxDownloadUrl } from "@/lib/media-url";
 import { useGpxFile } from "@/queries/gpx.queries";
 import { useHikeById } from "@/queries/hike.queries";
 import { AlertTriangle, Download, RefreshCw } from "lucide-react";
-import HikeGPX from "./hikeGPX";
+import dynamic from "next/dynamic";
+
+const HikeGPX = dynamic(() => import("./hikeGPX"), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="skeleton h-80 rounded-xl sm:h-[26rem]"
+      role="status"
+      aria-label="Chargement de la carte du tracé GPS"
+    />
+  ),
+});
 
 const HikeGPXContainer = () => {
   const { data: hike } = useHikeById();
@@ -56,7 +67,7 @@ const HikeGPXContainer = () => {
           </Button>
           <Button asChild>
             <a
-              href={`${config.API_URL}/gpx?path=${gpxPath}`}
+              href={getGpxDownloadUrl(gpxPath)}
               download={`${hike?.title ?? "itineraire"}.gpx`}
             >
               <Download aria-hidden="true" />

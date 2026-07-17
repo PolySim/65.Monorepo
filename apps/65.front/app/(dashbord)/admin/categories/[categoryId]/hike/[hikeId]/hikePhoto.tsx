@@ -14,7 +14,11 @@ const HikePhoto = () => {
   });
 
   return (
-    <section className="surface p-5 sm:p-6" aria-labelledby="hike-photos-title">
+    <section
+      id="hike-photos"
+      className="surface scroll-mt-24 p-5 sm:p-6"
+      aria-labelledby="hike-photos-title"
+    >
       <div className="mb-5 flex items-start gap-3">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary-dark">
           <Camera className="size-5" aria-hidden="true" />

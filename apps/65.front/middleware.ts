@@ -33,6 +33,35 @@ export default async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (isAdminRoute(request)) {
+    const cookie = request.headers.get("cookie");
+    if (!cookie) {
+      return NextResponse.redirect(new URL("/auth/signIn", request.url));
+    }
+
+    try {
+      const userResponse = await fetch(`${appConfig.API_URL}/users`, {
+        headers: { cookie },
+        cache: "no-store",
+      });
+
+      if (userResponse.status === 401) {
+        return NextResponse.redirect(new URL("/auth/signIn", request.url));
+      }
+
+      if (!userResponse.ok) {
+        return NextResponse.redirect(new URL("/", request.url));
+      }
+
+      const user = await userResponse.json();
+      return user.roleId === UserRole.ADMIN
+        ? NextResponse.next()
+        : NextResponse.redirect(new URL("/", request.url));
+    } catch {
+      return NextResponse.redirect(new URL("/auth/signIn", request.url));
+    }
+  }
+
   const session = await getSession(request);
 
   if (isAuthRoute(request) && session) {
@@ -41,29 +70,6 @@ export default async function middleware(request: NextRequest) {
 
   if (!session && !isAuthRoute(request)) {
     return NextResponse.redirect(new URL("/auth/signIn", request.url));
-  }
-
-  if (isAdminRoute(request)) {
-    const cookie = request.headers.get("cookie");
-    try {
-      const userResponse = await fetch(`${appConfig.API_URL}/users`, {
-        headers: cookie ? { cookie } : {},
-        cache: "no-store",
-      });
-
-      if (!userResponse.ok) {
-        return NextResponse.redirect(new URL("/", request.url));
-      }
-
-      const user = await userResponse.json();
-      if (user.roleId === UserRole.ADMIN) {
-        return NextResponse.next();
-      }
-    } catch {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-
-    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();

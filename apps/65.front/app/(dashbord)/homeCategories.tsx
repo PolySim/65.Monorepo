@@ -5,6 +5,7 @@ import { config } from "@/config/config";
 import { useCategories } from "@/queries/categories.queries";
 import { ArrowRight, RefreshCw } from "lucide-react";
 import Image from "next/image";
+import authenticatedImageLoader from "@/lib/authenticated-image-loader";
 import Link from "next/link";
 
 const HomeCategories = () => {
@@ -60,6 +61,7 @@ const HomeCategories = () => {
                 className="group relative aspect-[4/3] overflow-hidden rounded-xl bg-primary outline-none focus-visible:ring-[3px] focus-visible:ring-ring/30"
               >
                 <Image
+                  loader={authenticatedImageLoader}
                   src={`${config.IMAGE_URL}?path=${category.image_path}&rotate=0`}
                   alt=""
                   fill

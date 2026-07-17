@@ -3,6 +3,7 @@
 import { config } from "@/config/config";
 import { useHikeById } from "@/queries/hike.queries";
 import Image from "next/image";
+import authenticatedImageLoader from "@/lib/authenticated-image-loader";
 
 const ImagesCarroussel = () => {
   const { data: hike } = useHikeById();
@@ -17,6 +18,7 @@ const ImagesCarroussel = () => {
         >
           <div className="relative size-full">
             <Image
+              loader={authenticatedImageLoader}
               className="select-none object-contain"
               src={`${config.IMAGE_URL}?path=${image.path}&rotate=${image.rotate ?? 0}`}
               alt={`Photo ${index + 1} de la randonnée ${hike?.title ?? ""}`}

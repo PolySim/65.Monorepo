@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import * as fs from 'fs';
 import { File } from 'multer';
-import { extname, join } from 'path';
+import { extname, isAbsolute, join, relative, resolve } from 'path';
 import * as sharp from 'sharp';
 import { config } from 'src/config/config';
 import {
@@ -17,7 +17,9 @@ import {
 } from 'src/DTO/chunk.dto';
 import { DataSource, In, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { Category } from '../entities/category.entity';
 import { Image } from '../entities/image.entity';
+import { State } from '../entities/state.entity';
 
 interface ChunkUploadSession {
   fileHash: string;
@@ -25,6 +27,7 @@ interface ChunkUploadSession {
   hikeId: string;
   totalChunks: number;
   fileSize: number;
+  chunkSize: number;
   uploadedChunks: Set<number>;
   chunkPaths: Map<number | string, string>;
   createdAt: Date;
@@ -40,57 +43,186 @@ export class ImageRepository extends Repository<Image> {
     setInterval(() => this.cleanupExpiredSessions(), 60 * 60 * 1000);
   }
 
-  async sendImage(path: string, rotate: number) {
+  private resolveManagedImagePath(
+    storedPath: string,
+    requireFile = true,
+  ): string {
+    const imageRoot = resolve(config.image_path);
+    const candidatePath = resolve(imageRoot, storedPath);
+    const candidateFromRoot = relative(imageRoot, candidatePath);
+
+    if (
+      !candidateFromRoot ||
+      candidateFromRoot.startsWith('..') ||
+      isAbsolute(candidateFromRoot)
+    ) {
+      throw new NotFoundException('Image not found');
+    }
+
+    if (!fs.existsSync(candidatePath)) {
+      if (requireFile) {
+        throw new NotFoundException('Image not found');
+      }
+      return candidatePath;
+    }
+
+    const realImageRoot = fs.realpathSync(imageRoot);
+    const realImagePath = fs.realpathSync(candidatePath);
+    const realPathFromRoot = relative(realImageRoot, realImagePath);
+
+    if (
+      !realPathFromRoot ||
+      realPathFromRoot.startsWith('..') ||
+      isAbsolute(realPathFromRoot) ||
+      !fs.statSync(realImagePath).isFile()
+    ) {
+      throw new NotFoundException('Image not found');
+    }
+
+    return realImagePath;
+  }
+
+  private resolveChunkTempDirectory(fileHash: string): string {
+    if (!/^[a-f0-9]{1,64}$/i.test(fileHash)) {
+      throw new BadRequestException("Identifiant de session d'upload invalide");
+    }
+
+    const tempRoot = resolve(config.image_path, 'temp');
+    const tempDirectory = resolve(tempRoot, fileHash);
+    const pathFromRoot = relative(tempRoot, tempDirectory);
+
+    if (
+      !pathFromRoot ||
+      pathFromRoot.startsWith('..') ||
+      isAbsolute(pathFromRoot)
+    ) {
+      throw new BadRequestException("Identifiant de session d'upload invalide");
+    }
+
+    return tempDirectory;
+  }
+
+  private getSafeImageExtension(fileName: string): string {
+    const extension = extname(fileName).slice(1).toLowerCase();
+    if (!['gif', 'jpeg', 'jpg', 'png', 'webp'].includes(extension)) {
+      throw new BadRequestException("Format d'image non pris en charge");
+    }
+    return extension;
+  }
+
+  async sendImage(
+    path: string,
+    rotate: number,
+    width?: number,
+    quality?: number,
+  ): Promise<StreamableFile> {
+    if (!path || path === 'undefined') {
+      throw new NotFoundException('Image not found');
+    }
+
     const image = await this.findOne({
       where: { path },
     });
-    if (path === 'undefined') throw new NotFoundException('Image not found');
 
-    const globalPath = `${config.image_path}/${path}`;
+    const category = image
+      ? null
+      : await this.dataSource.getRepository(Category).findOne({
+          where: { image_path: path },
+          select: { id: true },
+        });
+    const state =
+      image || category
+        ? null
+        : await this.dataSource.getRepository(State).findOne({
+            where: { image_path: path },
+            select: { id: true },
+          });
 
-    // Vérifier si le fichier existe physiquement
-    if (!fs.existsSync(globalPath)) {
-      console.error(`Fichier image manquant: ${globalPath}`);
-
-      // Si l'image existe en base mais pas sur le disque, la supprimer de la base
-      if (image) {
-        await this.delete(image);
-      }
-
-      throw new NotFoundException(`Image physique non trouvée: ${path}`);
+    if (!image && !category && !state) {
+      throw new NotFoundException('Image not found');
     }
 
-    const globalRotate = Number(rotate) ?? image?.rotate ?? 0;
+    const requestedRotation = rotate as unknown;
+    const rotationValue =
+      requestedRotation === undefined ||
+      requestedRotation === null ||
+      String(requestedRotation).trim() === ''
+        ? Number(image?.rotate ?? 0)
+        : Number(requestedRotation);
+
+    if (!Number.isFinite(rotationValue) || rotationValue % 90 !== 0) {
+      throw new BadRequestException('Image rotation is invalid');
+    }
+
+    const normalizedRotation = ((rotationValue % 360) + 360) % 360;
+    const requestedWidth = width as unknown;
+    const widthValue =
+      requestedWidth === undefined ||
+      requestedWidth === null ||
+      String(requestedWidth).trim() === ''
+        ? null
+        : Number(requestedWidth);
+    const requestedQuality = quality as unknown;
+    const qualityValue =
+      requestedQuality === undefined ||
+      requestedQuality === null ||
+      String(requestedQuality).trim() === ''
+        ? 82
+        : Number(requestedQuality);
+
+    if (
+      (widthValue !== null &&
+        (!Number.isInteger(widthValue) ||
+          widthValue < 1 ||
+          widthValue > 3840)) ||
+      !Number.isInteger(qualityValue) ||
+      qualityValue < 40 ||
+      qualityValue > 95
+    ) {
+      throw new BadRequestException("Paramètres d'image invalides");
+    }
+
+    const globalPath = this.resolveManagedImagePath(path);
+
+    const ext = extname(globalPath).toLowerCase();
+    const mimeTypes = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+    };
+    const streamOptions = {
+      type: mimeTypes[ext] || 'application/octet-stream',
+      disposition: 'inline',
+    };
+
+    if (normalizedRotation === 0 && widthValue === null) {
+      return new StreamableFile(fs.createReadStream(globalPath), streamOptions);
+    }
 
     try {
-      const rotatedFile = await sharp(globalPath)
-        .rotate(globalRotate)
-        .toBuffer();
-
-      const ext = extname(globalPath).toLowerCase();
-      const mimeTypes = {
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg',
-        '.png': 'image/png',
-        '.gif': 'image/gif',
-        '.webp': 'image/webp',
-      };
-
-      return new StreamableFile(rotatedFile, {
-        type: mimeTypes[ext] || 'application/octet-stream',
-        disposition: 'inline',
-      });
-    } catch (error) {
-      console.error(
-        `Erreur lors du traitement de l'image ${globalPath}:`,
-        error,
-      );
-
-      // Si l'image est corrompue et existe en base, la supprimer
-      if (image) {
-        await this.delete(image);
+      let imagePipeline = sharp(globalPath).rotate(normalizedRotation);
+      if (widthValue !== null) {
+        imagePipeline = imagePipeline.resize({
+          width: widthValue,
+          withoutEnlargement: true,
+        });
       }
 
+      if (ext === '.jpg' || ext === '.jpeg') {
+        imagePipeline = imagePipeline.jpeg({
+          mozjpeg: true,
+          quality: qualityValue,
+        });
+      } else if (ext === '.webp') {
+        imagePipeline = imagePipeline.webp({ quality: qualityValue });
+      }
+
+      const rotatedFile = await imagePipeline.toBuffer();
+
+      return new StreamableFile(rotatedFile, streamOptions);
+    } catch {
       throw new NotFoundException(`Impossible de traiter l'image: ${path}`);
     }
   }
@@ -105,7 +237,8 @@ export class ImageRepository extends Repository<Image> {
     return await Promise.all(
       files.map(async (file, i) => {
         const newId = uuidv4();
-        const path = `${newId}.${(file.originalname ?? '').split('.').slice(-1)[0]}`;
+        const extension = this.getSafeImageExtension(file.originalname ?? '');
+        const path = `${newId}.${extension}`;
         const newImage = new Image();
         newImage.id = newId;
         newImage.hikeId = hikeId;
@@ -127,11 +260,16 @@ export class ImageRepository extends Repository<Image> {
     if (!image) {
       throw new NotFoundException('Image not found');
     }
-    const directoryPath = `${config.image_path}/${image.path}`;
-    if (fs.existsSync(directoryPath)) {
-      fs.unlinkSync(directoryPath);
-    }
     await this.delete(image);
+    try {
+      const directoryPath = this.resolveManagedImagePath(image.path, false);
+      if (fs.existsSync(directoryPath)) {
+        fs.unlinkSync(directoryPath);
+      }
+    } catch {
+      // La ligne en base est déjà supprimée : conserver un éventuel fichier
+      // legacy plutôt que de risquer une suppression hors du volume d'images.
+    }
   }
 
   async rotateImage(imageId: string) {
@@ -184,10 +322,24 @@ export class ImageRepository extends Repository<Image> {
       chunkSize = 512 * 1024,
     } = initiateUploadDto; // 512KB en prod, 1MB en dev
 
-    const totalChunks = Math.ceil(fileSize / chunkSize);
+    const normalizedFileSize = Number(fileSize);
+    const normalizedChunkSize = Number(chunkSize);
+    if (
+      !Number.isSafeInteger(normalizedFileSize) ||
+      normalizedFileSize <= 0 ||
+      normalizedFileSize > 100 * 1024 * 1024 ||
+      !Number.isSafeInteger(normalizedChunkSize) ||
+      normalizedChunkSize <= 0 ||
+      normalizedChunkSize > 1024 * 1024
+    ) {
+      throw new BadRequestException("Paramètres d'upload invalides");
+    }
+
+    this.getSafeImageExtension(fileName);
+    const totalChunks = Math.ceil(normalizedFileSize / normalizedChunkSize);
 
     // Créer le répertoire temporaire pour les chunks
-    const tempDir = join(config.image_path, 'temp', fileHash);
+    const tempDir = this.resolveChunkTempDirectory(fileHash);
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true });
     }
@@ -197,7 +349,8 @@ export class ImageRepository extends Repository<Image> {
       fileName,
       hikeId,
       totalChunks,
-      fileSize,
+      fileSize: normalizedFileSize,
+      chunkSize: normalizedChunkSize,
       uploadedChunks: new Set(),
       chunkPaths: new Map(),
       createdAt: new Date(),
@@ -208,25 +361,30 @@ export class ImageRepository extends Repository<Image> {
     return {
       fileHash,
       totalChunks,
-      chunkSize,
+      chunkSize: normalizedChunkSize,
       uploadId: fileHash,
     };
   }
 
   async uploadChunk(chunk: File, chunkUploadDto: ChunkUploadDto) {
     const { fileHash } = chunkUploadDto;
+    const tempDir = this.resolveChunkTempDirectory(fileHash);
 
     // Convertir les chaînes en nombres
-    const chunkIndex = parseInt(chunkUploadDto.chunkIndex.toString(), 10);
-    const totalChunks = parseInt(chunkUploadDto.totalChunks.toString(), 10);
+    const chunkIndex = Number(chunkUploadDto.chunkIndex);
+    const totalChunks = Number(chunkUploadDto.totalChunks);
 
     const session = this.uploadSessions.get(fileHash);
     if (!session) {
       throw new BadRequestException("Session d'upload non trouvée");
     }
 
-    if (isNaN(chunkIndex) || isNaN(totalChunks)) {
+    if (!Number.isInteger(chunkIndex) || !Number.isInteger(totalChunks)) {
       throw new BadRequestException('Index de chunk ou nombre total invalide');
+    }
+
+    if (totalChunks !== session.totalChunks) {
+      throw new BadRequestException('Nombre total de chunks incohérent');
     }
 
     if (chunkIndex >= totalChunks || chunkIndex < 0) {
@@ -237,7 +395,10 @@ export class ImageRepository extends Repository<Image> {
       return { success: true, message: 'Chunk déjà uploadé' };
     }
 
-    const tempDir = join(config.image_path, 'temp', fileHash);
+    if (!chunk?.buffer?.length || chunk.buffer.length > session.chunkSize) {
+      throw new BadRequestException('Taille de chunk invalide');
+    }
+
     const chunkPath = join(tempDir, `chunk_${chunkIndex}`);
 
     // Sauvegarder le chunk
@@ -255,6 +416,7 @@ export class ImageRepository extends Repository<Image> {
   }
 
   async getChunkStatus(fileHash: string): Promise<ChunkStatusDto> {
+    this.resolveChunkTempDirectory(fileHash);
     const session = this.uploadSessions.get(fileHash);
     if (!session) {
       throw new NotFoundException("Session d'upload non trouvée");
@@ -272,10 +434,15 @@ export class ImageRepository extends Repository<Image> {
     completeUploadDto: CompleteUploadDto,
   ): Promise<Image> {
     const { fileHash, hikeId } = completeUploadDto;
+    this.resolveChunkTempDirectory(fileHash);
 
     const session = this.uploadSessions.get(fileHash);
     if (!session) {
       throw new BadRequestException("Session d'upload non trouvée");
+    }
+
+    if (session.hikeId !== hikeId) {
+      throw new BadRequestException("Session d'upload incohérente");
     }
 
     if (session.uploadedChunks.size !== session.totalChunks) {
@@ -284,16 +451,20 @@ export class ImageRepository extends Repository<Image> {
       );
     }
 
+    let finalStoredPath: string | null = null;
+    let savedImage: Image | null = null;
+
     try {
       // Assembler les chunks
-      const finalFileName = `${uuidv4()}.${session.fileName.split('.').pop()}`;
-      const finalPath = join(config.image_path, 'Hike', finalFileName);
+      const finalFileName = `${uuidv4()}.${this.getSafeImageExtension(session.fileName)}`;
+      finalStoredPath = `Hike/${finalFileName}`;
 
       // Créer le répertoire de destination si nécessaire
       const hikeDir = join(config.image_path, 'Hike');
       if (!fs.existsSync(hikeDir)) {
         fs.mkdirSync(hikeDir, { recursive: true });
       }
+      const finalPath = this.resolveManagedImagePath(finalStoredPath, false);
 
       // Assembler les chunks dans l'ordre
       const writeStream = fs.createWriteStream(finalPath);
@@ -321,6 +492,10 @@ export class ImageRepository extends Repository<Image> {
         throw new BadRequestException('Fichier final non créé');
       }
 
+      if (fs.statSync(finalPath).size !== session.fileSize) {
+        throw new BadRequestException('Taille du fichier final incohérente');
+      }
+
       try {
         const processedBuffer = await sharp(finalPath).toBuffer();
         await sharp(processedBuffer).toFile(finalPath);
@@ -336,30 +511,58 @@ export class ImageRepository extends Repository<Image> {
       const newImage = new Image();
       newImage.id = uuidv4();
       newImage.hikeId = hikeId;
-      newImage.path = `Hike/${finalFileName}`;
+      newImage.path = finalStoredPath;
       newImage.ordered = numberMax;
 
-      const savedImage = await this.save(newImage);
+      savedImage = await this.save(newImage);
 
       // Nettoyer les fichiers temporaires
-      this.cleanupTempFiles(fileHash);
+      try {
+        this.cleanupTempFiles(fileHash);
+      } catch (cleanupError) {
+        console.error(
+          'Impossible de nettoyer les chunks finalisés:',
+          cleanupError,
+        );
+      }
       this.uploadSessions.delete(fileHash);
 
       return savedImage;
     } catch (error) {
-      // Nettoyer en cas d'erreur
+      if (!savedImage && finalStoredPath) {
+        try {
+          const finalPath = this.resolveManagedImagePath(
+            finalStoredPath,
+            false,
+          );
+          if (fs.existsSync(finalPath)) {
+            fs.unlinkSync(finalPath);
+          }
+        } catch {
+          // Le chemin est invalide ou le fichier a déjà disparu.
+        }
+      }
+
       console.error('ERREUR lors de la finalisation:', error);
       console.error(
         'Stack trace:',
         error instanceof Error ? error.stack : 'N/A',
       );
-      this.cleanupTempFiles(fileHash);
+      try {
+        this.cleanupTempFiles(fileHash);
+      } catch (cleanupError) {
+        console.error(
+          'Impossible de nettoyer les chunks en erreur:',
+          cleanupError,
+        );
+      }
       this.uploadSessions.delete(fileHash);
       throw error;
     }
   }
 
   async cancelChunkUpload(fileHash: string) {
+    this.resolveChunkTempDirectory(fileHash);
     const session = this.uploadSessions.get(fileHash);
     if (!session) {
       // Session déjà supprimée, pas d'erreur
@@ -373,7 +576,7 @@ export class ImageRepository extends Repository<Image> {
   }
 
   private cleanupTempFiles(fileHash: string) {
-    const tempDir = join(config.image_path, 'temp', fileHash);
+    const tempDir = this.resolveChunkTempDirectory(fileHash);
     if (fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }

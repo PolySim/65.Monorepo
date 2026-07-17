@@ -13,8 +13,13 @@ import { ImageRepository } from 'src/repository/image.repository';
 export class ImageService {
   constructor(private readonly imageRepository: ImageRepository) {}
 
-  async sendImage(path: string, rotate: number): Promise<StreamableFile> {
-    return this.imageRepository.sendImage(path, rotate);
+  async sendImage(
+    path: string,
+    rotate: number,
+    width?: number,
+    quality?: number,
+  ): Promise<StreamableFile> {
+    return this.imageRepository.sendImage(path, rotate, width, quality);
   }
 
   async createImage(hikeId: string, files: File[]): Promise<Image[]> {

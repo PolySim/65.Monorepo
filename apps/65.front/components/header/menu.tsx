@@ -6,6 +6,7 @@ import { Category } from "@/model/category.model";
 import { useCategories } from "@/queries/categories.queries";
 import { ChevronDown, MapPinned, MountainSnow } from "lucide-react";
 import Image from "next/image";
+import authenticatedImageLoader from "@/lib/authenticated-image-loader";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "../ui/button";
@@ -150,6 +151,7 @@ const Menu = () => {
                     className="group relative min-h-28 overflow-hidden rounded-lg outline-none focus-visible:ring-[3px] focus-visible:ring-ring/30"
                   >
                     <Image
+                      loader={authenticatedImageLoader}
                       src={`${config.IMAGE_URL}?path=${state.image_path}&rotate=0`}
                       alt={state.name}
                       width={270}
@@ -169,6 +171,7 @@ const Menu = () => {
                   className="group relative block h-full min-h-64 overflow-hidden rounded-lg outline-none focus-visible:ring-[3px] focus-visible:ring-ring/30"
                 >
                   <Image
+                    loader={authenticatedImageLoader}
                     src={`${config.IMAGE_URL}?path=${categoryHover?.image_path}&rotate=0`}
                     alt={categoryHover?.name ?? ""}
                     width={600}

@@ -1,8 +1,7 @@
 "use client";
 
-import HikeGPX from "@/app/(dashbord)/categories/[categoryId]/states/[stateId]/hike/[hikeId]/hikeGPX";
 import { Button } from "@/components/ui/button";
-import { config } from "@/config/config";
+import { getGpxDownloadUrl } from "@/lib/media-url";
 import {
   useCreateGpxFile,
   useDeleteGpxFile,
@@ -18,7 +17,25 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useRef } from "react";
+
+const HikeGPX = dynamic(
+  () =>
+    import(
+      "@/app/(dashbord)/categories/[categoryId]/states/[stateId]/hike/[hikeId]/hikeGPX"
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="skeleton h-80 rounded-xl"
+        role="status"
+        aria-label="Chargement de la carte du tracé GPS"
+      />
+    ),
+  },
+);
 
 const HikeGPXContainer = () => {
   const { data: hike } = useHikeById({
@@ -61,7 +78,8 @@ const HikeGPXContainer = () => {
   if (gpxPath && isPending) {
     return (
       <section
-        className="surface p-5 sm:p-6"
+        id="hike-gpx"
+        className="surface scroll-mt-24 p-5 sm:p-6"
         aria-labelledby="hike-gpx-title"
         aria-busy="true"
       >
@@ -76,7 +94,11 @@ const HikeGPXContainer = () => {
 
   if (gpxPath && isError) {
     return (
-      <section className="surface p-5 sm:p-6" aria-labelledby="hike-gpx-title">
+      <section
+        id="hike-gpx"
+        className="surface scroll-mt-24 p-5 sm:p-6"
+        aria-labelledby="hike-gpx-title"
+      >
         <SectionHeading hasTrack />
         <div
           className="mt-5 rounded-xl bg-sunrise-soft p-5 text-accent-foreground"
@@ -97,7 +119,7 @@ const HikeGPXContainer = () => {
             </Button>
             <Button asChild>
               <a
-                href={`${config.API_URL}/gpx?path=${gpxPath}`}
+                href={getGpxDownloadUrl(gpxPath)}
                 download={`${hike?.title ?? "itineraire"}.gpx`}
               >
                 <Download aria-hidden="true" />
@@ -112,7 +134,11 @@ const HikeGPXContainer = () => {
 
   if (gpxFile) {
     return (
-      <section className="surface p-5 sm:p-6" aria-labelledby="hike-gpx-title">
+      <section
+        id="hike-gpx"
+        className="surface scroll-mt-24 p-5 sm:p-6"
+        aria-labelledby="hike-gpx-title"
+      >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <SectionHeading hasTrack />
           <div className="grid gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap lg:justify-end">
@@ -132,7 +158,7 @@ const HikeGPXContainer = () => {
             </Button>
             <Button variant="outline" asChild>
               <a
-                href={`${config.API_URL}/gpx?path=${gpxPath}`}
+                href={getGpxDownloadUrl(gpxPath)}
                 download={`${hike?.title ?? "itineraire"}.gpx`}
               >
                 <Download aria-hidden="true" />
@@ -163,7 +189,11 @@ const HikeGPXContainer = () => {
   }
 
   return (
-    <section className="surface p-5 sm:p-6" aria-labelledby="hike-gpx-title">
+    <section
+      id="hike-gpx"
+      className="surface scroll-mt-24 p-5 sm:p-6"
+      aria-labelledby="hike-gpx-title"
+    >
       <SectionHeading />
       {fileInput}
       <button

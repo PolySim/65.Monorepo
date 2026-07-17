@@ -4,6 +4,7 @@ import { config } from "@/config/config";
 import { useHikeById } from "@/queries/hike.queries";
 import { Camera, ZoomIn } from "lucide-react";
 import Image from "next/image";
+import authenticatedImageLoader from "@/lib/authenticated-image-loader";
 import ImageContainer from "./ImageContainer";
 
 const HikePhoto = () => {
@@ -57,6 +58,7 @@ const HikePhoto = () => {
             }
           >
             <Image
+              loader={authenticatedImageLoader}
               src={`${config.IMAGE_URL}?path=${image.path}&rotate=${image.rotate ?? 0}`}
               alt={`Photo ${index + 1} de la randonnée ${hike?.title ?? ""}`}
               className="object-cover transition-transform duration-200 ease-out group-hover:scale-[1.025] group-focus-visible:scale-[1.025]"

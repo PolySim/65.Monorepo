@@ -10,6 +10,7 @@ import {
 } from "@/queries/hike.queries";
 import { ArrowLeft, Heart, Images, MapPin } from "lucide-react";
 import Image from "next/image";
+import authenticatedImageLoader from "@/lib/authenticated-image-loader";
 import { useRouter } from "next/navigation";
 
 const HikeHeader = () => {
@@ -35,6 +36,7 @@ const HikeHeader = () => {
     >
       {hike?.mainImage?.path && (
         <Image
+          loader={authenticatedImageLoader}
           src={`${config.IMAGE_URL}?path=${hike.mainImage.path}&rotate=${hike.mainImage.rotate ?? 0}`}
           alt={`Paysage de la randonnée ${hike.title}`}
           className="size-full object-cover"

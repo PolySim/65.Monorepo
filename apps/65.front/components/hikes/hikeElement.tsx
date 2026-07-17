@@ -5,6 +5,7 @@ import { DifficultyEnum } from "@/model/difficulty.model";
 import { HikeSearch } from "@/model/hike.model";
 import { ArrowRight, Clock, MapPin, Mountain } from "lucide-react";
 import Image from "next/image";
+import authenticatedImageLoader from "@/lib/authenticated-image-loader";
 import Link from "next/link";
 
 export const getDifficultyColor = (difficulty: DifficultyEnum) => {
@@ -36,6 +37,7 @@ const HikeElement = ({
       <div className="relative aspect-[16/10] overflow-hidden bg-secondary">
         {hike.mainImage?.path ? (
           <Image
+            loader={authenticatedImageLoader}
             src={`${config.IMAGE_URL}?path=${hike.mainImage.path}&rotate=${hike.mainImage.rotate ?? 0}`}
             alt={hike.title}
             fill

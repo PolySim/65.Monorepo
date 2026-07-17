@@ -59,7 +59,8 @@ const HikeGlobalInformation = () => {
 
   return (
     <section
-      className="surface p-5 sm:p-6"
+      id="essential-information"
+      className="surface scroll-mt-24 p-5 sm:p-6"
       aria-labelledby="essential-information-title"
     >
       <div className="mb-5 flex flex-col items-start gap-3">

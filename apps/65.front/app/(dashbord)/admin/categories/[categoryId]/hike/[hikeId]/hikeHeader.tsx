@@ -5,8 +5,16 @@ import { Button } from "@/components/ui/button";
 import { config } from "@/config/config";
 import { DifficultyEnum } from "@/model/difficulty.model";
 import { useHikeById, useUpdateHike } from "@/queries/hike.queries";
-import { ArrowDown, ArrowLeft, ArrowUp, Edit3, ImageOff } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  Edit3,
+  ExternalLink,
+  ImageOff,
+} from "lucide-react";
 import Image from "next/image";
+import authenticatedImageLoader from "@/lib/authenticated-image-loader";
 import { useRouter } from "next/navigation";
 import HikeDelete from "./hikeDelete";
 import UpdateInformationContainer from "./hikeUpdateInformationContainer";
@@ -15,17 +23,23 @@ const HikeHeader = () => {
   const { data: hike } = useHikeById({
     select: (data) => {
       return {
+        id: data.data?.id,
         title: data.data?.title,
         mainImage: data.data?.mainImage,
         mainImagePosition: data.data?.mainImagePosition,
         difficulty: data.data?.difficulty,
         state: data.data?.state,
+        category: data.data?.category,
       };
     },
   });
   const router = useRouter();
 
   const { mutate: updateHike, isPending: isUpdatingPosition } = useUpdateHike();
+  const publicHref =
+    hike?.id && hike.category?.id && hike.state?.id
+      ? `/categories/${hike.category.id}/states/${hike.state.id}/hike/${hike.id}`
+      : null;
 
   const onUpdateMainImagePosition = (direction: "up" | "down") => {
     const currentPosition = hike?.mainImagePosition ?? 50;
@@ -37,7 +51,11 @@ const HikeHeader = () => {
   };
 
   return (
-    <section className="surface overflow-hidden" aria-labelledby="hike-title">
+    <section
+      id="hike-header"
+      className="surface scroll-mt-24 overflow-hidden"
+      aria-labelledby="hike-title"
+    >
       <div className="flex flex-col gap-3 border-b border-border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="ghost" onClick={() => router.back()}>
@@ -50,6 +68,33 @@ const HikeHeader = () => {
               Modifier les informations
             </Button>
           </UpdateInformationContainer>
+          {publicHref ? (
+            <Button variant="outline" asChild>
+              <a href={publicHref} target="_blank" rel="noreferrer">
+                <ExternalLink aria-hidden="true" />
+                Aperçu public
+                <span className="sr-only"> (nouvel onglet)</span>
+              </a>
+            </Button>
+          ) : (
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                disabled
+                aria-describedby="public-preview-help"
+              >
+                <ExternalLink aria-hidden="true" />
+                Aperçu public
+              </Button>
+              <p
+                id="public-preview-help"
+                className="mt-1 max-w-48 text-xs leading-4 text-muted-foreground"
+              >
+                Renseignez un massif pour ouvrir l’aperçu.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
@@ -91,6 +136,7 @@ const HikeHeader = () => {
       <div className="relative h-64 overflow-hidden bg-muted sm:h-80">
         {hike?.mainImage?.path ? (
           <Image
+            loader={authenticatedImageLoader}
             src={`${config.IMAGE_URL}?path=${hike.mainImage.path}&rotate=${hike.mainImage.rotate ?? 0}`}
             alt={`Image principale de ${hike?.title ?? "l’activité"}`}
             className="size-full object-cover transition-[object-position] duration-200 ease-out"

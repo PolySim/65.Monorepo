@@ -5,6 +5,7 @@ import { config } from "@/config/config";
 import { useCategories } from "@/queries/categories.queries";
 import { ArrowRight, FolderTree, RefreshCw } from "lucide-react";
 import Image from "next/image";
+import authenticatedImageLoader from "@/lib/authenticated-image-loader";
 import Link from "next/link";
 
 export default function AdminPage() {
@@ -78,6 +79,7 @@ export default function AdminPage() {
                   className="group flex min-h-20 items-center gap-4 px-4 py-3 outline-none transition-colors duration-150 hover:bg-muted/70 focus-visible:bg-secondary sm:px-6"
                 >
                   <Image
+                    loader={authenticatedImageLoader}
                     src={`${config.IMAGE_URL}?rotate=0&path=${category.image_path ?? ""}`}
                     alt=""
                     width={112}

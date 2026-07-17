@@ -19,12 +19,12 @@ export const useCreateImage = () => {
     onMutate: () => {
       queryClient.cancelQueries({ queryKey: ["hike", hikeId] });
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data) => {
       if (!data.success) {
         toast.error("Erreur lors de la création de l'image");
       }
     },
-    onError: (error, variables, context) => {
+    onError: () => {
       toast.error("Erreur lors de la création de l'image");
     },
     onSettled: () => {
@@ -53,13 +53,13 @@ export const useDeleteImage = () => {
       });
       return { previousHike };
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, _variables, context) => {
       if (!data.success) {
         toast.error("Erreur lors de la suppression de l'image");
         queryClient.setQueryData(["hike", hikeId], context?.previousHike);
       }
     },
-    onError: (error, variables, context) => {
+    onError: (_error, _variables, context) => {
       toast.error("Erreur lors de la suppression de l'image");
       queryClient.setQueryData(["hike", hikeId], context?.previousHike);
     },
@@ -94,20 +94,20 @@ export const useRotateImage = () => {
             images: old.data.images.map((image) =>
               image.id === imageId
                 ? { ...image, rotate: (image.rotate ?? 0) + 90 }
-                : image
+                : image,
             ),
           },
         };
       });
       return { previousHike };
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, _variables, context) => {
       if (!data.success) {
         toast.error("Erreur lors de la rotation de l'image");
         queryClient.setQueryData(["hike", hikeId], context?.previousHike);
       }
     },
-    onError: (error, variables, context) => {
+    onError: (_error, _variables, context) => {
       toast.error("Erreur lors de la rotation de l'image");
       queryClient.setQueryData(["hike", hikeId], context?.previousHike);
     },
@@ -133,15 +133,15 @@ export const useReorderImage = () => {
           ...old,
           data: {
             ...old.data,
-            images: old.data.images.sort(
-              (a, b) => imageIds.indexOf(a.id) - imageIds.indexOf(b.id)
+            images: old.data.images.toSorted(
+              (a, b) => imageIds.indexOf(a.id) - imageIds.indexOf(b.id),
             ),
           },
         };
       });
       return { previousHike };
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, _variables, context) => {
       if (!data.success) {
         toast.error("Erreur lors du réordonnement des images");
         queryClient.setQueryData(["hike", hikeId], context?.previousHike);
@@ -149,7 +149,7 @@ export const useReorderImage = () => {
         toast.success("Images réordonnées avec succès");
       }
     },
-    onError: (error, variables, context) => {
+    onError: (_error, _variables, context) => {
       toast.error("Erreur lors du réordonnement des images");
       queryClient.setQueryData(["hike", hikeId], context?.previousHike);
     },

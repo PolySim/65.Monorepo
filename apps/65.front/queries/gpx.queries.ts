@@ -15,10 +15,6 @@ export const useGpxFile = (path: string) => {
       return response;
     },
     enabled: !!path,
-    retry: 1,
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
     select: (data) => data.data ?? null,
   });
 };
@@ -28,7 +24,7 @@ export const useCreateGpxFile = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (file: FormData) => createGpxFile(hikeId ?? "", file),
-    onMutate: (file) => {
+    onMutate: () => {
       queryClient.cancelQueries({ queryKey: ["gpx", hikeId] });
     },
     onSuccess: (data) => {
@@ -36,7 +32,7 @@ export const useCreateGpxFile = () => {
         toast.error("Erreur lors de la création du fichier GPX");
       }
     },
-    onError: (error) => {
+    onError: () => {
       toast.error("Erreur lors de la création du fichier GPX");
     },
     onSettled: () => {
@@ -64,11 +60,11 @@ export const useDeleteGpxFile = () => {
       });
       return { previousHike };
     },
-    onError: (error, variables, context) => {
+    onError: (_error, _variables, context) => {
       toast.error("Erreur lors de la suppression du fichier GPX");
       queryClient.setQueryData(["hike", hikeId], context?.previousHike);
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, _variables, context) => {
       if (!data.success) {
         toast.error("Erreur lors de la suppression du fichier GPX");
         queryClient.setQueryData(["hike", hikeId], context?.previousHike);

@@ -13,6 +13,7 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateHikeDto, HikeSearchDto, UpdateHikeDto } from 'src/DTO/hike.dto';
 import { Hike } from 'src/entities/hike.entity';
+import { AdminGuard } from 'src/middleware/AdminGuard';
 import { AuthGuard } from 'src/middleware/AuthGuard';
 import { HikeService } from 'src/services/hike.service';
 import { AuthenticatedRequest } from 'src/types/authenticated-request';
@@ -85,7 +86,7 @@ export class HikeController {
   }
 
   @Post('create')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, AdminGuard)
   @ApiOperation({ summary: 'Créer une randonnée' })
   @ApiResponse({
     status: 200,
@@ -97,7 +98,7 @@ export class HikeController {
   }
 
   @Put('update')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, AdminGuard)
   @ApiOperation({ summary: 'Mettre à jour une randonnée' })
   @ApiResponse({
     status: 200,
@@ -109,7 +110,7 @@ export class HikeController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, AdminGuard)
   @ApiOperation({ summary: 'Supprimer une randonnée' })
   @ApiResponse({
     status: 200,

@@ -38,15 +38,11 @@ export const useHikeFilters = (
     enabled:
       !filter?.isFavorites &&
       (!!newFilter.title || !!newFilter.categoryId || !!newFilter.stateId),
-    staleTime: 1000 * 60 * 5,
-    retry: 1,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
   });
 };
 
-export const useHikeById = (props?: {
-  select?: (data: { data?: Hike }) => Partial<Hike>;
+export const useHikeById = <TData = Hike>(props?: {
+  select?: (data: { data?: Hike }) => TData;
 }) => {
   const { hikeId } = useAppParams();
 
@@ -59,12 +55,8 @@ export const useHikeById = (props?: {
       }
       return response;
     },
-    select: (data) => (props?.select ? props.select(data) : data.data),
+    select: (data) => (props?.select ? props.select(data) : data.data) as TData,
     enabled: !!hikeId,
-    staleTime: 1000 * 60 * 5,
-    retry: 1,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
   });
 };
 
@@ -78,10 +70,6 @@ export const useHikeFavorites = (isFavorites?: boolean) => {
       }
       return data.data ?? [];
     },
-    staleTime: 1000 * 60 * 5,
-    retry: 1,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
     enabled: isFavorites,
   });
 };
@@ -104,7 +92,7 @@ export const useToggleFavorite = () => {
       );
       return { previousHikes };
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, _variables, context) => {
       if (!data.success) {
         toast.error("Erreur lors de l'ajout/retrait des favoris");
         queryClient.setQueryData(
@@ -113,7 +101,7 @@ export const useToggleFavorite = () => {
         );
       }
     },
-    onError: (error, variables, context) => {
+    onError: (_error, _variables, context) => {
       toast.error("Erreur lors de l'ajout/retrait des favoris");
       queryClient.setQueryData(["hikes", "favorites"], context?.previousHikes);
     },
@@ -141,7 +129,7 @@ export const useCreateHike = () => {
         );
       }
     },
-    onError: (error) => {
+    onError: () => {
       toast.error("Erreur lors de la création de la randonnée");
     },
     onSettled: () => {
@@ -173,13 +161,13 @@ export const useUpdateHike = () => {
       });
       return { previousHike };
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, _variables, context) => {
       if (!data.success) {
         toast.error("Erreur lors de la mise à jour de la randonnée");
         queryClient.setQueryData(["hike", hikeId], context?.previousHike);
       }
     },
-    onError: (error, variables, context) => {
+    onError: (_error, _variables, context) => {
       toast.error("Erreur lors de la mise à jour de la randonnée");
       queryClient.setQueryData(["hike", hikeId], context?.previousHike);
     },
@@ -199,35 +187,17 @@ export const useDeleteHike = () => {
     mutationFn: () => deleteHike(hikeId),
     onMutate: () => {
       queryClient.cancelQueries({ queryKey: ["hike", hikeId] });
-      const previousHikes = queryClient.getQueryData(["hikes", { categoryId }]);
-      if (previousHikes) {
-        queryClient.setQueryData(
-          ["hikes", { categoryId }],
-          (old: { data: HikeSearch[] }) => {
-            return {
-              data: old.data.filter((hike) => hike.id !== hikeId),
-            };
-          },
-        );
-      }
-      router.replace(`/admin/categories/${categoryId}`);
-      return { previousHikes };
     },
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data) => {
       if (!data.success) {
         toast.error("Erreur lors de la suppression de la randonnée");
-        queryClient.setQueryData(
-          ["hikes", { categoryId }],
-          context?.previousHikes,
-        );
+        return;
       }
+      toast.success("Activité supprimée");
+      router.replace(`/admin/categories/${categoryId}`);
     },
-    onError: (error, variables, context) => {
+    onError: () => {
       toast.error("Erreur lors de la suppression de la randonnée");
-      queryClient.setQueryData(
-        ["hikes", { categoryId }],
-        context?.previousHikes,
-      );
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["hikes"] });

@@ -18,16 +18,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ReactQueryProvider>
-      <html lang="fr" suppressHydrationWarning>
-        <body className="flex min-h-screen flex-col overflow-x-hidden">
+    <html lang="fr" suppressHydrationWarning>
+      <body className="flex min-h-screen flex-col overflow-x-hidden">
+        <ReactQueryProvider>
           <a href="#contenu-principal" className="skip-link">
             Aller au contenu
           </a>
           {children}
           <Toaster richColors closeButton position="top-right" />
-        </body>
-      </html>
-    </ReactQueryProvider>
+        </ReactQueryProvider>
+      </body>
+    </html>
   );
 }

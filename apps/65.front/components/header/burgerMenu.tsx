@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
+import authenticatedImageLoader from "@/lib/authenticated-image-loader";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "../ui/button";
@@ -116,6 +117,7 @@ const BurgerMenu = () => {
                         aria-expanded={isOpen}
                       >
                         <Image
+                          loader={authenticatedImageLoader}
                           src={`${config.IMAGE_URL}?path=${category.image_path}&rotate=0`}
                           alt=""
                           width={48}
@@ -135,6 +137,7 @@ const BurgerMenu = () => {
                           className="flex min-h-14 items-center gap-3 rounded-lg px-3 font-medium outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/20"
                         >
                           <Image
+                            loader={authenticatedImageLoader}
                             src={`${config.IMAGE_URL}?path=${category.image_path}&rotate=0`}
                             alt=""
                             width={48}

@@ -61,7 +61,8 @@ const HikeDescription = () => {
 
   return (
     <section
-      className="surface p-5 sm:p-6"
+      id="hike-content"
+      className="surface scroll-mt-24 p-5 sm:p-6"
       aria-labelledby="hike-content-title"
     >
       <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">

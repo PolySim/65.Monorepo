@@ -1,13 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { config } from "@/config/config";
 import { SimpleGPXParser } from "@/lib/gpx";
+import { getGpxDownloadUrl } from "@/lib/media-url";
 import { useHikeById } from "@/queries/hike.queries";
 import { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Download, Map, Navigation } from "lucide-react";
 import { MapContainer, Polyline, TileLayer } from "react-leaflet";
+import { useMemo } from "react";
 
 const HikeGPX = ({
   gpx,
@@ -16,28 +17,47 @@ const HikeGPX = ({
   gpx: string;
   compact?: boolean;
 }) => {
-  const { data: hike } = useHikeById();
+  const { data: hike } = useHikeById({
+    select: (data) => ({
+      gpxFiles: data.data?.gpxFiles,
+      title: data.data?.title,
+    }),
+  });
+
+  const { center, positions } = useMemo(() => {
+    try {
+      const parser = new SimpleGPXParser();
+      const data = parser.parse(gpx);
+      const parsedPositions =
+        data.tracks[0]?.points.map(
+          (point) => [point.lat, point.lon] as [number, number],
+        ) ?? [];
+
+      if (parsedPositions.length === 0) {
+        return { center: null, positions: parsedPositions };
+      }
+
+      const totals = parsedPositions.reduce<[number, number]>(
+        (accumulator, current) => [
+          accumulator[0] + current[0],
+          accumulator[1] + current[1],
+        ],
+        [0, 0],
+      );
+
+      return {
+        center: [
+          totals[0] / parsedPositions.length,
+          totals[1] / parsedPositions.length,
+        ] as [number, number],
+        positions: parsedPositions,
+      };
+    } catch {
+      return { center: null, positions: [] as [number, number][] };
+    }
+  }, [gpx]);
 
   if (typeof window === "undefined") return null;
-
-  const parser = new SimpleGPXParser();
-  let positions: [number, number][] = [];
-
-  try {
-    const data = parser.parse(gpx);
-    positions =
-      data.tracks[0]?.points.map((point) => [point.lat, point.lon]) ?? [];
-  } catch {
-    positions = [];
-  }
-
-  const center = positions.length
-    ? positions
-        .reduce<
-          [number, number]
-        >((acc, current) => [acc[0] + current[0], acc[1] + current[1]], [0, 0])
-        .map((coordinate) => coordinate / positions.length)
-    : null;
 
   const map = center ? (
     <MapContainer
@@ -98,7 +118,7 @@ const HikeGPX = ({
         <div className="flex flex-wrap gap-2">
           <Button asChild aria-label="Télécharger le tracé GPX">
             <a
-              href={`${config.API_URL}/gpx?path=${hike?.gpxFiles?.[0]?.path ?? ""}`}
+              href={getGpxDownloadUrl(hike?.gpxFiles?.[0]?.path ?? "")}
               download={`${hike?.title}.gpx`}
             >
               <Download aria-hidden="true" />

@@ -21,6 +21,7 @@ import { ImageService } from './services/image.service';
 import { UserService } from './services/user.service';
 import { DifficultyRepository } from './repository/difficulty.repository';
 import { DifficultyService } from './services/difficulty.service';
+import { AdminGuard } from './middleware/AdminGuard';
 
 @Module({
   imports: [TypeOrmModule.forRoot(databaseConfig)],
@@ -47,6 +48,7 @@ import { DifficultyService } from './services/difficulty.service';
     GpxRepository,
     DifficultyService,
     DifficultyRepository,
+    AdminGuard,
   ],
 })
 export class AppModule {}

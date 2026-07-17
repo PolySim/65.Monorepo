@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import * as fs from 'fs';
+import { isAbsolute, relative, resolve } from 'path';
 import { config } from 'src/config/config';
 import { CreateHikeDto, HikeSearchDto, UpdateHikeDto } from 'src/DTO/hike.dto';
 import { Favorite } from 'src/entities/favorite.entity';
@@ -13,6 +14,39 @@ import { Hike } from '../entities/hike.entity';
 export class HikeRepository extends Repository<Hike> {
   constructor(private dataSource: DataSource) {
     super(Hike, dataSource.createEntityManager());
+  }
+
+  private resolveFileForDeletion(
+    root: string,
+    storedPath: string,
+  ): string | null {
+    const absoluteRoot = resolve(root);
+    const candidatePath = resolve(absoluteRoot, storedPath);
+    const candidateFromRoot = relative(absoluteRoot, candidatePath);
+
+    if (
+      !candidateFromRoot ||
+      candidateFromRoot.startsWith('..') ||
+      isAbsolute(candidateFromRoot) ||
+      !fs.existsSync(candidatePath)
+    ) {
+      return null;
+    }
+
+    const realRoot = fs.realpathSync(absoluteRoot);
+    const realFilePath = fs.realpathSync(candidatePath);
+    const realPathFromRoot = relative(realRoot, realFilePath);
+
+    if (
+      !realPathFromRoot ||
+      realPathFromRoot.startsWith('..') ||
+      isAbsolute(realPathFromRoot) ||
+      !fs.statSync(realFilePath).isFile()
+    ) {
+      return null;
+    }
+
+    return realFilePath;
   }
 
   async findAllWithFilters(filters: HikeSearchDto): Promise<Hike[]> {
@@ -162,21 +196,34 @@ export class HikeRepository extends Repository<Hike> {
       where: { hikeId: id },
     });
 
+    await this.delete(id);
+
     for (const image of images) {
       try {
-        await fs.promises.unlink(`${config.image_path}/${image.path}`);
+        const filePath = this.resolveFileForDeletion(
+          config.image_path,
+          image.path,
+        );
+        if (filePath) {
+          await fs.promises.unlink(filePath);
+        }
       } catch (error) {
         console.error('Error deleting image', error);
       }
     }
     for (const gpxFile of gpxFiles) {
       try {
-        await fs.promises.unlink(`${config.gpx_path}/${gpxFile.path}`);
+        const filePath = this.resolveFileForDeletion(
+          config.gpx_path,
+          gpxFile.path,
+        );
+        if (filePath) {
+          await fs.promises.unlink(filePath);
+        }
       } catch (error) {
         console.error('Error deleting gpx file', error);
       }
     }
-    await this.delete(id);
     return;
   }
 }

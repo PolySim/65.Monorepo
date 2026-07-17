@@ -23,6 +23,7 @@ import {
   Upload,
 } from "lucide-react";
 import Image from "next/image";
+import authenticatedImageLoader from "@/lib/authenticated-image-loader";
 import { useEffect, useRef, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
@@ -134,6 +135,7 @@ const ImageReorderContainer = () => {
             >
               <div className="relative overflow-hidden bg-muted">
                 <Image
+                  loader={authenticatedImageLoader}
                   src={`${config.IMAGE_URL}?path=${image.path}&rotate=${getRotate(image)}`}
                   alt={`Photo ${index + 1} de ${hike?.title ?? "l’activité"}`}
                   className="aspect-video w-full object-cover"
