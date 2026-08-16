@@ -1,4 +1,8 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const apiUrl = (
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
@@ -9,6 +13,8 @@ const imageUrl = new URL(
 const imagePath = imageUrl.pathname.replace(/\/$/, "");
 
 const nextConfig: NextConfig = {
+  output: "standalone",
+  outputFileTracingRoot: path.join(dirname, "../../"),
   images: {
     remotePatterns: [
       {

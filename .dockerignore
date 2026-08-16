@@ -1,0 +1,29 @@
+# Git
+.git
+.github
+
+# Dépendances et caches
+**/node_modules
+.pnpm-store
+**/.turbo
+
+# Builds locaux
+**/.next
+**/dist
+**/tsconfig.tsbuildinfo
+
+# Environnement local (fourni par Coolify / build args au build)
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Logs et OS
+**/*.log
+**/.DS_Store
+
+# Éditeurs
+.vscode
+.idea
+
+# Divers
+data
