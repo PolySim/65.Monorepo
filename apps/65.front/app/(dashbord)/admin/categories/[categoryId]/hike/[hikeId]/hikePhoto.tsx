@@ -37,8 +37,8 @@ const HikePhoto = () => {
             </span>
           </div>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Faites glisser les images pour définir leur ordre. L’image
-            principale sert aussi de couverture à l’activité.
+            Faites glisser les images ou utilisez les flèches pour définir leur
+            ordre. L’image principale sert aussi de couverture à l’activité.
           </p>
         </div>
       </div>

@@ -2,18 +2,22 @@
 
 import { FormInput } from "@/components/form/formInput";
 import { Form } from "@/components/ui/form";
-import useDebounce from "@/hook/useDebonce";
+import { useAdminAutosave } from "@/hook/useAdminAutosave";
+import AutosaveStatus from "@/components/admin/autosaveStatus";
 import { useHikeById, useUpdateHike } from "@/queries/hike.queries";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Clock, MapPin, Mountain } from "lucide-react";
-import { useEffect } from "react";
+import { Clock, MapPin, Mountain } from "lucide-react";
 import { useForm } from "react-hook-form";
 import z from "zod";
 
 const formSchema = z.object({
-  distance: z.number().min(0, "La distance doit être positive").optional(),
+  distance: z
+    .number({ error: "Renseignez une distance valide" })
+    .min(0, "La distance doit être positive"),
   duration: z.string().optional(),
-  elevation: z.number().min(0, "Le dénivelé doit être positif").optional(),
+  elevation: z
+    .number({ error: "Renseignez un dénivelé valide" })
+    .min(0, "Le dénivelé doit être positif"),
 });
 
 type FormSchema = z.infer<typeof formSchema>;
@@ -36,26 +40,8 @@ const HikeGlobalInformation = () => {
       elevation: hike?.elevation ?? 0,
     },
   });
-  const { mutate: updateHike, isPending: isSaving } = useUpdateHike();
-
-  const saveInformation = (data: FormSchema) => {
-    updateHike(data);
-  };
-
-  const {
-    cancel: cancelAutosave,
-    flush: flushAutosave,
-    schedule: queueAutosave,
-  } = useDebounce(() => {
-    void form.handleSubmit(saveInformation)();
-  }, 1000);
-
-  const onSubmit = (data: FormSchema) => {
-    cancelAutosave();
-    saveInformation(data);
-  };
-
-  useEffect(() => () => flushAutosave(), [flushAutosave]);
+  const { mutateAsync: updateHike } = useUpdateHike();
+  const { status, schedule, flush } = useAdminAutosave(form, updateHike);
 
   return (
     <section
@@ -75,19 +61,16 @@ const HikeGlobalInformation = () => {
             Ces données apparaissent dans les listes et sur la fiche publique.
           </p>
         </div>
-        <p
-          className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground"
-          aria-live="polite"
-        >
-          <CheckCircle2 className="size-4 text-primary" aria-hidden="true" />
-          {isSaving ? "Enregistrement…" : "Enregistrement automatique"}
-        </p>
+        <AutosaveStatus status={status} onRetry={flush} />
       </div>
 
       <Form {...form}>
         <form
-          onChange={() => queueAutosave()}
-          onSubmit={form.handleSubmit(onSubmit)}
+          onChange={schedule}
+          onSubmit={(event) => {
+            event.preventDefault();
+            flush();
+          }}
           className="grid gap-5 sm:grid-cols-3 xl:grid-cols-1"
         >
           <div className="flex min-w-0 items-start gap-3">
@@ -97,6 +80,11 @@ const HikeGlobalInformation = () => {
             <div className="min-w-0 flex-1">
               <FormInput
                 name="distance"
+                value={
+                  Number.isNaN(form.watch("distance"))
+                    ? ""
+                    : form.watch("distance")
+                }
                 label="Distance (km)"
                 type="number"
                 min={0}
@@ -105,7 +93,7 @@ const HikeGlobalInformation = () => {
                 onChange={(value) =>
                   form.setValue(
                     "distance",
-                    value === "" ? undefined : Number(value),
+                    value === "" ? NaN : Number(value),
                     { shouldDirty: true, shouldValidate: true },
                   )
                 }
@@ -133,6 +121,11 @@ const HikeGlobalInformation = () => {
             <div className="min-w-0 flex-1">
               <FormInput
                 name="elevation"
+                value={
+                  Number.isNaN(form.watch("elevation"))
+                    ? ""
+                    : form.watch("elevation")
+                }
                 label="Dénivelé positif (m)"
                 type="number"
                 min={0}
@@ -140,7 +133,7 @@ const HikeGlobalInformation = () => {
                 onChange={(value) =>
                   form.setValue(
                     "elevation",
-                    value === "" ? undefined : Number(value),
+                    value === "" ? NaN : Number(value),
                     { shouldDirty: true, shouldValidate: true },
                   )
                 }

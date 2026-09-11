@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import z from "zod";
 
 const formSchema = z.object({
-  name: z.string().min(1, "Renseignez le nom de l’activité"),
+  name: z.string().trim().min(1, "Renseignez le nom de l’activité"),
   difficulty: z.string().optional(),
   state: z.string().optional(),
 });
@@ -69,6 +69,7 @@ export default function HikeUpdateInformation({
               name="name"
               label="Nom de l’activité"
               placeholder="Ex. Boucle du pic du Midi"
+              disabled={isPending}
               autoFocus
             />
           </div>
@@ -77,6 +78,7 @@ export default function HikeUpdateInformation({
               name="difficulty"
               label="Difficulté"
               className="w-full"
+              disabled={isPending}
               placeholder="Choisir une difficulté"
               options={difficulties.map((difficulty) => ({
                 value: difficulty.id,
@@ -89,6 +91,7 @@ export default function HikeUpdateInformation({
               name="state"
               label="Massif ou secteur"
               className="w-full"
+              disabled={isPending}
               placeholder="Choisir un massif"
               options={states.map((state) => ({
                 value: state.id,
@@ -108,7 +111,7 @@ export default function HikeUpdateInformation({
             {isPending && (
               <Loader2 className="animate-spin" aria-hidden="true" />
             )}
-            Enregistrer les modifications
+            {isPending ? "Enregistrement…" : "Enregistrer"}
           </Button>
         </DialogFooter>
       </form>

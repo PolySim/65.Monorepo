@@ -33,7 +33,11 @@ export default function AdminPage() {
               Catégories d’activités
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {categories?.length ?? 0} catégories disponibles
+              {isPending
+                ? "Chargement des catégories…"
+                : isError
+                  ? "Catégories indisponibles"
+                  : `${categories?.length ?? 0} catégorie${categories?.length === 1 ? "" : "s"} disponible${categories?.length === 1 ? "" : "s"}`}
             </p>
           </div>
           <span className="flex size-10 items-center justify-center rounded-lg bg-secondary text-primary-dark">
@@ -70,6 +74,17 @@ export default function AdminPage() {
               Réessayer
             </Button>
           </div>
+        ) : !categories?.length ? (
+          <div className="px-6 py-12 text-center">
+            <FolderTree
+              className="mx-auto size-8 text-primary"
+              aria-hidden="true"
+            />
+            <h3 className="mt-4 font-semibold">Aucune catégorie disponible</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Les catégories apparaîtront ici dès qu’elles seront disponibles.
+            </p>
+          </div>
         ) : (
           <ul className="divide-y divide-border">
             {(categories ?? []).map((category) => (
@@ -78,16 +93,22 @@ export default function AdminPage() {
                   href={`/admin/categories/${category.id}`}
                   className="group flex min-h-20 items-center gap-4 px-4 py-3 outline-none transition-colors duration-150 hover:bg-muted/70 focus-visible:bg-secondary sm:px-6"
                 >
-                  <Image
-                    loader={authenticatedImageLoader}
-                    src={`${config.IMAGE_URL}?rotate=0&path=${category.image_path ?? ""}`}
-                    alt=""
-                    width={112}
-                    height={112}
-                    className="size-14 shrink-0 rounded-lg object-cover outline outline-1 -outline-offset-1 outline-black/10"
-                  />
+                  {category.image_path ? (
+                    <Image
+                      loader={authenticatedImageLoader}
+                      src={`${config.IMAGE_URL}?rotate=0&path=${category.image_path ?? ""}`}
+                      alt=""
+                      width={112}
+                      height={112}
+                      className="size-14 shrink-0 rounded-lg object-cover outline outline-1 -outline-offset-1 outline-black/10"
+                    />
+                  ) : (
+                    <span className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary">
+                      <FolderTree className="size-6" aria-hidden="true" />
+                    </span>
+                  )}
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-semibold">
+                    <span className="block break-words font-semibold">
                       {category.name}
                     </span>
                     <span className="mt-1 block text-sm text-muted-foreground">

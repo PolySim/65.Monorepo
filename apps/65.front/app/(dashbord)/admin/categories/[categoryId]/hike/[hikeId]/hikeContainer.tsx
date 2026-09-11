@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useHikeById } from "@/queries/hike.queries";
 import { AlertCircle } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useState } from "react";
 import HikeDescription from "./hikeDescription";
 import HikeGPXContainer from "./hikeGPXContainer";
 import HikeGlobalInformation from "./hikeGlobalInformation";
@@ -27,7 +28,7 @@ const HikePhoto = dynamic(() => import("./hikePhoto"), {
 
 const HikeEditorSkeleton = () => (
   <div
-    className="page-container flex flex-1 flex-col gap-5 py-4 sm:py-6 lg:py-8"
+    className="flex min-w-0 flex-1 flex-col gap-5"
     aria-label="Chargement de la randonnée"
     aria-busy="true"
   >
@@ -41,6 +42,9 @@ const HikeEditorSkeleton = () => (
 );
 
 export default function HikeContainer() {
+  const [contentTab, setContentTab] = useState<"description" | "indications">(
+    "description",
+  );
   const { data: hike, isPending, isError, refetch } = useHikeById();
 
   if (isPending) return <HikeEditorSkeleton />;
@@ -73,12 +77,22 @@ export default function HikeContainer() {
   }
 
   return (
-    <div className="page-container flex flex-1 flex-col gap-5 py-4 sm:py-6 lg:py-8">
+    <div className="flex min-w-0 flex-1 flex-col gap-5">
       <HikeHeader />
-      <HikeReadiness hike={hike} />
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+      <HikeReadiness
+        hike={hike}
+        onContentNavigate={(tab) => {
+          setContentTab(tab);
+          requestAnimationFrame(() => {
+            const panel = document.getElementById(`${tab}-panel`);
+            panel?.scrollIntoView({ block: "start" });
+            panel?.querySelector("textarea")?.focus({ preventScroll: true });
+          });
+        }}
+      />
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
         <HikeGlobalInformation />
-        <HikeDescription />
+        <HikeDescription activeTab={contentTab} onTabChange={setContentTab} />
       </div>
       <HikePhoto />
       <HikeGPXContainer />

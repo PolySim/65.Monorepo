@@ -18,7 +18,16 @@ import {
   Upload,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const HikeGPX = dynamic(
   () =>
@@ -47,16 +56,34 @@ const HikeGPXContainer = () => {
   const gpxPath = hike?.gpxFiles?.[0]?.path ?? "";
   const { data: gpxFile, isPending, isError, refetch } = useGpxFile(gpxPath);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const { mutate: createGpxFile, isPending: isCreatingGpxFile } =
     useCreateGpxFile();
   const { mutate: deleteGpxFile, isPending: isDeletingGpxFile } =
     useDeleteGpxFile();
 
   const onSubmit = (file?: File) => {
-    if (!file || isCreatingGpxFile) return;
+    if (!file || isCreatingGpxFile || isDeletingGpxFile) return;
+    setUploadError("");
+    if (!file.name.toLowerCase().endsWith(".gpx")) {
+      setUploadError("Sélectionnez un fichier au format .gpx.");
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
     const formData = new FormData();
     formData.append("gpx", file);
     createGpxFile(formData, {
+      onSuccess: (result) => {
+        if (!result.success)
+          setUploadError(
+            "Import impossible. Vérifiez le fichier GPX et réessayez.",
+          );
+      },
+      onError: () =>
+        setUploadError(
+          "Import impossible. Vérifiez votre connexion et réessayez.",
+        ),
       onSettled: () => {
         if (inputRef.current) inputRef.current.value = "";
       },
@@ -66,6 +93,7 @@ const HikeGPXContainer = () => {
   const fileInput = (
     <input
       id="hike-gpx-upload"
+      aria-label="Fichier GPX à importer"
       type="file"
       accept=".gpx,application/gpx+xml"
       className="hidden"
@@ -75,86 +103,30 @@ const HikeGPXContainer = () => {
     />
   );
 
-  if (gpxPath && isPending) {
-    return (
-      <section
-        id="hike-gpx"
-        className="surface scroll-mt-24 p-5 sm:p-6"
-        aria-labelledby="hike-gpx-title"
-        aria-busy="true"
-      >
-        <SectionHeading />
-        <div
-          className="skeleton mt-5 h-72 rounded-xl sm:h-80"
-          aria-label="Chargement du tracé GPS"
-        />
-      </section>
-    );
-  }
-
-  if (gpxPath && isError) {
-    return (
-      <section
-        id="hike-gpx"
-        className="surface scroll-mt-24 p-5 sm:p-6"
-        aria-labelledby="hike-gpx-title"
-      >
-        <SectionHeading hasTrack />
-        <div
-          className="mt-5 rounded-xl bg-sunrise-soft p-5 text-accent-foreground"
-          role="alert"
-        >
-          <AlertTriangle className="size-6" aria-hidden="true" />
-          <h3 className="mt-3 font-semibold">
-            Aperçu de la carte indisponible
-          </h3>
-          <p className="mt-1 max-w-2xl text-sm leading-6">
-            Le tracé importé est conservé. Vous pouvez relancer son affichage ou
-            télécharger le fichier pour le contrôler dans votre application GPS.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button type="button" variant="outline" onClick={() => refetch()}>
-              <RefreshCw aria-hidden="true" />
-              Réessayer
-            </Button>
-            <Button asChild>
-              <a
-                href={getGpxDownloadUrl(gpxPath)}
-                download={`${hike?.title ?? "itineraire"}.gpx`}
-              >
-                <Download aria-hidden="true" />
-                Télécharger
-              </a>
-            </Button>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (gpxFile) {
-    return (
-      <section
-        id="hike-gpx"
-        className="surface scroll-mt-24 p-5 sm:p-6"
-        aria-labelledby="hike-gpx-title"
-      >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <SectionHeading hasTrack />
-          <div className="grid gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap lg:justify-end">
-            {fileInput}
+  const busy = isCreatingGpxFile || isDeletingGpxFile;
+  return (
+    <section
+      id="hike-gpx"
+      className="surface scroll-mt-24 p-5 sm:p-6"
+      aria-labelledby="hike-gpx-title"
+    >
+      <div className="flex flex-col gap-4">
+        <SectionHeading hasTrack={Boolean(gpxPath)} />
+        {fileInput}
+        {gpxPath && (
+          <div className="flex flex-wrap gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => inputRef.current?.click()}
-              disabled={isCreatingGpxFile}
+              disabled={busy}
             >
               {isCreatingGpxFile ? (
                 <Loader2 className="animate-spin" aria-hidden="true" />
               ) : (
                 <Upload aria-hidden="true" />
               )}
-              Remplacer
+              {isCreatingGpxFile ? "Import…" : "Remplacer"}
             </Button>
             <Button variant="outline" asChild>
               <a
@@ -167,61 +139,127 @@ const HikeGPXContainer = () => {
             </Button>
             <Button
               type="button"
-              variant="destructive"
-              onClick={() => deleteGpxFile()}
-              disabled={isDeletingGpxFile}
+              variant="ghost"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => setConfirmDelete(true)}
+              disabled={busy}
             >
-              {isDeletingGpxFile ? (
-                <Loader2 className="animate-spin" aria-hidden="true" />
-              ) : (
-                <Trash2 aria-hidden="true" />
-              )}
+              <Trash2 aria-hidden="true" />
               Supprimer
             </Button>
           </div>
+        )}
+      </div>
+      {uploadError && (
+        <p role="alert" className="mt-4 text-sm text-destructive">
+          {uploadError}
+        </p>
+      )}
+      {gpxPath && isPending ? (
+        <div
+          className="skeleton mt-5 h-72 rounded-xl sm:h-80"
+          role="status"
+          aria-label="Chargement du tracé GPS"
+        />
+      ) : gpxPath && isError ? (
+        <div
+          className="mt-5 rounded-xl bg-sunrise-soft p-5 text-accent-foreground"
+          role="alert"
+        >
+          <AlertTriangle className="size-6" aria-hidden="true" />
+          <h3 className="mt-3 font-semibold">
+            Aperçu de la carte indisponible
+          </h3>
+          <p className="mt-1 max-w-2xl text-sm leading-6">
+            Le tracé importé est conservé. Réessayez ou téléchargez le fichier
+            pour le contrôler. Vous pouvez aussi le remplacer.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-4"
+            onClick={() => void refetch()}
+          >
+            <RefreshCw aria-hidden="true" />
+            Réessayer
+          </Button>
         </div>
-
+      ) : gpxFile ? (
         <div className="mt-5 overflow-hidden rounded-xl [&>div]:!min-h-80 [&>div]:!rounded-xl [&_.leaflet-container]:!h-80 [&_.leaflet-container]:!rounded-xl">
           <HikeGPX gpx={gpxFile} compact />
         </div>
-      </section>
-    );
-  }
-
-  return (
-    <section
-      id="hike-gpx"
-      className="surface scroll-mt-24 p-5 sm:p-6"
-      aria-labelledby="hike-gpx-title"
-    >
-      <SectionHeading />
-      {fileInput}
-      <button
-        type="button"
-        className="mt-5 flex min-h-64 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-primary/55 bg-secondary/35 px-6 py-10 text-center text-primary outline-none transition-[border-color,background-color,box-shadow] duration-200 hover:border-primary hover:bg-secondary/60 focus-visible:border-primary focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60"
-        onClick={() => inputRef.current?.click()}
-        disabled={isCreatingGpxFile}
-        aria-describedby={isCreatingGpxFile ? undefined : "gpx-upload-help"}
+      ) : (
+        <button
+          type="button"
+          className="mt-5 flex min-h-48 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-primary/55 bg-secondary/35 px-6 py-8 text-center text-primary outline-none transition-colors duration-200 hover:border-primary hover:bg-secondary/60 focus-visible:ring-[3px] focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={() => inputRef.current?.click()}
+          disabled={busy}
+        >
+          {busy ? (
+            <>
+              <Loader2 className="size-7 animate-spin" aria-hidden="true" />
+              <span className="font-semibold" role="status">
+                {isDeletingGpxFile
+                  ? "Suppression du tracé…"
+                  : "Import du tracé…"}
+              </span>
+            </>
+          ) : (
+            <>
+              <Upload className="size-7" aria-hidden="true" />
+              <span className="font-semibold">Importer un fichier GPX</span>
+              <span className="max-w-md text-sm leading-6 text-muted-foreground">
+                Sélectionnez le tracé exporté depuis votre application GPS. Il
+                sera affiché sur la carte publique.
+              </span>
+            </>
+          )}
+        </button>
+      )}
+      <Dialog
+        open={confirmDelete}
+        onOpenChange={(open) => {
+          if (!isDeletingGpxFile) setConfirmDelete(open);
+        }}
       >
-        {isCreatingGpxFile ? (
-          <>
-            <Loader2 className="size-7 animate-spin" aria-hidden="true" />
-            <span className="font-semibold">Import du tracé…</span>
-          </>
-        ) : (
-          <>
-            <Upload className="size-7" aria-hidden="true" />
-            <span className="font-semibold">Importer un fichier GPX</span>
-            <span
-              id="gpx-upload-help"
-              className="max-w-md text-sm leading-6 text-muted-foreground"
+        <DialogContent
+          className="max-w-md"
+          showCloseButton={!isDeletingGpxFile}
+        >
+          <DialogHeader>
+            <DialogTitle>Supprimer le tracé GPS ?</DialogTitle>
+            <DialogDescription>
+              Le tracé sera retiré de la fiche publique. Téléchargez-le avant de
+              le supprimer si vous souhaitez le conserver.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isDeletingGpxFile}
+              >
+                Annuler
+              </Button>
+            </DialogClose>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isDeletingGpxFile}
+              onClick={() =>
+                deleteGpxFile(undefined, {
+                  onSuccess: (result) => {
+                    if (result.success) setConfirmDelete(false);
+                  },
+                })
+              }
             >
-              Sélectionnez le tracé exporté depuis votre application GPS. Il
-              sera affiché sur la carte publique.
-            </span>
-          </>
-        )}
-      </button>
+              {isDeletingGpxFile ? "Suppression…" : "Supprimer le tracé"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 };
@@ -247,7 +285,7 @@ const SectionHeading = ({ hasTrack = false }: { hasTrack?: boolean }) => (
       </div>
       <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
         {hasTrack
-          ? "Contrôlez le parcours sur la carte avant de publier vos changements."
+          ? "Contrôlez le parcours sur la carte. Les modifications sont appliquées directement à la fiche publique."
           : "Ajoutez un tracé pour afficher le parcours sur une carte interactive."}
       </p>
     </div>

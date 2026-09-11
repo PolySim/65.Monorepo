@@ -2,11 +2,12 @@
 
 import { FormArea } from "@/components/form/formArea";
 import { Form } from "@/components/ui/form";
-import useDebounce from "@/hook/useDebonce";
+import { useAdminAutosave } from "@/hook/useAdminAutosave";
+import AutosaveStatus from "@/components/admin/autosaveStatus";
 import { useHikeById, useUpdateHike } from "@/queries/hike.queries";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
-import { useEffect, useState } from "react";
+import { AlertTriangle, Info } from "lucide-react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
 
@@ -17,10 +18,13 @@ const formSchema = z.object({
 
 type FormSchema = z.infer<typeof formSchema>;
 
-const HikeDescription = () => {
-  const [activeTab, setActiveTab] = useState<"description" | "indications">(
-    "description",
-  );
+const HikeDescription = ({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: "description" | "indications";
+  onTabChange: (tab: "description" | "indications") => void;
+}) => {
   const { data: hike } = useHikeById({
     select: (data) => {
       return {
@@ -38,26 +42,35 @@ const HikeDescription = () => {
     },
   });
 
-  const { mutate: updateHike, isPending: isSaving } = useUpdateHike();
+  const { mutateAsync: updateHike } = useUpdateHike();
+  const { status, schedule, flush } = useAdminAutosave(form, updateHike);
 
-  const saveContent = (data: FormSchema) => {
-    updateHike(data);
+  useEffect(() => {
+    const syncTab = () => {
+      if (window.location.hash === "#indications-panel")
+        onTabChange("indications");
+      if (window.location.hash === "#description-panel")
+        onTabChange("description");
+    };
+    syncTab();
+    window.addEventListener("hashchange", syncTab);
+    return () => window.removeEventListener("hashchange", syncTab);
+  }, [onTabChange]);
+
+  const onTabKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const next =
+      event.key === "Home"
+        ? "description"
+        : event.key === "End"
+          ? "indications"
+          : activeTab === "description"
+            ? "indications"
+            : "description";
+    onTabChange(next);
+    document.getElementById(`${next}-tab`)?.focus();
   };
-
-  const {
-    cancel: cancelAutosave,
-    flush: flushAutosave,
-    schedule: queueAutosave,
-  } = useDebounce(() => {
-    void form.handleSubmit(saveContent)();
-  }, 1000);
-
-  const onSubmit = (data: FormSchema) => {
-    cancelAutosave();
-    saveContent(data);
-  };
-
-  useEffect(() => () => flushAutosave(), [flushAutosave]);
 
   return (
     <section
@@ -65,7 +78,7 @@ const HikeDescription = () => {
       className="surface scroll-mt-24 p-5 sm:p-6"
       aria-labelledby="hike-content-title"
     >
-      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+      <div className="mb-5 flex flex-col items-start gap-3">
         <div>
           <h2
             id="hike-content-title"
@@ -78,23 +91,21 @@ const HikeDescription = () => {
             départ.
           </p>
         </div>
-        <p
-          className="flex shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground"
-          aria-live="polite"
-        >
-          <CheckCircle2 className="size-4 text-primary" aria-hidden="true" />
-          {isSaving ? "Enregistrement…" : "Enregistrement automatique"}
-        </p>
+        <AutosaveStatus status={status} onRetry={flush} />
       </div>
 
       <Form {...form}>
         <form
-          onChange={() => queueAutosave()}
-          onSubmit={form.handleSubmit(onSubmit)}
+          onChange={schedule}
+          onSubmit={(event) => {
+            event.preventDefault();
+            flush();
+          }}
         >
           <div
             className="mb-5 flex gap-1 overflow-x-auto border-b border-border"
             role="tablist"
+            onKeyDown={onTabKeyDown}
             aria-label="Type de contenu"
           >
             <button
@@ -102,8 +113,9 @@ const HikeDescription = () => {
               type="button"
               role="tab"
               aria-selected={activeTab === "description"}
+              tabIndex={activeTab === "description" ? 0 : -1}
               aria-controls="description-panel"
-              onClick={() => setActiveTab("description")}
+              onClick={() => onTabChange("description")}
               className={`flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-sm font-medium outline-none transition-[border-color,color,background-color] duration-150 focus-visible:rounded-t-lg focus-visible:ring-[3px] focus-visible:ring-ring/20 ${
                 activeTab === "description"
                   ? "border-primary text-primary"
@@ -119,8 +131,9 @@ const HikeDescription = () => {
               type="button"
               role="tab"
               aria-selected={activeTab === "indications"}
+              tabIndex={activeTab === "indications" ? 0 : -1}
               aria-controls="indications-panel"
-              onClick={() => setActiveTab("indications")}
+              onClick={() => onTabChange("indications")}
               className={`flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-sm font-medium outline-none transition-[border-color,color,background-color] duration-150 focus-visible:rounded-t-lg focus-visible:ring-[3px] focus-visible:ring-ring/20 ${
                 activeTab === "indications"
                   ? "border-primary text-primary"
@@ -132,37 +145,37 @@ const HikeDescription = () => {
             </button>
           </div>
 
-          {activeTab === "description" && (
-            <div
-              id="description-panel"
-              role="tabpanel"
-              aria-labelledby="description-tab"
-            >
-              <FormArea
-                name="content"
-                label="Description publique"
-                description="Présentez le parcours, ses points forts et le terrain rencontré."
-                placeholder="Décrivez le parcours, son ambiance et ses principaux repères…"
-                className="min-h-56 resize-y"
-              />
-            </div>
-          )}
+          <div
+            id="description-panel"
+            hidden={activeTab !== "description"}
+            className="scroll-mt-28"
+            role="tabpanel"
+            aria-labelledby="description-tab"
+          >
+            <FormArea
+              name="content"
+              label="Description publique"
+              description="Présentez le parcours, ses points forts et le terrain rencontré."
+              placeholder="Décrivez le parcours, son ambiance et ses principaux repères…"
+              className="min-h-56 resize-y"
+            />
+          </div>
 
-          {activeTab === "indications" && (
-            <div
-              id="indications-panel"
-              role="tabpanel"
-              aria-labelledby="indications-tab"
-            >
-              <FormArea
-                name="indication"
-                label="Consignes et points d’attention"
-                description="Signalez l’accès, le balisage, les passages délicats et les précautions."
-                placeholder="Ajoutez les informations utiles avant le départ…"
-                className="min-h-56 resize-y"
-              />
-            </div>
-          )}
+          <div
+            id="indications-panel"
+            hidden={activeTab !== "indications"}
+            className="scroll-mt-28"
+            role="tabpanel"
+            aria-labelledby="indications-tab"
+          >
+            <FormArea
+              name="indication"
+              label="Consignes et points d’attention"
+              description="Signalez l’accès, le balisage, les passages délicats et les précautions."
+              placeholder="Ajoutez les informations utiles avant le départ…"
+              className="min-h-56 resize-y"
+            />
+          </div>
         </form>
       </Form>
     </section>

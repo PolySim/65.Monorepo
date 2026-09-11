@@ -167,7 +167,7 @@ export default function AdminHikeList() {
       aria-labelledby="hike-list-title"
     >
       <div className="border-b border-border p-4 sm:p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-4">
           <div>
             <h2 id="hike-list-title" className="font-bold">
               Activités de la catégorie
@@ -187,7 +187,7 @@ export default function AdminHikeList() {
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="relative min-w-0 sm:w-72">
+            <div className="relative min-w-0 flex-1">
               <label htmlFor="admin-hike-search" className="sr-only">
                 Rechercher dans les activités de cette catégorie
               </label>
@@ -295,7 +295,7 @@ export default function AdminHikeList() {
                 </div>
 
                 <div className="min-w-0">
-                  <h3 className="truncate font-semibold text-foreground">
+                  <h3 className="break-words font-semibold text-foreground">
                     {hike.title || "Activité sans nom"}
                     <span className="sr-only">, modifier l’activité</span>
                   </h3>

@@ -145,6 +145,8 @@ export const reorderImage = async (hikeId: string, imageIds: string[]) => {
       return { success: false };
     }
 
+    revalidateTag(`hike-${hikeId}`);
+    revalidateTag("hikes");
     return { success: true };
   } catch (error) {
     console.error("Error in reordering image", error);

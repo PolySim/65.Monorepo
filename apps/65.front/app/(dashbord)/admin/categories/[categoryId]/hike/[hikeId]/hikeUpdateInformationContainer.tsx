@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { useCategories } from "@/queries/categories.queries";
 import { useDifficulties } from "@/queries/difficulty.query";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import HikeUpdateInformation from "./hikeUpdateInformation";
 
@@ -18,8 +19,8 @@ export default function UpdateInformationContainer({
 }: {
   children: React.ReactNode;
 }) {
-  const { isPending: isPendingDifficulties } = useDifficulties();
-  const { isPending: isPendingCategories } = useCategories();
+  const difficulties = useDifficulties();
+  const categories = useCategories();
   const [open, setOpen] = useState(false);
 
   return (
@@ -33,7 +34,7 @@ export default function UpdateInformationContainer({
             mettre à jour la fiche.
           </DialogDescription>
         </DialogHeader>
-        {isPendingDifficulties || isPendingCategories ? (
+        {difficulties.isPending || categories.isPending ? (
           <div
             className="grid gap-4 sm:grid-cols-2"
             aria-label="Chargement du formulaire"
@@ -42,6 +43,21 @@ export default function UpdateInformationContainer({
             <div className="skeleton h-11 rounded-lg sm:col-span-2" />
             <div className="skeleton h-11 rounded-lg" />
             <div className="skeleton h-11 rounded-lg" />
+          </div>
+        ) : difficulties.isError || categories.isError ? (
+          <div className="space-y-4" role="alert">
+            <p className="text-sm text-muted-foreground">
+              Impossible de charger les options du formulaire.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                void difficulties.refetch();
+                void categories.refetch();
+              }}
+            >
+              Réessayer
+            </Button>
           </div>
         ) : (
           <HikeUpdateInformation onUpdated={() => setOpen(false)} />

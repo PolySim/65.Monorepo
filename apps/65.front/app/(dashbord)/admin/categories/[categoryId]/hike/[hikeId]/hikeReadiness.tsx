@@ -8,7 +8,13 @@ type ChecklistItem = {
   complete: boolean;
 };
 
-export default function HikeReadiness({ hike }: { hike: Hike }) {
+export default function HikeReadiness({
+  hike,
+  onContentNavigate,
+}: {
+  hike: Hike;
+  onContentNavigate: (tab: "description" | "indications") => void;
+}) {
   const essentialStatsComplete =
     typeof hike.distance === "number" &&
     Number.isFinite(hike.distance) &&
@@ -39,13 +45,13 @@ export default function HikeReadiness({ hike }: { hike: Hike }) {
     {
       id: "description",
       label: "Description",
-      href: "#hike-content",
+      href: "#description-panel",
       complete: Boolean(hike.content?.trim()),
     },
     {
       id: "indications",
       label: "Indications",
-      href: "#hike-content",
+      href: "#indications-panel",
       complete: Boolean(hike.indication?.trim()),
     },
     {
@@ -124,11 +130,11 @@ export default function HikeReadiness({ hike }: { hike: Hike }) {
         />
       </div>
 
-      <ul className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+      <ul className="mt-4 grid grid-cols-2 gap-2 xl:grid-cols-3 2xl:grid-cols-4">
         {checklist.map((item) => (
           <li key={item.id}>
             {item.complete ? (
-              <span className="flex min-h-11 items-center gap-2 rounded-lg bg-secondary/45 px-3 text-sm font-medium text-primary-dark">
+              <span className="flex min-h-11 items-center gap-2 rounded-lg bg-secondary/45 px-3 text-xs font-medium sm:text-sm text-primary-dark">
                 <CheckCircle2
                   className="size-4 shrink-0 text-primary"
                   aria-hidden="true"
@@ -139,7 +145,11 @@ export default function HikeReadiness({ hike }: { hike: Hike }) {
             ) : (
               <a
                 href={item.href}
-                className="group flex min-h-11 items-center gap-2 rounded-lg bg-muted px-3 text-sm font-medium text-foreground outline-none transition-colors duration-150 hover:bg-sunrise-soft focus-visible:ring-[3px] focus-visible:ring-ring/25"
+                onClick={() => {
+                  if (item.id === "description" || item.id === "indications")
+                    onContentNavigate(item.id);
+                }}
+                className="group flex min-h-11 items-center gap-2 rounded-lg bg-muted px-3 text-xs font-medium sm:text-sm text-foreground outline-none transition-colors duration-150 hover:bg-sunrise-soft focus-visible:ring-[3px] focus-visible:ring-ring/25"
               >
                 <Circle
                   className="size-4 shrink-0 text-sunrise"

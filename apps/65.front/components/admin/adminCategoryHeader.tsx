@@ -13,7 +13,7 @@ const AdminCategoryHeader = () => {
   return (
     <div>
       <nav
-        className="mb-4 flex items-center gap-1.5 text-sm text-muted-foreground"
+        className="mb-4 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground"
         aria-label="Fil d’Ariane"
       >
         <Link

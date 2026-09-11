@@ -20,7 +20,11 @@ const HikeDelete = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button type="button" variant="destructive">
+        <Button
+          type="button"
+          variant="ghost"
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+        >
           <Trash2 aria-hidden="true" />
           <span>Supprimer l&apos;activité</span>
         </Button>

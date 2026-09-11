@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import authenticatedImageLoader from "@/lib/authenticated-image-loader";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import HikeDelete from "./hikeDelete";
 import UpdateInformationContainer from "./hikeUpdateInformationContainer";
 
@@ -33,7 +33,6 @@ const HikeHeader = () => {
       };
     },
   });
-  const router = useRouter();
 
   const { mutate: updateHike, isPending: isUpdatingPosition } = useUpdateHike();
   const publicHref =
@@ -56,14 +55,16 @@ const HikeHeader = () => {
       className="surface scroll-mt-24 overflow-hidden"
       aria-labelledby="hike-title"
     >
-      <div className="flex flex-col gap-3 border-b border-border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+      <div className="flex flex-col gap-3 border-b border-border p-3 sm:p-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="ghost" onClick={() => router.back()}>
-            <ArrowLeft aria-hidden="true" />
-            Retour
+          <Button variant="ghost" asChild>
+            <Link href={`/admin/categories/${hike?.category?.id ?? ""}`}>
+              <ArrowLeft aria-hidden="true" />
+              Toutes les activités
+            </Link>
           </Button>
           <UpdateInformationContainer>
-            <Button type="button" variant="outline">
+            <Button type="button">
               <Edit3 aria-hidden="true" />
               Modifier les informations
             </Button>
@@ -97,13 +98,13 @@ const HikeHeader = () => {
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div
             className="flex items-center gap-1 rounded-lg bg-muted p-1"
             role="group"
             aria-label="Ajuster le cadrage vertical de l’image principale"
           >
-            <span className="hidden px-2 text-xs font-medium text-muted-foreground lg:inline">
+            <span className="px-2 text-xs font-medium text-muted-foreground">
               Cadrage de l’image
             </span>
             <Button
@@ -113,7 +114,11 @@ const HikeHeader = () => {
               aria-label="Remonter l’image principale"
               title="Remonter l’image principale"
               onClick={() => onUpdateMainImagePosition("up")}
-              disabled={isUpdatingPosition || !hike?.mainImage}
+              disabled={
+                isUpdatingPosition ||
+                !hike?.mainImage ||
+                (hike.mainImagePosition ?? 50) <= 0
+              }
             >
               <ArrowUp aria-hidden="true" />
             </Button>
@@ -124,7 +129,11 @@ const HikeHeader = () => {
               aria-label="Descendre l’image principale"
               title="Descendre l’image principale"
               onClick={() => onUpdateMainImagePosition("down")}
-              disabled={isUpdatingPosition || !hike?.mainImage}
+              disabled={
+                isUpdatingPosition ||
+                !hike?.mainImage ||
+                (hike.mainImagePosition ?? 50) >= 100
+              }
             >
               <ArrowDown aria-hidden="true" />
             </Button>
@@ -133,32 +142,29 @@ const HikeHeader = () => {
         </div>
       </div>
 
-      <div className="relative h-64 overflow-hidden bg-muted sm:h-80">
+      <div className="relative min-h-56 overflow-hidden bg-muted sm:min-h-64">
         {hike?.mainImage?.path ? (
           <Image
             loader={authenticatedImageLoader}
             src={`${config.IMAGE_URL}?path=${hike.mainImage.path}&rotate=${hike.mainImage.rotate ?? 0}`}
             alt={`Image principale de ${hike?.title ?? "l’activité"}`}
-            className="size-full object-cover transition-[object-position] duration-200 ease-out"
+            className="absolute inset-0 size-full object-cover transition-[object-position] duration-200 ease-out"
             width={2560}
             height={1440}
             priority
             style={{ objectPosition: `50% ${hike?.mainImagePosition ?? 50}%` }}
           />
         ) : (
-          <div className="flex size-full flex-col items-center justify-center gap-2 bg-primary-dark text-primary-foreground/80">
+          <div className="absolute inset-0 flex flex-col items-center justify-start gap-2 bg-primary-dark pt-5 text-primary-foreground/80">
             <ImageOff className="size-9" aria-hidden="true" />
             <p className="text-sm font-medium">Aucune image principale</p>
           </div>
         )}
 
         {hike?.mainImage?.path && (
-          <div
-            className="absolute inset-0 bg-foreground/45"
-            aria-hidden="true"
-          />
+          <div className="absolute inset-0 bg-black/65" aria-hidden="true" />
         )}
-        <div className="absolute inset-0 flex items-end p-5 sm:p-7">
+        <div className="relative flex min-h-56 items-end p-5 pt-28 sm:min-h-64 sm:p-7 sm:pt-28">
           <div className="flex w-full flex-col gap-4 text-primary-foreground sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0 max-w-3xl">
               <p className="mb-1.5 text-sm font-medium text-primary-foreground/85">
