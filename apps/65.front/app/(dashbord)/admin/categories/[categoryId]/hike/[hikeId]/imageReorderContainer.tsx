@@ -158,6 +158,8 @@ const ImageReorderContainer = () => {
                   className="aspect-video h-auto w-full object-cover"
                   width={576}
                   height={384}
+                  sizes="(min-width: 96rem) 18.1rem, (min-width: 80rem) 27.5rem, (min-width: 64rem) calc(50vw - 12.5rem), (min-width: 40rem) calc(50vw - 3.5rem), calc(100vw - 4.5rem)"
+                  quality={65}
                 />
 
                 <div className="absolute inset-x-2 top-2 flex items-start justify-between gap-2">

@@ -3,10 +3,19 @@
 import { useHikeById } from "@/queries/hike.queries";
 import { Clock3, Mountain, Route } from "lucide-react";
 
+const fact =
+  "flex min-w-0 flex-col gap-1.5 bg-card px-2.5 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-6 sm:py-4";
+const icon =
+  "flex size-7 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary-dark sm:size-11";
+const label = "text-xs font-medium text-muted-foreground sm:text-sm";
+const value =
+  "mt-0.5 text-sm font-semibold tabular-nums [overflow-wrap:anywhere] sm:text-lg";
+
 const HikeGlobalInformation = () => {
   const { data: hike } = useHikeById();
 
-  if (!(hike?.distance || hike?.duration || hike?.elevation)) return null;
+  if (!hike || !(hike.distance || hike.duration || hike.elevation != null))
+    return null;
 
   return (
     <section
@@ -16,51 +25,39 @@ const HikeGlobalInformation = () => {
       <h2 id="hike-key-information" className="sr-only">
         Informations essentielles
       </h2>
-      <dl className="grid divide-y divide-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+      <dl className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,5.75rem),1fr))] gap-px bg-border sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
         {!!hike.distance && (
-          <div className="flex min-h-24 items-center gap-4 px-5 py-4 sm:px-6">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary-dark">
-              <Route aria-hidden="true" className="size-5" />
+          <div className={fact}>
+            <span className={icon}>
+              <Route aria-hidden="true" className="size-4 sm:size-5" />
             </span>
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">
-                Distance
-              </dt>
-              <dd className="mt-0.5 text-lg font-semibold tabular-nums text-foreground">
-                {hike.distance} km
-              </dd>
+            <div className="min-w-0">
+              <dt className={label}>Distance</dt>
+              <dd className={value}>{hike.distance} km</dd>
             </div>
           </div>
         )}
 
         {!!hike.duration && (
-          <div className="flex min-h-24 items-center gap-4 px-5 py-4 sm:px-6">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary-dark">
-              <Clock3 aria-hidden="true" className="size-5" />
+          <div className={fact}>
+            <span className={icon}>
+              <Clock3 aria-hidden="true" className="size-4 sm:size-5" />
             </span>
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">
-                Durée estimée
-              </dt>
-              <dd className="mt-0.5 text-lg font-semibold tabular-nums text-foreground">
-                {hike.duration}
-              </dd>
+            <div className="min-w-0">
+              <dt className={label}>Durée estimée</dt>
+              <dd className={value}>{hike.duration}</dd>
             </div>
           </div>
         )}
 
-        {!!hike.elevation && (
-          <div className="flex min-h-24 items-center gap-4 px-5 py-4 sm:px-6">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-secondary text-primary-dark">
-              <Mountain aria-hidden="true" className="size-5" />
+        {hike.elevation != null && (
+          <div className={fact}>
+            <span className={icon}>
+              <Mountain aria-hidden="true" className="size-4 sm:size-5" />
             </span>
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">
-                Dénivelé positif
-              </dt>
-              <dd className="mt-0.5 text-lg font-semibold tabular-nums text-foreground">
-                {hike.elevation} m
-              </dd>
+            <div className="min-w-0">
+              <dt className={label}>Dénivelé positif</dt>
+              <dd className={value}>{hike.elevation} m</dd>
             </div>
           </div>
         )}

@@ -1,6 +1,6 @@
+import DesktopPicture from "@/components/desktop-picture";
 import { MountainSnow } from "lucide-react";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -22,13 +22,11 @@ export default function SignInLayout({
         className="relative hidden min-h-screen overflow-hidden bg-primary-dark lg:block"
         aria-label="Paysage des Hautes-Pyrénées"
       >
-        <Image
-          src="/fond_ecran.png"
+        <DesktopPicture
+          srcSet="/fond_ecran-1100.webp 1100w, /fond_ecran-1488.webp 1488w"
+          sizes="max(54vw, 150vh)"
           alt="Panorama enneigé des Hautes-Pyrénées"
-          fill
-          priority
-          sizes="55vw"
-          className="object-cover outline outline-1 -outline-offset-1 outline-black/10"
+          className="absolute inset-0 size-full object-cover outline outline-1 -outline-offset-1 outline-black/10"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/75" />
         <Link

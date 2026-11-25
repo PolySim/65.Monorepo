@@ -1,7 +1,36 @@
+import { ApiProperty } from '@nestjs/swagger';
+
+export const HIKE_SUGGESTION_MAX_LENGTH = 80;
+
 export class HikeSearchDto {
   title?: string;
   categoryId?: string;
   stateId?: string;
+}
+
+export class HikeSuggestionDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  title: string;
+
+  @ApiProperty()
+  categoryId: string;
+
+  @ApiProperty()
+  categoryName: string;
+
+  @ApiProperty()
+  stateId: string;
+
+  @ApiProperty()
+  stateName: string;
+}
+
+export class HikeFavoriteStatusDto {
+  @ApiProperty()
+  isFavorite: boolean;
 }
 
 export class CreateHikeDto {

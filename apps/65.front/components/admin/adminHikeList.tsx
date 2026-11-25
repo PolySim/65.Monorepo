@@ -285,6 +285,7 @@ export default function AdminHikeList() {
                       alt=""
                       fill
                       sizes="64px"
+                      quality={65}
                       className="object-cover transition-transform duration-200 ease-out group-hover:scale-[1.03] motion-reduce:transform-none"
                     />
                   ) : (

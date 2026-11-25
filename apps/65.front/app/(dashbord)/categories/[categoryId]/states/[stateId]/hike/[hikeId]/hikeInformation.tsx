@@ -6,44 +6,23 @@ import { AlertTriangle, MapPinned, RefreshCw } from "lucide-react";
 import HikeDescription from "./hikeDescription";
 import HikeGlobalInformation from "./hikeGlobalInformation";
 import HikeGPXContainer from "./hikeGPXContainer";
-import HikeHeader from "./hikeHeader";
+import HikeHeader, { HikeCollectionLink } from "./hikeHeader";
+import HikePageSkeleton from "./hikePageSkeleton";
 import HikePhoto from "./hikePhoto";
 
 const HikeInformation = () => {
   const { data: hike, isPending, isError, refetch } = useHikeById();
 
   if (isPending) {
-    return (
-      <div
-        className="page-container"
-        role="status"
-        aria-live="polite"
-        aria-label="Chargement des informations de la randonnée"
-      >
-        <span className="sr-only">
-          Chargement des informations de la randonnée…
-        </span>
-        <div aria-hidden="true" className="space-y-4">
-          <div className="skeleton h-[28rem] rounded-xl sm:h-[32rem] lg:h-[36rem]" />
-          <div className="surface grid gap-px overflow-hidden sm:grid-cols-3">
-            {[0, 1, 2].map((item) => (
-              <div key={item} className="flex min-h-24 items-center gap-4 p-5">
-                <div className="skeleton size-11 shrink-0 rounded-lg" />
-                <div className="flex-1 space-y-2">
-                  <div className="skeleton h-3 w-20 rounded" />
-                  <div className="skeleton h-5 w-28 rounded" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <HikePageSkeleton />;
   }
 
   if (isError) {
     return (
       <section className="page-container" aria-labelledby="hike-load-error">
+        <div className="mb-2">
+          <HikeCollectionLink />
+        </div>
         <div
           className="surface flex min-h-72 flex-col items-center justify-center px-6 py-12 text-center"
           role="alert"
@@ -70,6 +49,9 @@ const HikeInformation = () => {
   if (!hike) {
     return (
       <section className="page-container" aria-labelledby="hike-not-found">
+        <div className="mb-2">
+          <HikeCollectionLink />
+        </div>
         <div className="surface flex min-h-72 flex-col items-center justify-center px-6 py-12 text-center">
           <MapPinned aria-hidden="true" className="mb-4 size-10 text-primary" />
           <h1 id="hike-not-found" className="text-2xl font-semibold">
@@ -89,7 +71,15 @@ const HikeInformation = () => {
       <HikeGlobalInformation />
       <HikeDescription />
       <HikePhoto />
-      <HikeGPXContainer />
+      {!!hike.gpxFiles?.length && (
+        <div
+          id="carte"
+          tabIndex={-1}
+          className="mt-8 flow-root scroll-mt-24 sm:mt-12"
+        >
+          <HikeGPXContainer />
+        </div>
+      )}
     </article>
   );
 };

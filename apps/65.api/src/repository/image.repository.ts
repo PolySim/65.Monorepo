@@ -2,11 +2,20 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
   StreamableFile,
 } from '@nestjs/common';
 import * as fs from 'fs';
 import { File } from 'multer';
-import { extname, isAbsolute, join, relative, resolve } from 'path';
+import {
+  basename,
+  dirname,
+  extname,
+  isAbsolute,
+  join,
+  relative,
+  resolve,
+} from 'path';
 import * as sharp from 'sharp';
 import { config } from 'src/config/config';
 import {
@@ -21,6 +30,25 @@ import { Category } from '../entities/category.entity';
 import { Image } from '../entities/image.entity';
 import { State } from '../entities/state.entity';
 
+const DEFAULT_IMAGE_WIDTH = 1920;
+const MAX_IMAGE_DIMENSION = 3840;
+const DEFAULT_IMAGE_QUALITY = 82;
+const MAX_ORIGINAL_BYTES = 100 * 1024 * 1024;
+const MAX_IMAGE_PIXELS = 64 * 1024 * 1024; // Includes all frames.
+const MAX_QUEUED_VARIANTS = 16; // One active render per repository, including its read.
+const MAX_CACHE_BYTES = 64 * 1024 * 1024;
+const MAX_CACHE_ENTRIES = 256;
+const DEFAULT_CHUNK_BYTES = 512 * 1024; // Also used by the frontend splitter.
+const MAX_CHUNK_BYTES = 1024 * 1024;
+const MAX_UPLOAD_CHUNKS = Math.ceil(MAX_ORIGINAL_BYTES / DEFAULT_CHUNK_BYTES);
+const MAX_UPLOAD_SESSIONS = 8;
+
+interface ImageProfile {
+  width: number;
+  quality: number;
+  rotation: number;
+}
+
 interface ChunkUploadSession {
   fileHash: string;
   fileName: string;
@@ -29,13 +57,19 @@ interface ChunkUploadSession {
   fileSize: number;
   chunkSize: number;
   uploadedChunks: Set<number>;
-  chunkPaths: Map<number | string, string>;
+  chunkPaths: Map<number, string>;
   createdAt: Date;
+  finalizing?: boolean;
 }
 
 @Injectable()
 export class ImageRepository extends Repository<Image> {
   private uploadSessions: Map<string, ChunkUploadSession> = new Map();
+  private readonly variants = new Map<string, Buffer>();
+  private readonly pendingVariants = new Map<string, Promise<Buffer>>();
+  private readonly variantQueue: Array<() => void> = [];
+  private renderingVariant = false;
+  private variantBytes = 0;
 
   constructor(private dataSource: DataSource) {
     super(Image, dataSource.createEntityManager());
@@ -59,27 +93,29 @@ export class ImageRepository extends Repository<Image> {
       throw new NotFoundException('Image not found');
     }
 
-    if (!fs.existsSync(candidatePath)) {
-      if (requireFile) {
+    try {
+      const realImageRoot = fs.realpathSync(imageRoot);
+      const exists = fs.existsSync(candidatePath);
+      const realImagePath = exists
+        ? fs.realpathSync(candidatePath)
+        : join(
+            fs.realpathSync(dirname(candidatePath)),
+            basename(candidatePath),
+          );
+      const realPathFromRoot = relative(realImageRoot, realImagePath);
+
+      if (
+        !realPathFromRoot ||
+        realPathFromRoot.startsWith('..') ||
+        isAbsolute(realPathFromRoot) ||
+        (exists ? !fs.statSync(realImagePath).isFile() : requireFile)
+      ) {
         throw new NotFoundException('Image not found');
       }
-      return candidatePath;
-    }
-
-    const realImageRoot = fs.realpathSync(imageRoot);
-    const realImagePath = fs.realpathSync(candidatePath);
-    const realPathFromRoot = relative(realImageRoot, realImagePath);
-
-    if (
-      !realPathFromRoot ||
-      realPathFromRoot.startsWith('..') ||
-      isAbsolute(realPathFromRoot) ||
-      !fs.statSync(realImagePath).isFile()
-    ) {
+      return realImagePath;
+    } catch {
       throw new NotFoundException('Image not found');
     }
-
-    return realImagePath;
   }
 
   private resolveChunkTempDirectory(fileHash: string): string {
@@ -112,11 +148,11 @@ export class ImageRepository extends Repository<Image> {
 
   async sendImage(
     path: string,
-    rotate: number,
-    width?: number,
-    quality?: number,
+    rotate?: number | string,
+    width?: number | string,
+    quality?: number | string,
   ): Promise<StreamableFile> {
-    if (!path || path === 'undefined') {
+    if (typeof path !== 'string' || !path || path === 'undefined') {
       throw new NotFoundException('Image not found');
     }
 
@@ -142,89 +178,243 @@ export class ImageRepository extends Repository<Image> {
       throw new NotFoundException('Image not found');
     }
 
-    const requestedRotation = rotate as unknown;
-    const rotationValue =
-      requestedRotation === undefined ||
-      requestedRotation === null ||
-      String(requestedRotation).trim() === ''
-        ? Number(image?.rotate ?? 0)
-        : Number(requestedRotation);
-
-    if (!Number.isFinite(rotationValue) || rotationValue % 90 !== 0) {
+    const numericQuery = (value: unknown, fallback: number): number => {
+      if (value == null || (typeof value === 'string' && value.trim() === '')) {
+        return fallback;
+      }
+      return typeof value === 'number' || typeof value === 'string'
+        ? Number(value)
+        : NaN;
+    };
+    const rotation = numericQuery(rotate, Number(image?.rotate ?? 0));
+    const profile: ImageProfile = {
+      rotation: ((rotation % 360) + 360) % 360,
+      width: numericQuery(width, DEFAULT_IMAGE_WIDTH),
+      quality: numericQuery(quality, DEFAULT_IMAGE_QUALITY),
+    };
+    if (!Number.isSafeInteger(rotation) || rotation % 90 !== 0) {
       throw new BadRequestException('Image rotation is invalid');
     }
-
-    const normalizedRotation = ((rotationValue % 360) + 360) % 360;
-    const requestedWidth = width as unknown;
-    const widthValue =
-      requestedWidth === undefined ||
-      requestedWidth === null ||
-      String(requestedWidth).trim() === ''
-        ? null
-        : Number(requestedWidth);
-    const requestedQuality = quality as unknown;
-    const qualityValue =
-      requestedQuality === undefined ||
-      requestedQuality === null ||
-      String(requestedQuality).trim() === ''
-        ? 82
-        : Number(requestedQuality);
-
     if (
-      (widthValue !== null &&
-        (!Number.isInteger(widthValue) ||
-          widthValue < 1 ||
-          widthValue > 3840)) ||
-      !Number.isInteger(qualityValue) ||
-      qualityValue < 40 ||
-      qualityValue > 95
+      !Number.isInteger(profile.width) ||
+      profile.width < 1 ||
+      profile.width > MAX_IMAGE_DIMENSION ||
+      !Number.isInteger(profile.quality) ||
+      profile.quality < 40 ||
+      profile.quality > 95
     ) {
       throw new BadRequestException("Paramètres d'image invalides");
     }
 
-    const globalPath = this.resolveManagedImagePath(path);
-
-    const ext = extname(globalPath).toLowerCase();
-    const mimeTypes = {
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.png': 'image/png',
-      '.gif': 'image/gif',
-      '.webp': 'image/webp',
-    };
-    const streamOptions = {
-      type: mimeTypes[ext] || 'application/octet-stream',
-      disposition: 'inline',
-    };
-
-    if (normalizedRotation === 0 && widthValue === null) {
-      return new StreamableFile(fs.createReadStream(globalPath), streamOptions);
-    }
-
     try {
-      let imagePipeline = sharp(globalPath).rotate(normalizedRotation);
-      if (widthValue !== null) {
-        imagePipeline = imagePipeline.resize({
-          width: widthValue,
-          withoutEnlargement: true,
-        });
+      // Resolve and check the source on every request, including cache hits.
+      const source = this.resolveManagedImagePath(path);
+      const stat = fs.statSync(source, { bigint: true });
+      if (!stat.isFile() || stat.size <= 0 || stat.size > MAX_ORIGINAL_BYTES) {
+        throw new Error('Invalid image file');
+      }
+      const version = this.fileVersion(stat);
+      const key = JSON.stringify([source, version, profile]);
+      let variant = this.variants.get(key);
+      if (variant) {
+        this.variants.delete(key);
+        this.variants.set(key, variant);
+      } else {
+        let pending = this.pendingVariants.get(key);
+        if (!pending) {
+          pending = this.scheduleVariant(async () => {
+            const original = await this.readOriginal(source, stat);
+            const result = await this.renderVariant(original, profile);
+            if (
+              fs.realpathSync(source) !== source ||
+              this.fileVersion(fs.statSync(source, { bigint: true })) !==
+                version
+            ) {
+              throw new Error('Image changed during rendering');
+            }
+            this.cacheVariant(key, result);
+            return result;
+          }).finally(() => this.pendingVariants.delete(key));
+          this.pendingVariants.set(key, pending);
+        }
+        variant = await pending;
+        if (this.resolveManagedImagePath(path) !== source) {
+          throw new Error('Image path changed during rendering');
+        }
       }
 
-      if (ext === '.jpg' || ext === '.jpeg') {
-        imagePipeline = imagePipeline.jpeg({
-          mozjpeg: true,
-          quality: qualityValue,
-        });
-      } else if (ext === '.webp') {
-        imagePipeline = imagePipeline.webp({ quality: qualityValue });
-      }
-
-      const rotatedFile = await imagePipeline.toBuffer();
-
-      return new StreamableFile(rotatedFile, streamOptions);
-    } catch {
-      throw new NotFoundException(`Impossible de traiter l'image: ${path}`);
+      return new StreamableFile(variant, {
+        type: 'image/webp',
+        disposition: 'inline',
+      });
+    } catch (error) {
+      if (error instanceof ServiceUnavailableException) throw error;
+      throw new NotFoundException("Impossible de traiter l'image");
     }
+  }
+
+  private scheduleVariant(job: () => Promise<Buffer>): Promise<Buffer> {
+    let ready: Promise<void>;
+    if (this.renderingVariant) {
+      if (this.variantQueue.length >= MAX_QUEUED_VARIANTS) {
+        throw new ServiceUnavailableException("File de rendu d'images pleine");
+      }
+      ready = new Promise<void>((resolve) => this.variantQueue.push(resolve));
+    } else {
+      this.renderingVariant = true;
+      ready = Promise.resolve();
+    }
+    return ready.then(job).finally(() => {
+      const next = this.variantQueue.shift();
+      // Transfer the slot without allowing new jobs to jump the queue.
+      if (next) next();
+      else this.renderingVariant = false;
+    });
+  }
+
+  private fileVersion(stat: fs.BigIntStats): string {
+    return `${stat.dev}:${stat.ino}:${stat.size}:${stat.mtimeNs}:${stat.ctimeNs}`;
+  }
+
+  private async readOriginal(
+    source: string,
+    expected: fs.BigIntStats,
+  ): Promise<Buffer> {
+    const file = await fs.promises.open(
+      source,
+      fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW | fs.constants.O_NONBLOCK,
+    );
+    try {
+      const version = this.fileVersion(expected);
+      if (this.fileVersion(await file.stat({ bigint: true })) !== version) {
+        throw new Error('Image changed before reading');
+      }
+      // Read only the checked file size, even if a concurrent writer extends it.
+      const original = Buffer.allocUnsafe(Number(expected.size));
+      let offset = 0;
+      while (offset < original.length) {
+        const { bytesRead } = await file.read(
+          original,
+          offset,
+          original.length - offset,
+        );
+        if (!bytesRead) throw new Error('Image truncated during reading');
+        offset += bytesRead;
+      }
+      if (this.fileVersion(await file.stat({ bigint: true })) !== version) {
+        throw new Error('Image changed during reading');
+      }
+      return original;
+    } finally {
+      await file.close();
+    }
+  }
+
+  private cacheVariant(key: string, variant: Buffer): void {
+    if (variant.length > MAX_CACHE_BYTES) return;
+    while (
+      this.variants.size >= MAX_CACHE_ENTRIES ||
+      this.variantBytes + variant.length > MAX_CACHE_BYTES
+    ) {
+      const oldest = this.variants.entries().next().value;
+      if (!oldest) break;
+      this.variants.delete(oldest[0]);
+      this.variantBytes -= oldest[1].length;
+    }
+    this.variants.set(key, variant);
+    this.variantBytes += variant.length;
+  }
+
+  private async renderVariant(
+    original: Buffer,
+    profile: ImageProfile,
+  ): Promise<Buffer> {
+    // With animated input, Sharp checks width × stacked height before decoding.
+    const input = this.imageDecoder(original);
+    const metadata = await input.metadata();
+    const resize: sharp.ResizeOptions = {
+      width: profile.width,
+      height: MAX_IMAGE_DIMENSION,
+      fit: 'inside',
+      withoutEnlargement: true,
+    };
+    const webp = { quality: profile.quality };
+    const orientation = metadata.orientation ?? 1;
+    const pages = metadata.pages ?? 1;
+    if (pages === 1) {
+      return input
+        .autoOrient()
+        .rotate(profile.rotation)
+        .resize(resize)
+        .webp(webp)
+        .toBuffer();
+    }
+
+    if (profile.rotation === 0 && orientation === 1) {
+      return input.resize(resize).webp(webp).toBuffer();
+    }
+
+    // Sharp stacks animation frames vertically. Rotating that strip either
+    // fails (90/270) or reverses frame order (180). Transform each frame instead.
+    const { data, info } = await input
+      .toColourspace('srgb')
+      .ensureAlpha()
+      .raw({ depth: 'uchar' })
+      .toBuffer({ resolveWithObject: true });
+    const pageHeight = info.pageHeight;
+    const frameSize = info.width * pageHeight * 4;
+    if (
+      !pageHeight ||
+      info.height !== pageHeight * pages ||
+      info.channels !== 4 ||
+      data.length !== frameSize * pages ||
+      data.length > MAX_IMAGE_PIXELS * 4
+    ) {
+      throw new Error('Invalid decoded animation size');
+    }
+    // EXIF's eight transforms expressed as a horizontal mirror, then a rotation.
+    const exifAngle = [0, 0, 0, 180, 180, 270, 90, 90, 270][orientation] ?? 0;
+    const mirror = [2, 4, 5, 7].includes(orientation);
+    let frames: Buffer;
+    let frameWidth: number;
+    let frameHeight: number;
+    for (let i = 0; i < pages; i++) {
+      const frame = await sharp(
+        data.subarray(i * frameSize, (i + 1) * frameSize),
+        {
+          raw: { width: info.width, height: pageHeight, channels: 4 },
+        },
+      )
+        .flop(mirror)
+        .rotate((exifAngle + profile.rotation) % 360)
+        .resize(resize)
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      if (!frames) {
+        const outputBytes = frame.data.length * pages;
+        if (outputBytes > MAX_IMAGE_PIXELS * 4) {
+          throw new Error('Animation output exceeds pixel budget');
+        }
+        frames = Buffer.allocUnsafe(outputBytes);
+        frameWidth = frame.info.width;
+        frameHeight = frame.info.height;
+      }
+      frame.data.copy(frames, i * frame.data.length);
+    }
+    return sharp(frames, {
+      raw: {
+        width: frameWidth,
+        height: frameHeight * pages,
+        channels: 4,
+        pageHeight: frameHeight,
+      },
+    })
+      .webp({ ...webp, delay: metadata.delay, loop: metadata.loop })
+      .toBuffer();
+  }
+
+  private imageDecoder(input: Buffer | string): sharp.Sharp {
+    return sharp(input, { animated: true, limitInputPixels: MAX_IMAGE_PIXELS });
   }
 
   async createImage(hikeId: string, files: File[]): Promise<Image[]> {
@@ -244,9 +434,13 @@ export class ImageRepository extends Repository<Image> {
         newImage.hikeId = hikeId;
         newImage.path = `Hike/${path}`;
         newImage.ordered = numberMax + i;
-        await this.uploadImage({ name: path, file });
-        const saved = await this.save(newImage);
-        return saved;
+        const destination = await this.uploadImage({ name: path, file });
+        try {
+          return await this.save(newImage);
+        } catch (error) {
+          await this.discardOriginal(destination);
+          throw error;
+        }
       }),
     );
   }
@@ -303,14 +497,54 @@ export class ImageRepository extends Repository<Image> {
     );
   }
 
-  private async uploadImage({ name, file }: { name: string; file: File }) {
-    const directoryPath = `${config.image_path}/Hike`;
-    if (!fs.existsSync(directoryPath)) {
-      fs.mkdirSync(directoryPath, { recursive: true });
-    }
+  private originalDestination(name: string): string {
+    fs.mkdirSync(join(config.image_path, 'Hike'), { recursive: true });
+    return this.resolveManagedImagePath(`Hike/${name}`, false);
+  }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    await sharp(file.buffer).toFile(`${directoryPath}/${name}`);
+  private async discardOriginal(destination: string): Promise<void> {
+    try {
+      await fs.promises.unlink(destination);
+    } catch {
+      // Preserve the original error if the file cannot be removed.
+    }
+  }
+
+  private async validateOriginal(
+    input: Buffer | string,
+    fileName: string,
+  ): Promise<void> {
+    const extension = this.getSafeImageExtension(fileName);
+    const expectedFormat = extension === 'jpg' ? 'jpeg' : extension;
+    try {
+      const original = this.imageDecoder(input);
+      const metadata = await original.metadata();
+      if (metadata.format !== expectedFormat) {
+        throw new Error('Image format does not match its extension');
+      }
+      // metadata() reads headers only. Force a full decode (including all frames)
+      // to catch damaged files without encoding or stripping the original.
+      await original.stats();
+    } catch {
+      throw new BadRequestException(
+        'Fichier image invalide ou format incohérent',
+      );
+    }
+  }
+
+  private async uploadImage({ name, file }: { name: string; file: File }) {
+    const original: Buffer = file.buffer;
+    if (
+      !Buffer.isBuffer(original) ||
+      !original.length ||
+      original.length > MAX_ORIGINAL_BYTES
+    ) {
+      throw new BadRequestException('Taille du fichier invalide');
+    }
+    await this.validateOriginal(original, name);
+    const destination = this.originalDestination(name);
+    await fs.promises.writeFile(destination, original, { flag: 'wx' });
+    return destination;
   }
 
   async initiateChunkUpload(initiateUploadDto: InitiateUploadDto) {
@@ -319,18 +553,18 @@ export class ImageRepository extends Repository<Image> {
       fileName,
       hikeId,
       fileSize,
-      chunkSize = 512 * 1024,
-    } = initiateUploadDto; // 512KB en prod, 1MB en dev
+      chunkSize = DEFAULT_CHUNK_BYTES,
+    } = initiateUploadDto;
 
     const normalizedFileSize = Number(fileSize);
     const normalizedChunkSize = Number(chunkSize);
     if (
       !Number.isSafeInteger(normalizedFileSize) ||
       normalizedFileSize <= 0 ||
-      normalizedFileSize > 100 * 1024 * 1024 ||
+      normalizedFileSize > MAX_ORIGINAL_BYTES ||
       !Number.isSafeInteger(normalizedChunkSize) ||
       normalizedChunkSize <= 0 ||
-      normalizedChunkSize > 1024 * 1024
+      normalizedChunkSize > MAX_CHUNK_BYTES
     ) {
       throw new BadRequestException("Paramètres d'upload invalides");
     }
@@ -338,12 +572,35 @@ export class ImageRepository extends Repository<Image> {
     this.getSafeImageExtension(fileName);
     const totalChunks = Math.ceil(normalizedFileSize / normalizedChunkSize);
 
-    // Créer le répertoire temporaire pour les chunks
+    if (totalChunks > MAX_UPLOAD_CHUNKS) {
+      throw new BadRequestException('Nombre maximal de chunks dépassé');
+    }
     const tempDir = this.resolveChunkTempDirectory(fileHash);
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
+    const result = {
+      fileHash,
+      totalChunks,
+      chunkSize: normalizedChunkSize,
+      uploadId: fileHash,
+    };
+    const existing = this.uploadSessions.get(fileHash);
+    if (existing) {
+      if (
+        existing.hikeId !== hikeId ||
+        existing.fileName !== fileName ||
+        existing.fileSize !== normalizedFileSize ||
+        existing.chunkSize !== normalizedChunkSize
+      ) {
+        throw new BadRequestException("Session d'upload incohérente");
+      }
+      return result;
+    }
+    if (this.uploadSessions.size >= MAX_UPLOAD_SESSIONS) {
+      throw new ServiceUnavailableException(
+        "Trop de sessions d'upload actives",
+      );
     }
 
+    fs.mkdirSync(tempDir, { recursive: true });
     const session: ChunkUploadSession = {
       fileHash,
       fileName,
@@ -357,13 +614,7 @@ export class ImageRepository extends Repository<Image> {
     };
 
     this.uploadSessions.set(fileHash, session);
-
-    return {
-      fileHash,
-      totalChunks,
-      chunkSize: normalizedChunkSize,
-      uploadId: fileHash,
-    };
+    return result;
   }
 
   async uploadChunk(chunk: File, chunkUploadDto: ChunkUploadDto) {
@@ -395,7 +646,14 @@ export class ImageRepository extends Repository<Image> {
       return { success: true, message: 'Chunk déjà uploadé' };
     }
 
-    if (!chunk?.buffer?.length || chunk.buffer.length > session.chunkSize) {
+    const expectedSize = Math.min(
+      session.chunkSize,
+      session.fileSize - chunkIndex * session.chunkSize,
+    );
+    if (
+      !Buffer.isBuffer(chunk?.buffer) ||
+      chunk.buffer.length !== expectedSize
+    ) {
       throw new BadRequestException('Taille de chunk invalide');
     }
 
@@ -451,58 +709,42 @@ export class ImageRepository extends Repository<Image> {
       );
     }
 
-    let finalStoredPath: string | null = null;
+    if (session.finalizing) {
+      throw new BadRequestException('Finalisation déjà en cours');
+    }
+    session.finalizing = true;
+    let writtenPath: string | undefined;
     let savedImage: Image | null = null;
 
     try {
-      // Assembler les chunks
       const finalFileName = `${uuidv4()}.${this.getSafeImageExtension(session.fileName)}`;
-      finalStoredPath = `Hike/${finalFileName}`;
-
-      // Créer le répertoire de destination si nécessaire
-      const hikeDir = join(config.image_path, 'Hike');
-      if (!fs.existsSync(hikeDir)) {
-        fs.mkdirSync(hikeDir, { recursive: true });
-      }
-      const finalPath = this.resolveManagedImagePath(finalStoredPath, false);
-
-      // Assembler les chunks dans l'ordre
-      const writeStream = fs.createWriteStream(finalPath);
-      for (let i = 0; i < session.totalChunks; i++) {
-        // Les clés peuvent être des chaînes, essayer les deux
-        const chunkPath =
-          session.chunkPaths.get(i) || session.chunkPaths.get(i.toString());
-
-        if (!chunkPath || !fs.existsSync(chunkPath)) {
-          throw new BadRequestException(`Chunk ${i} manquant`);
-        }
-        const chunkData = fs.readFileSync(chunkPath);
-        writeStream.write(chunkData);
-      }
-      writeStream.end();
-
-      // Attendre que l'écriture soit terminée
-      await new Promise((resolve, reject) => {
-        writeStream.on('finish', resolve as () => void);
-        writeStream.on('error', reject);
-      });
-
-      // Vérifier que le fichier final existe et sa taille
-      if (!fs.existsSync(finalPath)) {
-        throw new BadRequestException('Fichier final non créé');
-      }
-
-      if (fs.statSync(finalPath).size !== session.fileSize) {
-        throw new BadRequestException('Taille du fichier final incohérente');
-      }
-
+      const finalStoredPath = `Hike/${finalFileName}`;
+      const finalPath = this.originalDestination(finalFileName);
+      const output = await fs.promises.open(finalPath, 'wx');
+      writtenPath = finalPath;
       try {
-        const processedBuffer = await sharp(finalPath).toBuffer();
-        await sharp(processedBuffer).toFile(finalPath);
-      } catch (sharpError) {
-        console.error('Erreur Sharp:', sharpError);
-        throw new BadRequestException("Erreur lors du traitement de l'image");
+        for (let i = 0; i < session.totalChunks; i++) {
+          const chunkPath = session.chunkPaths.get(i);
+          if (!chunkPath) {
+            throw new BadRequestException(`Chunk ${i} manquant`);
+          }
+          const chunkData = await fs.promises
+            .readFile(chunkPath)
+            .catch((error: NodeJS.ErrnoException) => {
+              if (error.code === 'ENOENT') {
+                throw new BadRequestException(`Chunk ${i} manquant`);
+              }
+              throw error;
+            });
+          await output.writeFile(chunkData);
+        }
+        if ((await output.stat()).size !== session.fileSize) {
+          throw new BadRequestException('Taille du fichier final incohérente');
+        }
+      } finally {
+        await output.close();
       }
+      await this.validateOriginal(finalPath, finalFileName);
 
       // Obtenir le nombre d'images existantes pour l'ordre
       const numberMax = (await this.count({ where: { hikeId } })) + 1;
@@ -529,18 +771,8 @@ export class ImageRepository extends Repository<Image> {
 
       return savedImage;
     } catch (error) {
-      if (!savedImage && finalStoredPath) {
-        try {
-          const finalPath = this.resolveManagedImagePath(
-            finalStoredPath,
-            false,
-          );
-          if (fs.existsSync(finalPath)) {
-            fs.unlinkSync(finalPath);
-          }
-        } catch {
-          // Le chemin est invalide ou le fichier a déjà disparu.
-        }
+      if (!savedImage && writtenPath) {
+        await this.discardOriginal(writtenPath);
       }
 
       console.error('ERREUR lors de la finalisation:', error);
@@ -568,6 +800,9 @@ export class ImageRepository extends Repository<Image> {
       // Session déjà supprimée, pas d'erreur
       return { success: true, message: 'Upload déjà annulé' };
     }
+    if (session.finalizing) {
+      throw new BadRequestException('Finalisation déjà en cours');
+    }
 
     this.cleanupTempFiles(fileHash);
     this.uploadSessions.delete(fileHash);
@@ -587,7 +822,10 @@ export class ImageRepository extends Repository<Image> {
     const expireTime = 24 * 60 * 60 * 1000; // 24 heures
 
     for (const [fileHash, session] of this.uploadSessions.entries()) {
-      if (now.getTime() - session.createdAt.getTime() > expireTime) {
+      if (
+        !session.finalizing &&
+        now.getTime() - session.createdAt.getTime() > expireTime
+      ) {
         this.cleanupTempFiles(fileHash);
         this.uploadSessions.delete(fileHash);
       }

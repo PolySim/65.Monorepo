@@ -2,16 +2,27 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import * as fs from 'fs';
 import { isAbsolute, relative, resolve } from 'path';
 import { config } from 'src/config/config';
-import { CreateHikeDto, HikeSearchDto, UpdateHikeDto } from 'src/DTO/hike.dto';
+import {
+  CreateHikeDto,
+  HikeSearchDto,
+  HikeSuggestionDto,
+  UpdateHikeDto,
+} from 'src/DTO/hike.dto';
 import { Favorite } from 'src/entities/favorite.entity';
 import { HikeGPX } from 'src/entities/higeGPX.entity';
 import { Image } from 'src/entities/image.entity';
 import { DataSource, Like, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { Hike } from '../entities/hike.entity';
+import { HikeSuggestions } from './hike-suggestions.query';
 
 @Injectable()
 export class HikeRepository extends Repository<Hike> {
+  private readonly suggestions = new HikeSuggestions(
+    (sql) => this.query(sql),
+    () => this.dataSource.createQueryRunner().isTransactionActive,
+  );
+
   constructor(private dataSource: DataSource) {
     super(Hike, dataSource.createEntityManager());
   }
@@ -83,6 +94,10 @@ export class HikeRepository extends Repository<Hike> {
     });
   }
 
+  async findSuggestions(term: string): Promise<HikeSuggestionDto[]> {
+    return this.suggestions.find(term);
+  }
+
   async getHikeById(id: string): Promise<Hike> {
     return await this.findOne({
       where: { id },
@@ -140,6 +155,24 @@ export class HikeRepository extends Repository<Hike> {
         duration: true,
       },
     });
+  }
+
+  async isFavorite(hikeId: string, userId: string): Promise<boolean> {
+    return this.dataSource.getRepository(Favorite).existsBy({ hikeId, userId });
+  }
+
+  async setFavorite(hikeId: string, userId: string, isFavorite: boolean) {
+    const favorites = this.dataSource.getRepository(Favorite);
+    if (isFavorite) {
+      await favorites
+        .createQueryBuilder()
+        .insert()
+        .values({ hikeId, userId })
+        .orIgnore()
+        .execute();
+    } else {
+      await favorites.delete({ hikeId, userId });
+    }
   }
 
   async toggleFavorite(hikeId: string, userId: string): Promise<void> {

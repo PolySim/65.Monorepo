@@ -2,136 +2,165 @@
 
 import { Button } from "@/components/ui/button";
 import { config } from "@/config/config";
-import { cn } from "@/lib/utils";
+import { useAppParams } from "@/hook/useAppParams";
+import authenticatedImageLoader from "@/lib/authenticated-image-loader";
 import {
   useHikeById,
-  useHikeFavorites,
-  useToggleFavorite,
+  useHikeFavoriteStatus,
+  useSetFavorite,
 } from "@/queries/hike.queries";
-import { ArrowLeft, Heart, Images, MapPin } from "lucide-react";
+import { ArrowLeft, Heart, Images, Map, MapPin, RefreshCw } from "lucide-react";
 import Image from "next/image";
-import authenticatedImageLoader from "@/lib/authenticated-image-loader";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+
+export function HikeCollectionLink() {
+  const { categoryId, stateId } = useAppParams();
+  const category = `/categories/${encodeURIComponent(categoryId)}`;
+  const hasState = !!stateId && stateId !== "-1";
+  const href = hasState
+    ? `${category}/states/${encodeURIComponent(stateId)}`
+    : category;
+
+  return (
+    <Button asChild variant="ghost" className="min-h-11 px-2.5 text-primary">
+      <Link href={href}>
+        <ArrowLeft aria-hidden="true" />
+        {hasState ? "Activités du massif" : "Activités de la catégorie"}
+      </Link>
+    </Button>
+  );
+}
 
 const HikeHeader = () => {
   const { data: hike } = useHikeById();
-  const router = useRouter();
-  const {
-    data: hikeFavorites,
-    isPending: areFavoritesPending,
-    isError: areFavoritesUnavailable,
-  } = useHikeFavorites(true);
-  const { mutate: toggleFavorite, isPending: isTogglingFavorite } =
-    useToggleFavorite();
-  const isFavorite = hikeFavorites?.some((h) => h.id === hike?.id);
+  const favoriteStatus = useHikeFavoriteStatus(!!hike?.id);
+  const { mutate: setFavorite, isPending: isSettingFavorite } =
+    useSetFavorite();
+  if (!hike) return null;
+
+  const isFavorite = favoriteStatus.data?.isFavorite;
   const favoriteLabel = isFavorite
     ? "Retirer des favoris"
     : "Ajouter aux favoris";
-  const imageCount = hike?.images?.length ?? 0;
+  const imageCount = hike.images?.length ?? 0;
 
   return (
-    <header
-      className="relative isolate h-[28rem] overflow-hidden rounded-xl bg-primary sm:h-[32rem] lg:h-[36rem]"
-      aria-labelledby="hike-title"
-    >
-      {hike?.mainImage?.path && (
-        <Image
-          loader={authenticatedImageLoader}
-          src={`${config.IMAGE_URL}?path=${hike.mainImage.path}&rotate=${hike.mainImage.rotate ?? 0}`}
-          alt={`Paysage de la randonnée ${hike.title}`}
-          className="size-full object-cover"
-          fill
-          priority
-          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 92vw, 1280px"
-          style={{ objectPosition: `50% ${hike.mainImagePosition ?? 50}%` }}
-        />
-      )}
-      <div aria-hidden="true" className="absolute inset-0 bg-foreground/15" />
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-foreground/95 via-foreground/55 to-transparent"
-      />
-
-      <nav
-        aria-label="Actions de la randonnée"
-        className="absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-3 p-3 sm:p-5"
-      >
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => router.back()}
-          aria-label="Retour à la liste des randonnées"
-          className="bg-card text-foreground shadow-sm hover:bg-muted"
-        >
-          <ArrowLeft aria-hidden="true" />
-          <span>Retour</span>
-        </Button>
-
-        <div className="flex flex-wrap justify-end gap-2">
-          {imageCount > 0 && (
-            <Button
-              asChild
-              variant="secondary"
-              className="bg-card text-foreground shadow-sm hover:bg-muted"
-            >
-              <a href="#photos" aria-label={`Voir les ${imageCount} photos`}>
-                <Images aria-hidden="true" />
-                <span className="hidden sm:inline">Voir les photos</span>
-                <span aria-hidden="true">({imageCount})</span>
-              </a>
-            </Button>
-          )}
-          <Button
-            type="button"
-            variant="secondary"
-            aria-label={favoriteLabel}
-            aria-pressed={isFavorite}
-            disabled={
-              areFavoritesPending ||
-              areFavoritesUnavailable ||
-              isTogglingFavorite
-            }
-            onClick={() => toggleFavorite()}
-            className={cn(
-              "bg-card text-foreground shadow-sm hover:bg-muted",
-              isFavorite &&
-                "bg-sunrise text-accent-foreground hover:bg-sunrise/90",
-            )}
-          >
-            <Heart
-              aria-hidden="true"
-              fill={isFavorite ? "currentColor" : "none"}
-            />
-            <span className="hidden sm:inline">{favoriteLabel}</span>
-          </Button>
-        </div>
+    <header aria-labelledby="hike-title">
+      <nav aria-label="Navigation de la fiche" className="mb-2">
+        <HikeCollectionLink />
       </nav>
-
-      <div className="absolute inset-x-0 bottom-0 z-10 flex flex-col items-start gap-5 p-5 text-primary-foreground sm:p-8 lg:flex-row lg:items-end lg:justify-between lg:p-10">
-        <div className="min-w-0 max-w-3xl">
-          {(hike?.state?.name || hike?.category?.name) && (
-            <p className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-primary-foreground/90 sm:text-base">
-              <MapPin aria-hidden="true" className="size-4 shrink-0" />
-              {hike?.state?.name && <span>{hike.state.name}</span>}
-              {hike?.state?.name && hike?.category?.name && (
-                <span aria-hidden="true">·</span>
-              )}
-              {hike?.category?.name && <span>{hike.category.name}</span>}
-            </p>
-          )}
+      <div className="surface overflow-hidden">
+        {hike.mainImage?.path && (
+          <div className="relative h-36 bg-secondary sm:h-60 lg:h-[23rem]">
+            <Image
+              loader={authenticatedImageLoader}
+              src={`${config.IMAGE_URL}?path=${hike.mainImage.path}&rotate=${hike.mainImage.rotate ?? 0}`}
+              alt={`Paysage de la randonnée ${hike.title}`}
+              className="object-cover"
+              fill
+              priority
+              sizes="(min-width: 80rem) 76rem, (min-width: 64rem) calc(100vw - 4rem), (min-width: 40rem) calc(100vw - 3rem), calc(100vw - 2rem)"
+              style={{ objectPosition: `50% ${hike.mainImagePosition ?? 50}%` }}
+            />
+          </div>
+        )}
+        <div className="px-4 py-4 sm:px-6 sm:py-5">
           <h1
             id="hike-title"
-            className="break-words text-3xl font-bold leading-[1.08] tracking-[-0.025em] text-balance sm:text-4xl lg:text-5xl"
+            className="text-2xl font-bold leading-tight tracking-[-0.025em] [overflow-wrap:anywhere] sm:text-4xl lg:text-5xl"
           >
-            {hike?.title}
+            {hike.title}
           </h1>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
+            {(hike.state?.name || hike.category?.name) && (
+              <p className="flex min-w-0 items-center gap-1.5 [overflow-wrap:anywhere]">
+                <MapPin
+                  aria-hidden="true"
+                  className="size-4 shrink-0 text-primary"
+                />
+                <span>
+                  {[hike.state?.name, hike.category?.name]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              </p>
+            )}
+            {hike.difficulty?.name && (
+              <span className="rounded-full bg-sunrise-soft px-2.5 py-1 text-xs font-semibold text-accent-foreground">
+                Niveau {hike.difficulty.name}
+              </span>
+            )}
+          </div>
+          <div
+            className="mt-3 flex flex-wrap gap-1.5 border-t pt-3 sm:gap-2"
+            role="group"
+            aria-label="Actions de la randonnée"
+          >
+            {!!hike.gpxFiles?.length && (
+              <Button
+                asChild
+                variant="outline"
+                className="min-h-11 gap-1.5 px-2.5 sm:px-3"
+              >
+                <a href="#carte">
+                  <Map aria-hidden="true" /> Carte
+                </a>
+              </Button>
+            )}
+            {imageCount > 0 && (
+              <Button
+                asChild
+                variant="outline"
+                className="min-h-11 gap-1.5 px-2.5 sm:px-3"
+              >
+                <a
+                  href="#photos"
+                  aria-label={`Voir les photos (${imageCount})`}
+                >
+                  <Images aria-hidden="true" /> Photos
+                </a>
+              </Button>
+            )}
+            {favoriteStatus.isError ? (
+              <Button
+                variant="outline"
+                className="min-h-11 px-3"
+                disabled={favoriteStatus.isFetching}
+                onClick={() => favoriteStatus.refetch()}
+                aria-label="Réessayer le chargement du favori"
+              >
+                <RefreshCw aria-hidden="true" /> Favori indisponible
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant={isFavorite ? "secondary" : "outline"}
+                aria-label={favoriteLabel}
+                aria-pressed={isFavorite}
+                disabled={
+                  isFavorite === undefined ||
+                  favoriteStatus.isFetching ||
+                  isSettingFavorite
+                }
+                onClick={() => {
+                  if (isFavorite !== undefined)
+                    setFavorite({ hikeId: hike.id, isFavorite: !isFavorite });
+                }}
+                className="min-h-11 gap-1.5 px-2.5 sm:px-3"
+              >
+                <Heart
+                  aria-hidden="true"
+                  fill={isFavorite ? "currentColor" : "none"}
+                />
+                {isFavorite === undefined || isSettingFavorite
+                  ? "Favori…"
+                  : isFavorite
+                    ? "En favori"
+                    : "Favori"}
+              </Button>
+            )}
+          </div>
         </div>
-
-        {hike?.difficulty?.name && (
-          <span className="shrink-0 rounded-full bg-sunrise-soft px-3.5 py-2 text-sm font-semibold text-accent-foreground ring-1 ring-accent/30">
-            Niveau {hike.difficulty.name}
-          </span>
-        )}
       </div>
     </header>
   );

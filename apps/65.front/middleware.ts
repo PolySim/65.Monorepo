@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { config as appConfig } from "./config/config";
+import { AUTH_ACCOUNT_HEADER, config as appConfig } from "./config/config";
 import { UserRole } from "./model/user.model";
 
 const isAuthRoute = (request: NextRequest) =>
@@ -11,7 +11,14 @@ const isPublicRoute = (request: NextRequest) =>
 const isAdminRoute = (request: NextRequest) =>
   request.nextUrl.pathname.startsWith("/admin");
 
-const getSession = async (request: NextRequest) => {
+const withAccount = (request: NextRequest, accountId: string) => {
+  const headers = new Headers(request.headers);
+  // Always overwrite the incoming value with the identity verified by the API.
+  headers.set(AUTH_ACCOUNT_HEADER, accountId);
+  return NextResponse.next({ request: { headers } });
+};
+
+const getAccountId = async (request: NextRequest) => {
   const cookie = request.headers.get("cookie");
   if (!cookie) return null;
 
@@ -22,7 +29,9 @@ const getSession = async (request: NextRequest) => {
     });
 
     if (!response.ok) return null;
-    return response.json();
+    const session = await response.json();
+    const id = session?.user?.id;
+    return typeof id === "string" && id ? id : null;
   } catch {
     return null;
   }
@@ -54,25 +63,26 @@ export default async function middleware(request: NextRequest) {
       }
 
       const user = await userResponse.json();
-      return user.roleId === UserRole.ADMIN
-        ? NextResponse.next()
+      return user.roleId === UserRole.ADMIN &&
+        typeof user.authUserId === "string" && user.authUserId
+        ? withAccount(request, user.authUserId)
         : NextResponse.redirect(new URL("/", request.url));
     } catch {
       return NextResponse.redirect(new URL("/auth/signIn", request.url));
     }
   }
 
-  const session = await getSession(request);
+  const accountId = await getAccountId(request);
 
-  if (isAuthRoute(request) && session) {
-    return NextResponse.redirect(new URL("/", request.url));
+  if (isAuthRoute(request)) {
+    return accountId
+      ? NextResponse.redirect(new URL("/", request.url))
+      : NextResponse.next();
   }
 
-  if (!session && !isAuthRoute(request)) {
-    return NextResponse.redirect(new URL("/auth/signIn", request.url));
-  }
-
-  return NextResponse.next();
+  return accountId
+    ? withAccount(request, accountId)
+    : NextResponse.redirect(new URL("/auth/signIn", request.url));
 }
 
 export const config = {

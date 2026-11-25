@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { useAppParams } from "@/hook/useAppParams";
 import { useHikeFavorites, useHikeFilters } from "@/queries/hike.queries";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import EmptyHikes from "./emptyHikes";
@@ -27,6 +28,7 @@ const HikeGridSkeleton = () => (
 );
 
 const GridHikes = (props: { isFavorites?: boolean; isAdmin?: boolean }) => {
+  const { categoryId, stateId } = useAppParams();
   const filtersQuery = useHikeFilters();
   const favoritesQuery = useHikeFavorites(props.isFavorites);
   const query = props.isFavorites ? favoritesQuery : filtersQuery;
@@ -44,18 +46,21 @@ const GridHikes = (props: { isFavorites?: boolean; isAdmin?: boolean }) => {
           <AlertTriangle className="size-5" aria-hidden="true" />
         </span>
         <h2 className="mt-5 text-lg font-bold">
-          Impossible de charger les activités
+          {props.isFavorites
+            ? "Impossible de charger vos favoris"
+            : "Impossible de charger les activités"}
         </h2>
         <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
           Vérifiez votre connexion puis relancez le chargement.
         </p>
         <Button
-          className="mt-5"
+          className="mt-5 min-h-11"
           variant="outline"
+          disabled={query.isFetching}
           onClick={() => query.refetch()}
         >
           <RefreshCw aria-hidden="true" />
-          Réessayer
+          {query.isFetching ? "Chargement…" : "Réessayer"}
         </Button>
       </div>
     );
@@ -68,7 +73,15 @@ const GridHikes = (props: { isFavorites?: boolean; isAdmin?: boolean }) => {
       ))}
     </div>
   ) : (
-    <EmptyHikes isFavorites={props.isFavorites} isAdmin={props.isAdmin} />
+    <EmptyHikes
+      isFavorites={props.isFavorites}
+      isAdmin={props.isAdmin}
+      categoryHref={
+        !props.isFavorites && !props.isAdmin && categoryId && stateId
+          ? `/categories/${encodeURIComponent(categoryId)}`
+          : undefined
+      }
+    />
   );
 };
 

@@ -102,6 +102,21 @@ const BurgerMenu = () => {
               (categories ?? []).map((category) => {
                 const hasStates = (category.states ?? []).length > 0;
                 const isOpen = openCategory === category.id;
+                const thumbnail = category.image_path ? (
+                  <Image
+                    loader={authenticatedImageLoader}
+                    src={`${config.IMAGE_URL}?path=${category.image_path}&rotate=0`}
+                    alt=""
+                    width={48}
+                    height={48}
+                    className="size-10 shrink-0 rounded-md object-cover outline outline-1 -outline-offset-1 outline-black/10"
+                  />
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className="size-10 shrink-0 rounded-md bg-secondary"
+                  />
+                );
 
                 return (
                   <div key={category.id} className="mb-1">
@@ -116,14 +131,7 @@ const BurgerMenu = () => {
                         className="flex min-h-14 w-full items-center gap-3 rounded-lg px-3 text-left font-medium outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/20"
                         aria-expanded={isOpen}
                       >
-                        <Image
-                          loader={authenticatedImageLoader}
-                          src={`${config.IMAGE_URL}?path=${category.image_path}&rotate=0`}
-                          alt=""
-                          width={48}
-                          height={48}
-                          className="size-10 rounded-md object-cover outline outline-1 -outline-offset-1 outline-black/10"
-                        />
+                        {thumbnail}
                         <span className="flex-1">{category.name}</span>
                         <ChevronDown
                           className={`size-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
@@ -136,14 +144,7 @@ const BurgerMenu = () => {
                           href={`/categories/${category.id}`}
                           className="flex min-h-14 items-center gap-3 rounded-lg px-3 font-medium outline-none hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/20"
                         >
-                          <Image
-                            loader={authenticatedImageLoader}
-                            src={`${config.IMAGE_URL}?path=${category.image_path}&rotate=0`}
-                            alt=""
-                            width={48}
-                            height={48}
-                            className="size-10 rounded-md object-cover outline outline-1 -outline-offset-1 outline-black/10"
-                          />
+                          {thumbnail}
                           {category.name}
                         </Link>
                       </DialogClose>

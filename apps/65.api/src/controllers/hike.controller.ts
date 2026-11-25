@@ -1,17 +1,33 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   Post,
   Put,
+  Query,
   Req,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CreateHikeDto, HikeSearchDto, UpdateHikeDto } from 'src/DTO/hike.dto';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import {
+  CreateHikeDto,
+  HIKE_SUGGESTION_MAX_LENGTH,
+  HikeFavoriteStatusDto,
+  HikeSearchDto,
+  HikeSuggestionDto,
+  UpdateHikeDto,
+} from 'src/DTO/hike.dto';
 import { Hike } from 'src/entities/hike.entity';
 import { AdminGuard } from 'src/middleware/AdminGuard';
 import { AuthGuard } from 'src/middleware/AuthGuard';
@@ -53,6 +69,50 @@ export class HikeController {
       throw new UnauthorizedException('User not authenticated');
     }
     return this.hikeService.getHikeWithFavorites(authUserId);
+  }
+
+  @Get('suggestions')
+  @UseGuards(AuthGuard)
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: 'Suggérer au plus huit randonnées' })
+  @ApiQuery({
+    name: 'q',
+    schema: { type: 'string', maxLength: HIKE_SUGGESTION_MAX_LENGTH },
+  })
+  @ApiResponse({ status: 200, type: [HikeSuggestionDto] })
+  async findSuggestions(
+    @Query('q') query: unknown,
+  ): Promise<HikeSuggestionDto[]> {
+    return this.hikeService.findSuggestions(query);
+  }
+
+  @Get(':id/favorite')
+  @UseGuards(AuthGuard)
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: 'Lire le statut favori de la randonnée' })
+  @ApiResponse({ status: 200, type: HikeFavoriteStatusDto })
+  async getFavoriteStatus(
+    @Param('id') hikeId: string,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<HikeFavoriteStatusDto> {
+    return this.hikeService.getFavoriteStatus(hikeId, req.user.id);
+  }
+
+  @Put(':id/favorite')
+  @UseGuards(AuthGuard)
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: 'Fixer le statut favori de la randonnée' })
+  @ApiBody({ type: HikeFavoriteStatusDto })
+  @ApiResponse({ status: 200, type: HikeFavoriteStatusDto })
+  async setFavorite(
+    @Param('id') hikeId: string,
+    @Body('isFavorite') isFavorite: unknown,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<HikeFavoriteStatusDto> {
+    if (typeof isFavorite !== 'boolean') {
+      throw new BadRequestException('isFavorite doit être un booléen');
+    }
+    return this.hikeService.setFavorite(hikeId, req.user.id, isFavorite);
   }
 
   @Get(':id')

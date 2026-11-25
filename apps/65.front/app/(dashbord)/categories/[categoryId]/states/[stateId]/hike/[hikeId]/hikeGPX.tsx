@@ -4,11 +4,34 @@ import { Button } from "@/components/ui/button";
 import { SimpleGPXParser } from "@/lib/gpx";
 import { getGpxDownloadUrl } from "@/lib/media-url";
 import { useHikeById } from "@/queries/hike.queries";
-import { LatLngExpression } from "leaflet";
+import { latLngBounds, type FitBoundsOptions, type LatLngTuple } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Download, Map, Navigation } from "lucide-react";
-import { MapContainer, Polyline, TileLayer } from "react-leaflet";
-import { useMemo } from "react";
+import {
+  CircleMarker,
+  MapContainer,
+  Polyline,
+  TileLayer,
+  useMap,
+} from "react-leaflet";
+import { useEffect, useMemo } from "react";
+
+const trackStyle = { color: "var(--primary)", weight: 5, opacity: 0.9 };
+const trackBoundsOptions: FitBoundsOptions = {
+  padding: [24, 24],
+  maxZoom: 15,
+  animate: false,
+};
+
+function FitTrack({ bounds }: { bounds: ReturnType<typeof latLngBounds> }) {
+  const map = useMap();
+
+  useEffect(() => {
+    map.fitBounds(bounds, trackBoundsOptions);
+  }, [bounds, map]);
+
+  return null;
+}
 
 const HikeGPX = ({
   gpx,
@@ -24,45 +47,32 @@ const HikeGPX = ({
     }),
   });
 
-  const { center, positions } = useMemo(() => {
+  const track = useMemo(() => {
     try {
-      const parser = new SimpleGPXParser();
-      const data = parser.parse(gpx);
-      const parsedPositions =
-        data.tracks[0]?.points.map(
-          (point) => [point.lat, point.lon] as [number, number],
-        ) ?? [];
-
-      if (parsedPositions.length === 0) {
-        return { center: null, positions: parsedPositions };
-      }
-
-      const totals = parsedPositions.reduce<[number, number]>(
-        (accumulator, current) => [
-          accumulator[0] + current[0],
-          accumulator[1] + current[1],
-        ],
-        [0, 0],
+      const { tracks } = new SimpleGPXParser().parse(gpx);
+      const segments = tracks.flatMap(({ segments }) =>
+        segments.map((points) =>
+          points.map(({ lat, lon }): LatLngTuple => [lat, lon]),
+        ),
       );
-
+      const bounds = latLngBounds(segments.flat());
+      if (!bounds.isValid()) return null;
       return {
-        center: [
-          totals[0] / parsedPositions.length,
-          totals[1] / parsedPositions.length,
-        ] as [number, number],
-        positions: parsedPositions,
+        bounds,
+        lines: segments.filter((segment) => segment.length > 1),
+        singlePoints: segments.filter((segment) => segment.length === 1),
       };
     } catch {
-      return { center: null, positions: [] as [number, number][] };
+      return null;
     }
   }, [gpx]);
 
   if (typeof window === "undefined") return null;
 
-  const map = center ? (
+  const map = track ? (
     <MapContainer
-      center={center as LatLngExpression}
-      zoom={12}
+      bounds={track.bounds}
+      boundsOptions={trackBoundsOptions}
       scrollWheelZoom={true}
       className="h-80 w-full rounded-xl outline outline-1 -outline-offset-1 outline-border !z-0 sm:h-[26rem]"
       aria-label={`Carte interactive du parcours ${hike?.title ?? ""}`}
@@ -71,15 +81,18 @@ const HikeGPX = ({
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <Polyline
-        pathOptions={{
-          fillColor: "var(--primary)",
-          color: "var(--primary)",
-          weight: 5,
-          opacity: 0.9,
-        }}
-        positions={positions as LatLngExpression[]}
-      />
+      <FitTrack bounds={track.bounds} />
+      {track.lines.length > 0 && (
+        <Polyline pathOptions={trackStyle} positions={track.lines} />
+      )}
+      {track.singlePoints.map(([point], index) => (
+        <CircleMarker
+          key={index}
+          center={point}
+          radius={6}
+          pathOptions={trackStyle}
+        />
+      ))}
     </MapContainer>
   ) : (
     <div className="flex min-h-64 flex-col items-center justify-center rounded-xl bg-muted px-6 text-center outline outline-1 -outline-offset-1 outline-border">
@@ -97,7 +110,7 @@ const HikeGPX = ({
   if (compact) return map;
 
   return (
-    <section className="mt-12 sm:mt-16" aria-labelledby="hike-gpx-title">
+    <section aria-labelledby="hike-gpx-title">
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="flex items-center gap-3">

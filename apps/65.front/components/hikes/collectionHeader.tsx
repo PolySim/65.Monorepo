@@ -2,8 +2,11 @@
 
 import { useAppParams } from "@/hook/useAppParams";
 import { useCategories } from "@/queries/categories.queries";
-import { ChevronRight, Heart, MapPin } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
+
+const breadcrumbLink =
+  "inline-flex min-h-11 items-center rounded underline-offset-4 outline-none hover:text-primary-dark hover:underline focus-visible:ring-2 focus-visible:ring-ring";
 
 const CollectionHeader = ({
   isFavorites = false,
@@ -14,74 +17,61 @@ const CollectionHeader = ({
   const { data: categories, isPending } = useCategories();
   const category = categories?.find((item) => item.id === categoryId);
   const state = category?.states?.find((item) => item.id === stateId);
-
-  if (isFavorites) {
-    return (
-      <header className="mb-8">
-        <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-          <Heart className="size-4" aria-hidden="true" />
-          Votre sélection
-        </div>
-        <h1 className="mt-3 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
-          Mes activités favorites
-        </h1>
-        <p className="mt-3 max-w-2xl text-muted-foreground">
-          Retrouvez ici les sorties que vous souhaitez préparer, comparer ou
-          garder sous la main.
-        </p>
-      </header>
-    );
-  }
+  const title = isFavorites
+    ? "Mes favoris"
+    : (state?.name ?? category?.name ?? "Activités");
 
   return (
-    <header className="mb-8">
+    <header className="mb-4 sm:mb-6">
       <nav
-        className="mb-4 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground"
+        className="mb-1 flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground"
         aria-label="Fil d’Ariane"
       >
-        <Link
-          className="rounded outline-none hover:text-primary-dark hover:underline focus-visible:ring-2"
-          href="/"
-        >
-          Explorer
+        <Link className={breadcrumbLink} href="/#terrains">
+          Catégories
         </Link>
-        <ChevronRight className="size-3.5" aria-hidden="true" />
-        {state && category ? (
+        <ChevronRight className="size-3.5 shrink-0" aria-hidden="true" />
+        {stateId && category && (
           <>
             <Link
-              className="rounded outline-none hover:text-primary-dark hover:underline focus-visible:ring-2"
+              className={breadcrumbLink}
               href={`/categories/${category.id}`}
             >
               {category.name}
             </Link>
-            <ChevronRight className="size-3.5" aria-hidden="true" />
+            <ChevronRight className="size-3.5 shrink-0" aria-hidden="true" />
           </>
-        ) : null}
-        <span aria-current="page">
-          {state?.name ?? category?.name ?? "Activités"}
+        )}
+        <span aria-current="page" className="[overflow-wrap:anywhere]">
+          {title}
         </span>
       </nav>
-      {isPending ? (
-        <div className="space-y-3" role="status">
-          <span className="sr-only">Chargement du titre</span>
-          <div className="skeleton h-10 w-72 rounded-lg" />
-          <div className="skeleton h-5 w-full max-w-xl rounded" />
-        </div>
+      {!isFavorites && isPending ? (
+        <div
+          role="status"
+          aria-label="Chargement du titre"
+          className="skeleton h-9 w-64 max-w-full rounded-lg sm:h-10"
+        />
       ) : (
-        <>
-          <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-            <MapPin className="size-4" aria-hidden="true" />
-            {state ? "Massif" : "Catégorie"}
-          </div>
-          <h1 className="mt-3 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
-            {state?.name ?? category?.name ?? "Activités de montagne"}
-          </h1>
-          <p className="mt-3 max-w-2xl text-muted-foreground">
-            {state
-              ? `Toutes les activités disponibles dans le secteur ${state.name}.`
-              : `Parcourez les itinéraires et lieux classés dans ${category?.name ?? "cette sélection"}.`}
-          </p>
-        </>
+        <h1 className="text-3xl font-bold tracking-[-0.03em] [overflow-wrap:anywhere] sm:text-4xl">
+          {title}
+        </h1>
+      )}
+      {!isFavorites && !stateId && !!category?.states?.length && (
+        <nav
+          className="mt-3 flex flex-wrap gap-2"
+          aria-label="Filtrer par massif"
+        >
+          {category.states.map((item) => (
+            <Link
+              key={item.id}
+              href={`/categories/${category.id}/states/${item.id}`}
+              className="inline-flex min-h-11 items-center rounded-lg bg-secondary px-3 text-sm font-semibold text-secondary-foreground outline-none hover:bg-secondary/70 focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {item.name}
+            </Link>
+          ))}
+        </nav>
       )}
     </header>
   );

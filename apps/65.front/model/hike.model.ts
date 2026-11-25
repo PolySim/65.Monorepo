@@ -22,6 +22,19 @@ export type HikeSearch = {
   elevation?: number;
 };
 
+export const HIKE_SUGGESTION_MAX_LENGTH = 80;
+
+export type HikeSuggestion = {
+  id: string;
+  title: string;
+  categoryId: string;
+  categoryName: string;
+  stateId: string;
+  stateName: string;
+};
+
+export type HikeFavoriteStatus = { isFavorite: boolean };
+
 export type Hike = {
   id: string;
   title: string;

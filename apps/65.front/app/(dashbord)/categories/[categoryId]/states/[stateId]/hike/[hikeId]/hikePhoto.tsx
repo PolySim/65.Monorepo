@@ -7,6 +7,16 @@ import Image from "next/image";
 import authenticatedImageLoader from "@/lib/authenticated-image-loader";
 import ImageContainer from "./ImageContainer";
 
+// Match the page-container gutters and the gallery's gap-3 columns.
+const fullWidth =
+  "(min-width: 80rem) 76rem, (min-width: 64rem) calc(100vw - 4rem), (min-width: 40rem) calc(100vw - 3rem), calc(100vw - 2rem)";
+const halfWidth =
+  "(min-width: 80rem) 37.625rem, (min-width: 64rem) calc(50vw - 2.375rem), (min-width: 40rem) calc(50vw - 1.875rem), calc(100vw - 2rem)";
+const featuredWidth =
+  "(min-width: 80rem) 50.4rem, (min-width: 64rem) calc(66.667vw - 2.92rem), (min-width: 40rem) calc(100vw - 3rem), calc(100vw - 2rem)";
+const columnWidth =
+  "(min-width: 80rem) 24.84rem, (min-width: 64rem) calc(33.333vw - 1.84rem), (min-width: 40rem) calc(50vw - 1.875rem), calc(100vw - 2rem)";
+
 const HikePhoto = () => {
   const { data: hike } = useHikeById();
   const images = hike?.images ?? [];
@@ -17,7 +27,8 @@ const HikePhoto = () => {
   return (
     <section
       id="photos"
-      className="mt-12 scroll-mt-24 sm:mt-16"
+      tabIndex={-1}
+      className="mt-8 scroll-mt-24 sm:mt-12"
       aria-labelledby="hike-photos-title"
     >
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
@@ -63,10 +74,15 @@ const HikePhoto = () => {
               alt={`Photo ${index + 1} de la randonnée ${hike?.title ?? ""}`}
               className="object-cover transition-transform duration-200 ease-out group-hover:scale-[1.025] group-focus-visible:scale-[1.025]"
               fill
+              quality={75}
               sizes={
-                index === 0
-                  ? "(max-width: 640px) 100vw, (max-width: 1024px) 92vw, 62vw"
-                  : "(max-width: 640px) 100vw, (max-width: 1024px) 46vw, 30vw"
+                images.length === 1
+                  ? fullWidth
+                  : images.length === 2
+                    ? halfWidth
+                    : index === 0
+                      ? featuredWidth
+                      : columnWidth
               }
             />
             <span className="absolute inset-0 flex items-center justify-center bg-foreground/0 transition-colors duration-200 ease-out group-hover:bg-foreground/45 group-focus-visible:bg-foreground/45">

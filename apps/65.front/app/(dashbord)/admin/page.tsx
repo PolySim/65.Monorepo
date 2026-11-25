@@ -98,8 +98,9 @@ export default function AdminPage() {
                       loader={authenticatedImageLoader}
                       src={`${config.IMAGE_URL}?rotate=0&path=${category.image_path ?? ""}`}
                       alt=""
-                      width={112}
-                      height={112}
+                      width={56}
+                      height={56}
+                      quality={65}
                       className="size-14 shrink-0 rounded-lg object-cover outline outline-1 -outline-offset-1 outline-black/10"
                     />
                   ) : (

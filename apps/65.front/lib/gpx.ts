@@ -12,6 +12,7 @@ export interface GPXPoint {
 export interface GPXTrack {
   name?: string;
   points: GPXPoint[];
+  segments: GPXPoint[][];
 }
 
 export interface GPXData {
@@ -73,7 +74,7 @@ export class SimpleGPXParser {
     const lat = parseFloat(element.getAttribute("lat") || "");
     const lon = parseFloat(element.getAttribute("lon") || "");
 
-    if (isNaN(lat) || isNaN(lon)) {
+    if (!(Math.abs(lat) <= 90 && Math.abs(lon) <= 180)) {
       return null;
     }
 
@@ -115,6 +116,7 @@ export class SimpleGPXParser {
   private parseTrack(trkElement: Element): GPXTrack | null {
     const track: GPXTrack = {
       points: [],
+      segments: [],
     };
 
     // Nom du track
@@ -123,14 +125,20 @@ export class SimpleGPXParser {
       track.name = nameElement.textContent;
     }
 
-    // Parser tous les points du track (segments)
-    const trackPoints = trkElement.querySelectorAll("trkpt");
-    trackPoints.forEach((trkpt) => {
-      const point = this.parsePoint(trkpt);
-      if (point) {
-        track.points.push(point);
-      }
-    });
+    const segments = trkElement.querySelectorAll("trkseg");
+    for (const segment of segments.length
+      ? Array.from(segments)
+      : [trkElement]) {
+      const points: GPXPoint[] = [];
+      segment.querySelectorAll("trkpt").forEach((trkpt) => {
+        const point = this.parsePoint(trkpt);
+        if (point) {
+          points.push(point);
+          track.points.push(point);
+        }
+      });
+      if (points.length) track.segments.push(points);
+    }
 
     return track.points.length > 0 ? track : null;
   }
@@ -143,7 +151,7 @@ export class SimpleGPXParser {
     for (let i = 1; i < track.points.length; i++) {
       totalDistance += this.haversineDistance(
         track.points[i - 1],
-        track.points[i]
+        track.points[i],
       );
     }
     return totalDistance;

@@ -28,7 +28,6 @@ const HikeGPXContainer = () => {
   if (isPending) {
     return (
       <section
-        className="mt-12 sm:mt-16"
         role="status"
         aria-live="polite"
         aria-label="Chargement du tracé GPX"
@@ -48,7 +47,7 @@ const HikeGPXContainer = () => {
   if (isError) {
     return (
       <section
-        className="mt-12 rounded-xl bg-sunrise-soft px-6 py-8 text-accent-foreground sm:mt-16 sm:px-8"
+        className="rounded-xl bg-sunrise-soft px-6 py-8 text-accent-foreground sm:px-8"
         aria-labelledby="hike-gpx-error-title"
         role="alert"
       >

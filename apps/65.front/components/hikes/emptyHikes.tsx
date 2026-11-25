@@ -5,9 +5,11 @@ import Link from "next/link";
 export default function EmptyHikes({
   isFavorites,
   isAdmin,
+  categoryHref,
 }: {
   isFavorites?: boolean;
   isAdmin?: boolean;
+  categoryHref?: string;
 }) {
   const Icon = isFavorites ? Heart : isAdmin ? Plus : Compass;
   const title = isFavorites
@@ -16,13 +18,15 @@ export default function EmptyHikes({
       ? "Aucune activité dans cette catégorie"
       : "Aucune activité trouvée";
   const description = isFavorites
-    ? "Enregistrez les sorties qui vous intéressent pour les retrouver rapidement ici."
+    ? "Sur une fiche, sélectionnez « Favori » pour retrouver la sortie ici."
     : isAdmin
       ? "Créez une première activité avec le bouton situé en haut de la page."
-      : "Cette sélection ne contient pas encore d’activité. Explorez une autre catégorie ou un autre massif.";
+      : "Essayez un autre massif ou une autre catégorie.";
 
   return (
-    <div className="surface flex min-h-80 flex-col items-center justify-center px-6 py-12 text-center">
+    <div
+      className={`surface flex flex-col items-center justify-center px-6 text-center ${isAdmin ? "min-h-80 py-12" : "py-8 sm:py-12"}`}
+    >
       <span className="flex size-14 items-center justify-center rounded-xl bg-secondary text-primary-dark">
         <Icon className="size-6" aria-hidden="true" />
       </span>
@@ -32,7 +36,9 @@ export default function EmptyHikes({
       </p>
       {isFavorites || !isAdmin ? (
         <Button className="mt-6" asChild>
-          <Link href="/">Explorer les activités</Link>
+          <Link href={categoryHref ?? "/#terrains"}>
+            {categoryHref ? "Voir toute la catégorie" : "Voir les catégories"}
+          </Link>
         </Button>
       ) : null}
     </div>

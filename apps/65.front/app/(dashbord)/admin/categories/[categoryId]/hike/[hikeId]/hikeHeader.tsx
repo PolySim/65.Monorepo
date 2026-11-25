@@ -149,9 +149,9 @@ const HikeHeader = () => {
             src={`${config.IMAGE_URL}?path=${hike.mainImage.path}&rotate=${hike.mainImage.rotate ?? 0}`}
             alt={`Image principale de ${hike?.title ?? "l’activité"}`}
             className="absolute inset-0 size-full object-cover transition-[object-position] duration-200 ease-out"
-            width={2560}
-            height={1440}
-            priority
+            fill
+            sizes="(min-width: 80rem) 59rem, (min-width: 64rem) calc(100vw - 21rem), (min-width: 40rem) calc(100vw - 3rem), calc(100vw - 2rem)"
+            quality={75}
             style={{ objectPosition: `50% ${hike?.mainImagePosition ?? 50}%` }}
           />
         ) : (

@@ -4,8 +4,10 @@ import { config } from "@/config/config";
 import {
   CreateHikeDto,
   Hike,
+  HikeFavoriteStatus,
   HikeFilter,
   HikeSearch,
+  HikeSuggestion,
   UpdateHikeDto,
 } from "@/model/hike.model";
 import { getAuthHeaders } from "@/lib/auth-headers";
@@ -42,6 +44,25 @@ export const getHikes = async (filters: HikeFilter) => {
     return { success: true, data };
   } catch (error) {
     console.error("Error in fetching hikes", error);
+    return { success: false };
+  }
+};
+
+export const getHikeSuggestions = async (term: string) => {
+  try {
+    const authHeaders = await getAuthHeaders();
+    if (!authHeaders) return { success: false };
+
+    const query = new URLSearchParams({ q: term });
+    const res = await fetch(`${config.API_URL}/hikes/suggestions?${query}`, {
+      headers: authHeaders,
+      cache: "no-store",
+    });
+    if (!res.ok) return { success: false };
+
+    const data = (await res.json()) as HikeSuggestion[];
+    return { success: true, data };
+  } catch {
     return { success: false };
   }
 };
@@ -109,35 +130,37 @@ export const getHikeFavorites = async () => {
   }
 };
 
-export const toggleFavorite = async (hikeId: string) => {
+async function requestFavoriteStatus(hikeId: string, isFavorite?: boolean) {
   try {
     const authHeaders = await getAuthHeaders();
+    if (!authHeaders) return { success: false };
 
-    if (!authHeaders) {
-      console.error("Unauthorized for toggling favorite");
-      return { success: false };
-    }
-
-    const res = await fetch(`${config.API_URL}/hikes/toggle-favorite`, {
-      method: "POST",
-      headers: {
-        ...authHeaders,
-        "Content-Type": "application/json",
+    const res = await fetch(
+      `${config.API_URL}/hikes/${encodeURIComponent(hikeId)}/favorite`,
+      {
+        headers: authHeaders,
+        cache: "no-store",
+        ...(isFavorite !== undefined && {
+          method: "PUT",
+          headers: { ...authHeaders, "Content-Type": "application/json" },
+          body: JSON.stringify({ isFavorite }),
+        }),
       },
-      body: JSON.stringify({ hikeId }),
-    });
+    );
+    if (!res.ok) return { success: false };
 
-    if (!res.ok) {
-      console.error("Error in toggling favorite", res.statusText);
-      return { success: false };
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error("Error in toggling favorite", error);
+    const data = (await res.json()) as HikeFavoriteStatus;
+    return { success: true, data };
+  } catch {
     return { success: false };
   }
-};
+}
+
+export const getHikeFavoriteStatus = async (hikeId: string) =>
+  requestFavoriteStatus(hikeId);
+
+export const setHikeFavorite = async (hikeId: string, isFavorite: boolean) =>
+  requestFavoriteStatus(hikeId, isFavorite);
 
 export const createHike = async (hike: CreateHikeDto) => {
   try {

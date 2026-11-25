@@ -3,8 +3,10 @@ import {
   deleteHike,
   getHikeById,
   getHikeFavorites,
+  getHikeFavoriteStatus,
+  getHikeSuggestions,
   getHikes,
-  toggleFavorite,
+  setHikeFavorite,
   updateHike,
 } from "@/action/hike.action";
 import { useAppParams } from "@/hook/useAppParams";
@@ -12,7 +14,7 @@ import {
   CreateHikeDto,
   Hike,
   HikeFilter,
-  HikeSearch,
+  HIKE_SUGGESTION_MAX_LENGTH,
   UpdateHikeDto,
 } from "@/model/hike.model";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -40,6 +42,23 @@ export const useHikeFilters = (
       (!!newFilter.title || !!newFilter.categoryId || !!newFilter.stateId),
   });
 };
+
+export const useHikeSuggestions = (term: string, enabled: boolean) =>
+  useQuery({
+    queryKey: ["hikes", "suggestions", term],
+    queryFn: async () => {
+      const response = await getHikeSuggestions(term);
+      if (!response.success || !response.data) {
+        throw new Error("Impossible de charger les suggestions");
+      }
+      return response.data;
+    },
+    enabled:
+      enabled && term.length >= 2 && term.length <= HIKE_SUGGESTION_MAX_LENGTH,
+    staleTime: 30_000,
+    gcTime: 60_000,
+    retry: false,
+  });
 
 export const useHikeById = <TData = Hike>(props?: {
   select?: (data: { data?: Hike }) => TData;
@@ -70,43 +89,59 @@ export const useHikeFavorites = (isFavorites?: boolean) => {
       }
       return data.data ?? [];
     },
-    enabled: isFavorites,
+    enabled: isFavorites === true,
   });
 };
 
-export const useToggleFavorite = () => {
-  const queryClient = useQueryClient();
+const favoriteStatusKey = (hikeId: string) => ["hike-favorite", hikeId];
+const favoritesKey = ["hikes", "favorites"];
+
+export const useHikeFavoriteStatus = (enabled: boolean) => {
   const { hikeId } = useAppParams();
+  return useQuery({
+    queryKey: favoriteStatusKey(hikeId),
+    queryFn: async () => {
+      const response = await getHikeFavoriteStatus(hikeId);
+      if (!response.success || !response.data) {
+        throw new Error("Impossible de charger le statut favori");
+      }
+      return response.data;
+    },
+    enabled: enabled && !!hikeId,
+    staleTime: 0,
+  });
+};
+
+export const useSetFavorite = () => {
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => toggleFavorite(hikeId),
-    onMutate: () => {
-      queryClient.cancelQueries({ queryKey: ["hikes", "favorites"] });
-      const previousHikes = queryClient.getQueryData(["hikes", "favorites"]);
-      queryClient.setQueryData(
-        ["hikes", "favorites"],
-        (old: HikeSearch[] = []) =>
-          old.some((hike) => hike.id === hikeId)
-            ? old.filter((hike) => hike.id !== hikeId)
-            : [...old, { id: hikeId }],
-      );
-      return { previousHikes };
-    },
-    onSuccess: (data, _variables, context) => {
-      if (!data.success) {
-        toast.error("Erreur lors de l'ajout/retrait des favoris");
-        queryClient.setQueryData(
-          ["hikes", "favorites"],
-          context?.previousHikes,
-        );
+    mutationFn: async ({
+      hikeId,
+      isFavorite,
+    }: {
+      hikeId: string;
+      isFavorite: boolean;
+    }) => {
+      const response = await setHikeFavorite(hikeId, isFavorite);
+      if (!response.success || !response.data) {
+        throw new Error("Impossible de modifier le favori");
       }
+      return response.data;
     },
-    onError: (_error, _variables, context) => {
+    onSuccess: async (status, { hikeId }) => {
+      const queryKey = favoriteStatusKey(hikeId);
+      await queryClient.cancelQueries({ queryKey });
+      queryClient.setQueryData(queryKey, status);
+    },
+    onError: (_error, { hikeId }) => {
       toast.error("Erreur lors de l'ajout/retrait des favoris");
-      queryClient.setQueryData(["hikes", "favorites"], context?.previousHikes);
+      void queryClient.invalidateQueries({
+        queryKey: favoriteStatusKey(hikeId),
+      });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["hikes", "favorites"] });
+      void queryClient.invalidateQueries({ queryKey: favoritesKey });
     },
   });
 };

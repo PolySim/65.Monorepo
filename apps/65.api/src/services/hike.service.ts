@@ -1,5 +1,17 @@
-import { Injectable } from '@nestjs/common';
-import { CreateHikeDto, HikeSearchDto, UpdateHikeDto } from 'src/DTO/hike.dto';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  CreateHikeDto,
+  HIKE_SUGGESTION_MAX_LENGTH,
+  HikeFavoriteStatusDto,
+  HikeSearchDto,
+  HikeSuggestionDto,
+  UpdateHikeDto,
+} from 'src/DTO/hike.dto';
 import { Hike } from 'src/entities/hike.entity';
 import { HikeRepository } from 'src/repository/hike.repository';
 import { UserRepository } from 'src/repository/user.repository';
@@ -15,6 +27,19 @@ export class HikeService {
     return this.hikeRepository.findAllWithFilters(filters);
   }
 
+  async findSuggestions(query: unknown): Promise<HikeSuggestionDto[]> {
+    if (
+      typeof query !== 'string' ||
+      query.length > HIKE_SUGGESTION_MAX_LENGTH
+    ) {
+      throw new BadRequestException(
+        `q doit être une chaîne de ${HIKE_SUGGESTION_MAX_LENGTH} caractères maximum`,
+      );
+    }
+    const term = query.trim();
+    return term.length < 2 ? [] : this.hikeRepository.findSuggestions(term);
+  }
+
   async getHikeById(id: string): Promise<Hike> {
     return this.hikeRepository.getHikeById(id);
   }
@@ -25,6 +50,35 @@ export class HikeService {
       throw new Error('User not found');
     }
     return this.hikeRepository.getHikeWithFavorites(user.id);
+  }
+
+  private async getFavoriteUserId(hikeId: string, authUserId: string) {
+    const user = await this.userRepository.findByAuthUserId(authUserId);
+    if (!user) {
+      throw new ForbiddenException('User not linked');
+    }
+    if (!(await this.hikeRepository.existsBy({ id: hikeId }))) {
+      throw new NotFoundException('Hike not found');
+    }
+    return user.id;
+  }
+
+  async getFavoriteStatus(
+    hikeId: string,
+    authUserId: string,
+  ): Promise<HikeFavoriteStatusDto> {
+    const userId = await this.getFavoriteUserId(hikeId, authUserId);
+    return { isFavorite: await this.hikeRepository.isFavorite(hikeId, userId) };
+  }
+
+  async setFavorite(
+    hikeId: string,
+    authUserId: string,
+    isFavorite: boolean,
+  ): Promise<HikeFavoriteStatusDto> {
+    const userId = await this.getFavoriteUserId(hikeId, authUserId);
+    await this.hikeRepository.setFavorite(hikeId, userId, isFavorite);
+    return { isFavorite };
   }
 
   async toggleFavorite(hikeId: string, authUserId: string): Promise<void> {
