@@ -55,7 +55,7 @@ const HikeGPXContainer = () => {
   if (isError) {
     return (
       <section
-        className="rounded-xl bg-sunrise-soft px-6 py-8 text-accent-foreground sm:px-8"
+        className="rounded-md bg-sunrise-soft p-4 text-accent-foreground sm:p-5"
         aria-labelledby="hike-gpx-error-title"
         role="alert"
       >
@@ -64,15 +64,14 @@ const HikeGPXContainer = () => {
           L’aperçu du tracé est indisponible
         </h2>
         <p className="mt-2 max-w-2xl text-sm leading-6">
-          Le fichier est toujours accessible. Réessayez d’afficher la carte ou
-          téléchargez directement le GPX.
+          Réessayez d’afficher la carte ou tentez de télécharger le fichier GPX.
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
           <Button type="button" variant="outline" onClick={() => refetch()}>
             <RefreshCw aria-hidden="true" />
             Réessayer
           </Button>
-          <Button asChild>
+          <Button asChild className="shadow-none">
             <a
               href={getGpxDownloadUrl(gpxPath)}
               download={`${hike?.title ?? "itineraire"}.gpx`}
@@ -86,7 +85,7 @@ const HikeGPXContainer = () => {
     );
   }
 
-  return gpxFile ? <HikeGPX gpx={gpxFile} /> : null;
+  return gpxFile != null ? <HikeGPX gpx={gpxFile} /> : null;
 };
 
 export default HikeGPXContainer;

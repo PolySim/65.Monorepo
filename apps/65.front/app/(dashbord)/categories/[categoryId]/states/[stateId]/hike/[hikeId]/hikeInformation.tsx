@@ -5,7 +5,6 @@ import { AlertTriangle, MapPinned, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import HikeDescription from "./hikeDescription";
-import HikeGlobalInformation from "./hikeGlobalInformation";
 import HikeGPXContainer from "./hikeGPXContainer";
 import HikeHeader, { HikeCollectionLink } from "./hikeHeader";
 import HikePageSkeleton from "./hikePageSkeleton";
@@ -23,7 +22,7 @@ export function HikeUnavailable({ missing }: { missing: boolean }) {
           <HikeCollectionLink />
         </div>
         <div
-          className="surface flex min-h-72 flex-col items-center justify-center px-6 py-12 text-center"
+          className="border-t py-10 sm:py-14"
           role="alert"
         >
           <AlertTriangle
@@ -55,7 +54,7 @@ export function HikeUnavailable({ missing }: { missing: boolean }) {
       <div className="mb-2">
         <HikeCollectionLink />
       </div>
-      <div className="surface flex min-h-72 flex-col items-center justify-center px-6 py-12 text-center">
+      <div className="border-t py-10 sm:py-14">
         <MapPinned aria-hidden="true" className="mb-4 size-10 text-primary" />
         <h1 id="hike-not-found" className="text-2xl font-semibold">
           Randonnée introuvable
@@ -75,18 +74,17 @@ const HikeInformation = () => {
   return (
     <article className="page-container pb-6 sm:pb-10">
       <HikeHeader />
-      <HikeGlobalInformation />
       <HikeDescription />
-      <HikePhoto />
       {!!hike.gpxFiles?.length && (
         <div
           id="carte"
           tabIndex={-1}
-          className="mt-8 flow-root scroll-mt-24 sm:mt-12"
+          className="mt-8 scroll-mt-24 border-t pt-6 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring sm:mt-12 sm:pt-8"
         >
           <HikeGPXContainer />
         </div>
       )}
+      <HikePhoto />
     </article>
   );
 };

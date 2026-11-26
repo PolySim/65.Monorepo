@@ -1,7 +1,7 @@
 "use client";
 
 import { useHikeDetail } from "./useHikeDetail";
-import { AlertTriangle, Info } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 const HikeDescription = () => {
   const hike = useHikeDetail();
@@ -12,7 +12,7 @@ const HikeDescription = () => {
 
   return (
     <div
-      className={`mt-10 grid gap-8 sm:mt-12 sm:gap-10 ${
+      className={`mt-8 grid gap-8 border-t pt-6 [overflow-wrap:anywhere] sm:mt-12 sm:gap-10 sm:pt-8 ${
         description && indications
           ? "lg:grid-cols-[minmax(0,1.55fr)_minmax(18rem,0.8fr)] lg:items-start"
           : ""
@@ -20,15 +20,12 @@ const HikeDescription = () => {
     >
       {description && (
         <section aria-labelledby="hike-description-title">
-          <div className="mb-5 flex items-center gap-3">
-            <Info aria-hidden="true" className="size-6 text-primary" />
-            <h2
-              id="hike-description-title"
-              className="text-2xl font-semibold tracking-[-0.015em] text-foreground"
-            >
-              À propos du parcours
-            </h2>
-          </div>
+          <h2
+            id="hike-description-title"
+            className="mb-3 text-2xl font-semibold tracking-[-0.015em] text-foreground"
+          >
+            À propos du parcours
+          </h2>
           <div className="max-w-[72ch] space-y-4">
             {description
               .split("\n")
@@ -47,11 +44,11 @@ const HikeDescription = () => {
 
       {indications && (
         <aside
-          className="rounded-xl bg-sunrise-soft p-5 text-accent-foreground sm:p-6"
+          className="max-w-[72ch] rounded-md bg-sunrise-soft p-4 text-accent-foreground sm:p-5"
           aria-labelledby="hike-indications-title"
         >
-          <div className="mb-4 flex items-center gap-3">
-            <AlertTriangle aria-hidden="true" className="size-6 text-accent" />
+          <div className="mb-2 flex items-center gap-2">
+            <AlertTriangle aria-hidden="true" className="size-5 shrink-0 text-accent" />
             <h2
               id="hike-indications-title"
               className="text-xl font-semibold tracking-[-0.01em]"

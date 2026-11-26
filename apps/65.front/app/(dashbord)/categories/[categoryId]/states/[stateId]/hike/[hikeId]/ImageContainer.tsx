@@ -97,7 +97,7 @@ const ImageContainer = ({
           type="button"
           aria-label={imageLabel}
           className={cn(
-            "group relative w-full cursor-zoom-in overflow-hidden rounded-xl outline outline-1 -outline-offset-1 outline-black/10 transition-transform duration-200 ease-out hover:-translate-y-0.5 focus-visible:ring-[3px] focus-visible:ring-ring/30 focus-visible:outline-none active:translate-y-0 motion-reduce:transform-none",
+            "group relative w-full cursor-zoom-in overflow-hidden rounded-md bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
             className,
           )}
         >
@@ -112,7 +112,7 @@ const ImageContainer = ({
           );
         }}
         showCloseButton={false}
-        className="top-0 left-0 flex h-dvh max-h-none w-screen max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none bg-foreground p-0 shadow-none sm:p-0"
+        className="top-0 left-0 flex h-dvh max-h-none w-screen max-w-none translate-x-0 translate-y-0 gap-0 overflow-hidden rounded-none bg-foreground p-0 shadow-none sm:p-0 [&_button:focus-visible]:outline-2 [&_button:focus-visible]:outline-offset-2 [&_button:focus-visible]:outline-card"
       >
         <DialogHeader className="sr-only">
           <DialogTitle>
@@ -138,14 +138,14 @@ const ImageContainer = ({
           variant="secondary"
           onClick={() => setIsOpen(false)}
           aria-label="Fermer la galerie"
-          className="absolute top-4 left-4 z-10 bg-card text-foreground shadow-sm hover:bg-muted"
+          className="absolute top-4 left-4 z-10 bg-card text-foreground hover:bg-muted"
         >
           <XIcon aria-hidden="true" />
           <span className="hidden sm:inline">Fermer</span>
         </Button>
 
         <p
-          className="absolute top-4 left-1/2 z-10 min-h-11 -translate-x-1/2 rounded-lg bg-card px-3 py-3 text-sm font-semibold text-foreground shadow-sm"
+          className="absolute top-4 left-1/2 z-10 min-h-11 -translate-x-1/2 rounded-md bg-card px-3 py-3 text-sm font-semibold text-foreground"
           aria-live="polite"
         >
           {activeIndex + 1} / {imageCount}
@@ -158,7 +158,7 @@ const ImageContainer = ({
           onClick={() => onNavigate(-1)}
           disabled={activeIndex === 0}
           aria-label="Afficher la photo précédente"
-          className="absolute top-1/2 left-3 z-10 -translate-y-1/2 bg-card text-foreground shadow-sm hover:bg-muted sm:left-5"
+          className="absolute top-1/2 left-3 z-10 -translate-y-1/2 bg-card text-foreground hover:bg-muted sm:left-5"
         >
           <ChevronLeft aria-hidden="true" />
         </Button>
@@ -169,7 +169,7 @@ const ImageContainer = ({
           onClick={() => onNavigate(1)}
           disabled={activeIndex >= imageCount - 1}
           aria-label="Afficher la photo suivante"
-          className="absolute top-1/2 right-3 z-10 -translate-y-1/2 bg-card text-foreground shadow-sm hover:bg-muted sm:right-5"
+          className="absolute top-1/2 right-3 z-10 -translate-y-1/2 bg-card text-foreground hover:bg-muted sm:right-5"
         >
           <ChevronRight aria-hidden="true" />
         </Button>

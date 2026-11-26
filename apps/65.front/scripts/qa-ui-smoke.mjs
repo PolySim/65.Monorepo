@@ -1,4 +1,4 @@
-/* global document -- Browser callbacks executed by Playwright. */
+/* global document, getComputedStyle, Node, requestAnimationFrame -- Browser callbacks executed by Playwright. */
 import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { createRequire } from "node:module";
@@ -23,12 +23,12 @@ const media = (urls) =>
 const hikePath = "/categories/ski/states/south/hike/";
 let contextNumber = 0;
 
-async function open(path, { mobile = false, mode } = {}) {
+async function open(path, { mobile = false, mode, viewport } = {}) {
   const context = await browser.newContext({
     hasTouch: mobile,
-    viewport: mobile
-      ? { width: 390, height: 844 }
-      : { width: 1280, height: 850 },
+    viewport:
+      viewport ??
+      (mobile ? { width: 390, height: 844 } : { width: 1280, height: 850 }),
   });
   if (mode)
     await context.addCookies([
@@ -59,8 +59,13 @@ async function focused(locator) {
     true,
   );
 }
-async function shot(page, name) {
-  if (output) await page.screenshot({ path: join(output, `${name}.png`) });
+async function shot(page, name, { fullPage = false } = {}) {
+  if (output)
+    await page.screenshot({
+      path: join(output, `${name}.png`),
+      fullPage,
+      animations: "disabled",
+    });
 }
 
 async function fitsViewport(page, locator) {
@@ -216,9 +221,14 @@ try {
     await focused(direct.locator("#photos"));
     const photo = direct.getByRole("button", { name: /Ouvrir la photo 1/ });
     await photo.press("Enter");
-    await direct.getByRole("dialog", { name: /Galerie photo/ }).waitFor();
+    const dialog = direct.getByRole("dialog", { name: /Galerie photo/ });
+    await dialog.waitFor();
+    await dialog.getByRole("img").evaluate((img) => img.decode());
+    await shot(direct, `hike-gallery-${size}`);
     await direct.keyboard.press("Escape");
     await focused(photo);
+    assert.equal(await photo.evaluate((el) => getComputedStyle(el).outlineStyle), "solid");
+    assert.equal(await photo.evaluate((el) => getComputedStyle(el).outlineWidth), "2px");
     await direct.getByRole("link", { name: "Activités du massif" }).click();
     await direct.waitForURL("**/categories/ski/states/south");
     await context.close();
@@ -384,6 +394,7 @@ try {
     .waitFor();
   await gpxError.page.getByRole("button", { name: "Réessayer" }).waitFor();
   await gpxError.page.getByRole("link", { name: "Télécharger le GPX" }).waitFor();
+  await shot(gpxError.page, "hike-gpx-error", { fullPage: true });
   await gpxError.context.close();
 
   for (const mode of ["empty", "error"]) {
@@ -416,6 +427,97 @@ try {
   console.log(
     "États chargement, vide et erreur : catégories + GPX vide/erreur vérifiés",
   );
+
+  for (const width of [320, 390, 820, 1440]) {
+    const { context, page, urls } = await open(`${hikePath}wide`, {
+      mobile: width < 768,
+      mode: "normal",
+      viewport: { width, height: 850 },
+    });
+    try {
+      const title = page.locator("#hike-title");
+      const actions = page.getByRole("group", {
+        name: "Actions de la randonnée",
+      });
+      const cover = page.getByRole("img", {
+        name: "Paysage de la randonnée Parcours wide",
+      });
+      await cover.evaluate((img) => img.decode());
+      await fitsViewport(page, title);
+      await fitsViewport(page, actions);
+      await page.getByRole("button", { name: "Ajouter aux favoris" }).waitFor();
+      const actionBox = await actions.boundingBox();
+      const coverBox = await cover.boundingBox();
+      assert.ok(
+        width < 768
+          ? actionBox.y + actionBox.height <= coverBox.y
+          : actionBox.x + actionBox.width <= coverBox.x,
+      );
+      assert.equal(
+        Math.round(coverBox.width),
+        { 320: 288, 390: 358, 820: 370, 1440: 584 }[width],
+      );
+      assert.equal(
+        await cover.evaluate((img) => getComputedStyle(img).objectPosition),
+        "50% 23%",
+      );
+      assert.ok(
+        await page.locator("#carte").evaluate((map) =>
+          Boolean(
+            map.compareDocumentPosition(document.querySelector("#photos")) &
+              Node.DOCUMENT_POSITION_FOLLOWING,
+          ),
+        ),
+      );
+      await page.locator(".leaflet-container").waitFor();
+      assert.deepEqual(
+        await page.locator("article *").evaluateAll((elements) =>
+          elements
+            .filter((el) => {
+              // Tailwind's shadow-none serializes as transparent zero-size layers.
+              const shadow = getComputedStyle(el).boxShadow.replaceAll(
+                /rgba\(0, 0, 0, 0\)(?: 0px){4}(?:, )?/g,
+                "",
+              );
+              return shadow && shadow !== "none";
+            })
+            .map((el) => el.className),
+        ),
+        [],
+      );
+      if (output) {
+        // Full-page captures must not depend on the browser's lazy-load distance.
+        await page.locator("article header img, #photos img").evaluateAll(async (images) => {
+          await Promise.all(images.map((image) => {
+            image.loading = "eager";
+            return image.decode();
+          }));
+          await new Promise((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve)),
+          );
+        });
+        await shot(page, `hike-editorial-${width}`, { fullPage: true });
+      }
+
+      urls.length = 0;
+      await page.goto(`${origin}${hikePath}long-no-media`);
+      await title.filter({ hasText: /Traversée des crêtes/ }).waitFor();
+      await fitsViewport(page, title);
+      await fitsViewport(page, actions);
+      assert.equal(await actions.getByRole("link").count(), 0);
+      assert.equal(
+        await page
+          .locator("article img, #carte, #photos, #hike-key-information, #hike-description-title, #hike-indications-title")
+          .count(),
+        0,
+      );
+      assert.ok(!urls.some((url) => /\/api\/(?:gpx|images)\b/.test(url)));
+      await shot(page, `hike-long-no-media-${width}`);
+      console.log(`Fiche ${width}px : cover ${coverBox.width}px, actions visibles, aucun débordement ; titre long et médias absents OK`);
+    } finally {
+      await context.close();
+    }
+  }
 } finally {
   await browser.close();
 }

@@ -11,7 +11,14 @@ import {
 import { ArrowLeft, Heart, Images, Map, MapPin, RefreshCw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import HikeGlobalInformation from "./hikeGlobalInformation";
 import { useHikeDetail } from "./useHikeDetail";
+
+// Half the page-container after its gutters and the split layout's column gap.
+const coverSizes =
+  "(min-width: 80rem) 36.5rem, (min-width: 64rem) calc(50vw - 3.5rem), (min-width: 48rem) calc(50vw - 2.5rem), (min-width: 40rem) calc(100vw - 3rem), calc(100vw - 2rem)";
+
+const quickAction = "gap-1.5 has-[>svg]:px-2 sm:has-[>svg]:px-3";
 
 export function HikeCollectionLink() {
   const { categoryId, stateId } = useAppParams();
@@ -22,7 +29,7 @@ export function HikeCollectionLink() {
     : category;
 
   return (
-    <Button asChild variant="ghost" className="min-h-11 px-2.5 text-primary">
+    <Button asChild variant="link" className="min-h-11 has-[>svg]:px-0">
       <Link href={href}>
         <ArrowLeft aria-hidden="true" />
         {hasState ? "Activités du massif" : "Activités de la catégorie"}
@@ -46,32 +53,24 @@ const HikeHeader = () => {
 
   return (
     <header aria-labelledby="hike-title">
-      <nav aria-label="Navigation de la fiche" className="mb-2">
+      <nav aria-label="Navigation de la fiche" className="mb-3 sm:mb-5">
         <HikeCollectionLink />
       </nav>
-      <div className="surface overflow-hidden">
-        {hike.mainImage?.path && (
-          <div className="relative h-36 bg-secondary sm:h-60 lg:h-[23rem]">
-            <Image
-              loader={authenticatedImageLoader}
-              src={`${config.IMAGE_URL}?path=${hike.mainImage.path}&rotate=${hike.mainImage.rotate ?? 0}`}
-              alt={`Paysage de la randonnée ${hike.title}`}
-              className="object-cover"
-              fill
-              priority
-              sizes="(min-width: 80rem) 76rem, (min-width: 64rem) calc(100vw - 4rem), (min-width: 40rem) calc(100vw - 3rem), calc(100vw - 2rem)"
-              style={{ objectPosition: `50% ${hike.mainImagePosition ?? 50}%` }}
-            />
-          </div>
-        )}
-        <div className="px-4 py-4 sm:px-6 sm:py-5">
+      <div
+        className={
+          hike.mainImage?.path
+            ? "grid items-center gap-5 md:grid-cols-2 md:gap-8 lg:gap-12"
+            : "max-w-3xl"
+        }
+      >
+        <div className="min-w-0">
           <h1
             id="hike-title"
-            className="text-2xl font-bold leading-tight tracking-[-0.025em] [overflow-wrap:anywhere] sm:text-4xl lg:text-5xl"
+            className="text-3xl leading-[1.08] font-bold tracking-[-0.03em] [overflow-wrap:anywhere] sm:text-4xl lg:text-5xl xl:text-[3.5rem]"
           >
             {hike.title}
           </h1>
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground empty:hidden sm:mt-3">
             {(hike.state?.name || hike.category?.name) && (
               <p className="flex min-w-0 items-center gap-1.5 [overflow-wrap:anywhere]">
                 <MapPin
@@ -86,21 +85,21 @@ const HikeHeader = () => {
               </p>
             )}
             {hike.difficulty?.name && (
-              <span className="rounded-full bg-sunrise-soft px-2.5 py-1 text-xs font-semibold text-accent-foreground">
+              <span className="font-semibold text-foreground [overflow-wrap:anywhere]">
                 Niveau {hike.difficulty.name}
               </span>
             )}
           </div>
+          <HikeGlobalInformation />
           <div
-            className="mt-3 flex flex-wrap gap-1.5 border-t pt-3 sm:gap-2"
+            className="mt-4 flex flex-wrap gap-2 sm:mt-5"
             role="group"
             aria-label="Actions de la randonnée"
           >
             {!!hike.gpxFiles?.length && (
               <Button
                 asChild
-                variant="outline"
-                className="min-h-11 gap-1.5 px-2.5 sm:px-3"
+                className={`${quickAction} shadow-none`}
               >
                 <a href="#carte">
                   <Map aria-hidden="true" /> Carte
@@ -111,7 +110,7 @@ const HikeHeader = () => {
               <Button
                 asChild
                 variant="outline"
-                className="min-h-11 gap-1.5 px-2.5 sm:px-3"
+                className={quickAction}
               >
                 <a
                   href="#photos"
@@ -146,7 +145,7 @@ const HikeHeader = () => {
                   if (isFavorite !== undefined)
                     setFavorite({ hikeId: hike.id, isFavorite: !isFavorite });
                 }}
-                className="min-h-11 gap-1.5 px-2.5 sm:px-3"
+                className={quickAction}
               >
                 <Heart
                   aria-hidden="true"
@@ -161,6 +160,20 @@ const HikeHeader = () => {
             )}
           </div>
         </div>
+        {hike.mainImage?.path && (
+          <div className="relative aspect-[16/10] overflow-hidden rounded-md bg-secondary md:aspect-[4/3] lg:aspect-[16/10]">
+            <Image
+              loader={authenticatedImageLoader}
+              src={`${config.IMAGE_URL}?path=${encodeURIComponent(hike.mainImage.path)}&rotate=${hike.mainImage.rotate ?? 0}`}
+              alt={`Paysage de la randonnée ${hike.title}`}
+              className="object-cover"
+              fill
+              priority
+              sizes={coverSizes}
+              style={{ objectPosition: `50% ${hike.mainImagePosition ?? 50}%` }}
+            />
+          </div>
+        )}
       </div>
     </header>
   );

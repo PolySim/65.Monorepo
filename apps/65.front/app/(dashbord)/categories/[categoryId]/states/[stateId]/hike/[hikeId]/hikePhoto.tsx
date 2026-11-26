@@ -2,7 +2,7 @@
 
 import { config } from "@/config/config";
 import { useHikeDetail } from "./useHikeDetail";
-import { Camera, ZoomIn } from "lucide-react";
+import { ZoomIn } from "lucide-react";
 import Image from "next/image";
 import authenticatedImageLoader from "@/lib/authenticated-image-loader";
 import ImageContainer from "./ImageContainer";
@@ -28,19 +28,16 @@ const HikePhoto = () => {
     <section
       id="photos"
       tabIndex={-1}
-      className="mt-8 scroll-mt-24 sm:mt-12"
+      className="mt-8 scroll-mt-24 border-t pt-6 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring sm:mt-12 sm:pt-8"
       aria-labelledby="hike-photos-title"
     >
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Camera aria-hidden="true" className="size-6 text-primary" />
-          <h2
-            id="hike-photos-title"
-            className="text-2xl font-semibold tracking-[-0.015em] text-foreground"
-          >
-            Le parcours en images
-          </h2>
-        </div>
+        <h2
+          id="hike-photos-title"
+          className="text-2xl font-semibold tracking-[-0.015em] text-foreground"
+        >
+          Le parcours en images
+        </h2>
         <p className="text-sm font-medium text-muted-foreground">
           {images.length} photo{images.length > 1 ? "s" : ""}
         </p>
@@ -72,7 +69,7 @@ const HikePhoto = () => {
               loader={authenticatedImageLoader}
               src={`${config.IMAGE_URL}?path=${image.path}&rotate=${image.rotate ?? 0}`}
               alt={`Photo ${index + 1} de la randonnée ${hike?.title ?? ""}`}
-              className="object-cover transition-transform duration-200 ease-out group-hover:scale-[1.025] group-focus-visible:scale-[1.025]"
+              className="object-cover"
               fill
               quality={75}
               sizes={
@@ -85,11 +82,8 @@ const HikePhoto = () => {
                       : columnWidth
               }
             />
-            <span className="absolute inset-0 flex items-center justify-center bg-foreground/0 transition-colors duration-200 ease-out group-hover:bg-foreground/45 group-focus-visible:bg-foreground/45">
-              <span className="flex min-h-11 items-center gap-2 rounded-lg bg-card px-4 text-sm font-semibold text-foreground opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
-                <ZoomIn aria-hidden="true" className="size-4" />
-                Agrandir
-              </span>
+            <span aria-hidden="true" className="absolute right-3 bottom-3 grid size-11 place-items-center rounded-md bg-card text-primary-dark group-hover:bg-secondary group-focus-visible:bg-secondary">
+              <ZoomIn className="size-5" />
             </span>
           </ImageContainer>
         ))}

@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { parseArgs } from "node:util";
 
@@ -22,15 +23,29 @@ const hikes = ["wide", "single", "empty", "error"].map((id) => ({
   elevation: id === "wide" ? 0 : null,
   ...(id === "wide"
     ? {
-        mainImage: { id: "wide-cover", path: "fixture.svg" },
+        mainImage: { id: "wide-cover", path: "fixture-hike-cover.webp" },
+        mainImagePosition: 23,
+        content: "Une boucle fictive traverse les pentes du massif avant de rejoindre le col. Le retour emprunte le vallon, puis retrouve le sentier de départ.\nLe parcours alterne passages dégagés et lisières en sous-bois.",
+        indication: "Itinéraire fictif pour les essais. Aucun balisage ni accès réel n’est décrit.",
         distance: 12.5,
         duration: "4 h 30",
         difficulty: { id: "marcheur", name: "Marcheur" },
       }
     : {}),
-  images: id === "wide" ? [{ id: "wide-photo", path: "fixture.svg" }] : [],
+  images: id === "wide" ? [{ id: "wide-photo", path: "fixture-hike-photo.webp" }] : [],
   gpxFiles: [{ path: `${id}.gpx` }],
 }));
+
+const sparseHike = {
+  id: "long-no-media",
+  title: "Traversée des crêtes et des vallons du Massif Sud par le sentier de Montagnedelagrandecrêteetdeshautesvallées",
+  category: categories[1],
+  state: south,
+};
+const hikePhotos = {
+  "fixture-hike-cover.webp": await readFile(new URL("../public/Home/neige-900.webp", import.meta.url)),
+  "fixture-hike-photo.webp": await readFile(new URL("../public/Home/refuge-900.webp", import.meta.url)),
+};
 
 const catalogHikes = Array.from({ length: 24 }, (_, index) => ({
   ...hikes[0],
@@ -140,6 +155,7 @@ createServer(async (req, res) => {
       return json(null, 503);
     }
     if (pathname === "/hikes/missing-empty") return file("", "text/plain");
+    if (pathname === `/hikes/${sparseHike.id}`) return json(sparseHike);
     const hike = (mode === "catalog" ? catalogHikes : hikes).find(
       ({ id }) => pathname === `/hikes/${id}`,
     );
@@ -153,12 +169,16 @@ createServer(async (req, res) => {
       "wide.gpx":
         '<trk><trkseg><trkpt lat="42.1" lon="-1.8"/><trkpt lat="42.35" lon="-1.45"/></trkseg><trkseg><trkpt lat="42.5" lon="-0.7"/><trkpt lat="42.8" lon="-0.5"/></trkseg></trk><trk><trkseg><trkpt lat="43" lon="0.7"/><trkpt lat="43.2" lon="1.7"/></trkseg></trk>',
       "single.gpx": '<trk><trkseg><trkpt lat="42.8" lon="0.1"/></trkseg></trk>',
-      "empty.gpx": "",
     };
+    if (name === "empty.gpx") return file("", "application/gpx+xml");
     if (!Object.hasOwn(tracks, name)) return json(null, 404);
     return file(`<gpx>${tracks[name]}</gpx>`, "application/gpx+xml");
   }
   const imagePath = url.searchParams.get("path");
+  if (pathname === "/images" && Object.hasOwn(hikePhotos, imagePath)) {
+    if (delayMs) await delay();
+    return file(hikePhotos[imagePath], "image/webp");
+  }
   if (
     pathname === "/images" &&
     (imagePath === "fixture.svg" ||

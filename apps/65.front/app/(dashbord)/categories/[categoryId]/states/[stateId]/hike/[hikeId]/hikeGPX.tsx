@@ -6,7 +6,7 @@ import { getGpxDownloadUrl } from "@/lib/media-url";
 import { useHikeDetail } from "./useHikeDetail";
 import { latLngBounds, type FitBoundsOptions, type LatLngTuple } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Download, Map, Navigation } from "lucide-react";
+import { Download, Map } from "lucide-react";
 import {
   CircleMarker,
   MapContainer,
@@ -69,7 +69,7 @@ const HikeGPX = ({
       bounds={track.bounds}
       boundsOptions={trackBoundsOptions}
       scrollWheelZoom={true}
-      className="h-80 w-full rounded-xl outline outline-1 -outline-offset-1 outline-border !z-0 sm:h-[26rem]"
+      className="h-80 w-full rounded-md outline outline-1 -outline-offset-1 outline-border !z-0 [&_.leaflet-bar]:shadow-none [&_.leaflet-bar]:border [&_.leaflet-bar]:border-border sm:h-[26rem]"
       aria-label={`Carte interactive du parcours ${hike?.title ?? ""}`}
     >
       <TileLayer
@@ -108,15 +108,12 @@ const HikeGPX = ({
     <section aria-labelledby="hike-gpx-title">
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="flex items-center gap-3">
-            <Navigation aria-hidden="true" className="size-6 text-primary" />
-            <h2
-              id="hike-gpx-title"
-              className="text-2xl font-semibold tracking-[-0.015em] text-foreground"
-            >
-              Tracé du parcours
-            </h2>
-          </div>
+          <h2
+            id="hike-gpx-title"
+            className="text-2xl font-semibold tracking-[-0.015em] text-foreground"
+          >
+            Tracé du parcours
+          </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
             Consultez l’itinéraire sur la carte ou téléchargez le fichier pour
             votre application GPS.
@@ -124,7 +121,7 @@ const HikeGPX = ({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button asChild aria-label="Télécharger le tracé GPX">
+          <Button asChild variant="outline" aria-label="Télécharger le tracé GPX">
             <a
               href={getGpxDownloadUrl(hike?.gpxFiles?.[0]?.path ?? "")}
               download={`${hike?.title}.gpx`}

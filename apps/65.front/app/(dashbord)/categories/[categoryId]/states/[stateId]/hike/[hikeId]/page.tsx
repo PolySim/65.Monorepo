@@ -26,7 +26,7 @@ async function HikeDetailRoute({ params }: Props) {
 
 export default function HikePage({ params }: Props) {
   return (
-    <div className="flex min-h-[60vh] flex-1 flex-col bg-background py-3 sm:py-6 lg:py-8">
+    <div className="flex min-h-[60vh] flex-1 flex-col bg-background py-3 sm:py-6 lg:py-8 [&_:is(a,button):focus-visible]:outline-2 [&_:is(a,button):focus-visible]:outline-offset-2 [&_:is(a,button):focus-visible]:outline-ring">
       <Suspense fallback={<HikePageSkeleton />}>
         <HikeDetailRoute params={params} />
       </Suspense>
