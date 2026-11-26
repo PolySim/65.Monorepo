@@ -1,6 +1,6 @@
 "use client";
 
-import { useHikeById } from "@/queries/hike.queries";
+import { useHikeDetail } from "./useHikeDetail";
 import { Clock3, Mountain, Route } from "lucide-react";
 
 const fact =
@@ -12,7 +12,7 @@ const value =
   "mt-0.5 text-sm font-semibold tabular-nums [overflow-wrap:anywhere] sm:text-lg";
 
 const HikeGlobalInformation = () => {
-  const { data: hike } = useHikeById();
+  const hike = useHikeDetail();
 
   if (!hike || !(hike.distance || hike.duration || hike.elevation != null))
     return null;

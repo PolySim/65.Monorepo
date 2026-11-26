@@ -10,6 +10,28 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "../ui/button";
 
+function MassifPhoto({ src, eager }: { src?: string | null; eager: boolean }) {
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <span className="relative grid aspect-[8/5] place-items-center bg-secondary text-primary-dark">
+      <MountainSnow className="size-5" aria-hidden="true" />
+      {src && !failed && (
+        <Image
+          loader={authenticatedImageLoader}
+          src={src}
+          alt=""
+          fill
+          sizes="160px"
+          loading={eager ? "eager" : "lazy"}
+          onError={() => setFailed(true)}
+          className="object-cover"
+        />
+      )}
+    </span>
+  );
+}
+
 const Menu = () => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -72,12 +94,12 @@ const Menu = () => {
         id={menuId}
         aria-label="Catégories"
         hidden={!isOpen}
-        className="absolute top-[calc(100%+0.625rem)] right-0 z-50 w-[min(46rem,calc(100vw-2rem))] rounded-xl bg-popover p-3 text-popover-foreground shadow-[0_16px_36px_-16px_oklch(0.12_0.02_155/0.45)] outline outline-1 -outline-offset-1 outline-border"
+        className="absolute top-[calc(100%+0.625rem)] right-0 z-50 max-h-[min(65vh,28rem)] w-88 overflow-y-auto rounded-lg border border-border bg-popover p-3 text-popover-foreground"
       >
         {isOpen &&
           (isPending ? (
             <div
-              className="w-56 space-y-2"
+              className="space-y-2"
               role="status"
               aria-label="Chargement des catégories"
             >
@@ -95,21 +117,17 @@ const Menu = () => {
               </Button>
             </div>
           ) : categories?.length ? (
-            <ul className="max-h-[min(65vh,28rem)] min-h-64 w-56 overflow-y-auto">
-              <li
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-y-3 right-3 left-62 rounded-lg bg-muted"
-              />
+            <ul className="divide-y divide-border">
               {categories.map((category) => {
                 const states = category.states ?? [];
                 const expanded = activeId === category.id;
                 const panelId = `${menuId}-${category.id}`;
 
                 return (
-                  <li key={category.id}>
+                  <li key={category.id} className="py-1 first:pt-0 last:pb-0">
                     <div
                       className={cn(
-                        "mb-1 flex items-center gap-1 rounded-lg",
+                        "flex items-center gap-1 rounded-md",
                         expanded && "bg-secondary",
                       )}
                     >
@@ -134,42 +152,39 @@ const Menu = () => {
                         >
                           <ChevronDown
                             aria-hidden="true"
-                            className={cn(expanded && "-rotate-90")}
+                            className={cn(expanded && "rotate-180")}
                           />
                         </Button>
                       )}
                     </div>
                     {states.length > 0 && (
-                      <div
-                        id={panelId}
-                        hidden={!expanded}
-                        className="absolute inset-y-3 right-3 left-62 overflow-y-auto rounded-lg bg-muted p-2"
-                      >
+                      <div id={panelId} hidden={!expanded} className="py-2">
                         {expanded && (
                           <ul className="grid grid-cols-2 gap-2">
-                            {states.map((state) => (
-                              <li key={state.id}>
-                                <Link
-                                  onClick={close}
-                                  href={`/categories/${category.id}/states/${state.id}`}
-                                  className="group relative flex min-h-28 items-end overflow-hidden rounded-lg bg-primary outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                >
-                                  {state.image_path && (
-                                    <Image
-                                      loader={authenticatedImageLoader}
-                                      src={`${config.IMAGE_URL}?path=${state.image_path}&rotate=0`}
-                                      alt=""
-                                      fill
-                                      sizes="250px"
-                                      className="object-cover transition-transform duration-200 group-hover:scale-[1.03] motion-reduce:transform-none"
+                            {states.map((state, index) => {
+                              const src = state.image_path
+                                ? `${config.IMAGE_URL}?path=${encodeURIComponent(state.image_path)}&rotate=0`
+                                : null;
+
+                              return (
+                                <li key={state.id}>
+                                  <Link
+                                    onClick={close}
+                                    href={`/categories/${category.id}/states/${state.id}`}
+                                    className="flex h-full flex-col overflow-hidden rounded-md border border-border text-sm font-medium outline-none hover:border-primary hover:underline focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-ring"
+                                  >
+                                    <MassifPhoto
+                                      key={src}
+                                      src={src}
+                                      eager={index < 2}
                                     />
-                                  )}
-                                  <span className="relative w-full bg-gradient-to-t from-black/75 to-transparent p-3 text-sm font-semibold text-white">
-                                    {state.name}
-                                  </span>
-                                </Link>
-                              </li>
-                            ))}
+                                    <span className="px-2.5 py-2 [overflow-wrap:anywhere]">
+                                      {state.name}
+                                    </span>
+                                  </Link>
+                                </li>
+                              );
+                            })}
                           </ul>
                         )}
                       </div>

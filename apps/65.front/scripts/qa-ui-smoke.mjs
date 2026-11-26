@@ -17,7 +17,7 @@ const {
 const { chromium } = createRequire(import.meta.url)(playwright);
 const origin = "http://127.0.0.1:46254";
 if (output) await mkdir(output, { recursive: true });
-const browser = await chromium.launch({ executablePath });
+let browser = await chromium.launch({ executablePath });
 const media = (urls) =>
   urls.filter((url) => /\/(Home\/|fond_ecran-)/.test(url));
 const hikePath = "/categories/ski/states/south/hike/";
@@ -255,7 +255,7 @@ try {
         .waitFor();
       await page.goto(`${origin}${hikePath}missing`);
       await page
-        .getByRole("heading", { name: "Impossible de charger cette activité" })
+        .getByRole("heading", { name: "Randonnée introuvable" })
         .waitFor();
       await page.getByRole("link", { name: "Activités du massif" }).waitFor();
       await page.goto(origin);
@@ -274,6 +274,9 @@ try {
     await context.close();
   }
 
+  // Isolate the desktop keyboard/map suite from the member journey browser.
+  await browser.close();
+  browser = await chromium.launch({ executablePath });
   const { context, page, urls } = await open("/", { mode: "keys" });
   const trigger = page.getByRole("button", { name: "Catégories", exact: true });
   await trigger.focus();
@@ -373,11 +376,15 @@ try {
   await page
     .getByText("Aperçu du tracé indisponible", { exact: true })
     .waitFor();
-  await page.goto(`${origin}${hikePath}error`);
-  await page
+  await context.close();
+
+  const gpxError = await open(`${hikePath}error`, { mode: "normal" });
+  await gpxError.page
     .getByRole("heading", { name: "L’aperçu du tracé est indisponible" })
     .waitFor();
-  await context.close();
+  await gpxError.page.getByRole("button", { name: "Réessayer" }).waitFor();
+  await gpxError.page.getByRole("link", { name: "Télécharger le GPX" }).waitFor();
+  await gpxError.context.close();
 
   for (const mode of ["empty", "error"]) {
     const { context, page } = await open("/", { mode });

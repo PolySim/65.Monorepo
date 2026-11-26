@@ -1,7 +1,7 @@
 "use client";
 
 import { config } from "@/config/config";
-import { useHikeById } from "@/queries/hike.queries";
+import { useHikeDetail } from "./useHikeDetail";
 import { Camera, ZoomIn } from "lucide-react";
 import Image from "next/image";
 import authenticatedImageLoader from "@/lib/authenticated-image-loader";
@@ -18,7 +18,7 @@ const columnWidth =
   "(min-width: 80rem) 24.84rem, (min-width: 64rem) calc(33.333vw - 1.84rem), (min-width: 40rem) calc(50vw - 1.875rem), calc(100vw - 2rem)";
 
 const HikePhoto = () => {
-  const { data: hike } = useHikeById();
+  const hike = useHikeDetail();
   const images = hike?.images ?? [];
   const hasFeatureLayout = images.length >= 3;
 

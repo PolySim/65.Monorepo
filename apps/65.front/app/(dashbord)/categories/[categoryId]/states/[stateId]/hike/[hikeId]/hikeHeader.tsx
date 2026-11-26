@@ -5,13 +5,13 @@ import { config } from "@/config/config";
 import { useAppParams } from "@/hook/useAppParams";
 import authenticatedImageLoader from "@/lib/authenticated-image-loader";
 import {
-  useHikeById,
   useHikeFavoriteStatus,
   useSetFavorite,
 } from "@/queries/hike.queries";
 import { ArrowLeft, Heart, Images, Map, MapPin, RefreshCw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useHikeDetail } from "./useHikeDetail";
 
 export function HikeCollectionLink() {
   const { categoryId, stateId } = useAppParams();
@@ -32,7 +32,7 @@ export function HikeCollectionLink() {
 }
 
 const HikeHeader = () => {
-  const { data: hike } = useHikeById();
+  const hike = useHikeDetail();
   const favoriteStatus = useHikeFavoriteStatus(!!hike?.id);
   const { mutate: setFavorite, isPending: isSettingFavorite } =
     useSetFavorite();

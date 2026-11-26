@@ -1,10 +1,10 @@
 "use client";
 
-import { useHikeById } from "@/queries/hike.queries";
+import { useHikeDetail } from "./useHikeDetail";
 import { AlertTriangle, Info } from "lucide-react";
 
 const HikeDescription = () => {
-  const { data: hike } = useHikeById();
+  const hike = useHikeDetail();
   const description = hike?.content?.trim();
   const indications = hike?.indication?.trim();
 

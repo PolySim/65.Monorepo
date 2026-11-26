@@ -1,12 +1,12 @@
 "use client";
 
 import { config } from "@/config/config";
-import { useHikeById } from "@/queries/hike.queries";
+import { useHikeDetail } from "./useHikeDetail";
 import Image from "next/image";
 import authenticatedImageLoader from "@/lib/authenticated-image-loader";
 
 const ImagesCarroussel = () => {
-  const { data: hike } = useHikeById();
+  const hike = useHikeDetail();
   const images = hike?.images ?? [];
 
   return (

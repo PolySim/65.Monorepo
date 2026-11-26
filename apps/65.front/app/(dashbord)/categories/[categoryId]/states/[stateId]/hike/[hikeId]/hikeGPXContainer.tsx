@@ -2,10 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { getGpxDownloadUrl } from "@/lib/media-url";
-import { useGpxFile } from "@/queries/gpx.queries";
-import { useHikeById } from "@/queries/hike.queries";
+import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, Download, RefreshCw } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useHikeDetail } from "./useHikeDetail";
 
 const HikeGPX = dynamic(() => import("./hikeGPX"), {
   ssr: false,
@@ -19,9 +19,17 @@ const HikeGPX = dynamic(() => import("./hikeGPX"), {
 });
 
 const HikeGPXContainer = () => {
-  const { data: hike } = useHikeById();
+  const hike = useHikeDetail();
   const gpxPath = hike?.gpxFiles?.[0]?.path ?? "";
-  const { data: gpxFile, isPending, isError, refetch } = useGpxFile(gpxPath);
+  const { data: gpxFile, isPending, isError, refetch } = useQuery({
+    queryKey: ["hike-gpx", gpxPath],
+    enabled: !!gpxPath,
+    queryFn: async ({ signal }) => {
+      const response = await fetch(getGpxDownloadUrl(gpxPath), { signal, cache: "no-store" });
+      if (!response.ok) throw new Error("Impossible de charger le tracé GPX");
+      return response.text();
+    },
+  });
 
   if (!hike?.gpxFiles?.length) return null;
 

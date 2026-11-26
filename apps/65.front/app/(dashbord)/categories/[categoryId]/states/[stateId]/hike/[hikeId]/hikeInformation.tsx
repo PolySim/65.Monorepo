@@ -1,23 +1,22 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useHikeById } from "@/queries/hike.queries";
 import { AlertTriangle, MapPinned, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import HikeDescription from "./hikeDescription";
 import HikeGlobalInformation from "./hikeGlobalInformation";
 import HikeGPXContainer from "./hikeGPXContainer";
 import HikeHeader, { HikeCollectionLink } from "./hikeHeader";
 import HikePageSkeleton from "./hikePageSkeleton";
 import HikePhoto from "./hikePhoto";
+import { useHikeDetail } from "./useHikeDetail";
 
-const HikeInformation = () => {
-  const { data: hike, isPending, isError, refetch } = useHikeById();
+export function HikeUnavailable({ missing }: { missing: boolean }) {
+  const router = useRouter();
+  const [retrying, startTransition] = useTransition();
 
-  if (isPending) {
-    return <HikePageSkeleton />;
-  }
-
-  if (isError) {
+  if (!missing) {
     return (
       <section className="page-container" aria-labelledby="hike-load-error">
         <div className="mb-2">
@@ -37,33 +36,41 @@ const HikeInformation = () => {
           <p className="mt-2 max-w-md text-muted-foreground">
             Vérifiez votre connexion puis relancez le chargement.
           </p>
-          <Button className="mt-6" variant="outline" onClick={() => refetch()}>
+          <Button
+            className="mt-6"
+            variant="outline"
+            disabled={retrying}
+            onClick={() => startTransition(() => router.refresh())}
+          >
             <RefreshCw aria-hidden="true" />
-            Réessayer
+            {retrying ? "Chargement…" : "Réessayer"}
           </Button>
         </div>
       </section>
     );
   }
 
-  if (!hike) {
-    return (
-      <section className="page-container" aria-labelledby="hike-not-found">
-        <div className="mb-2">
-          <HikeCollectionLink />
-        </div>
-        <div className="surface flex min-h-72 flex-col items-center justify-center px-6 py-12 text-center">
-          <MapPinned aria-hidden="true" className="mb-4 size-10 text-primary" />
-          <h1 id="hike-not-found" className="text-2xl font-semibold">
-            Randonnée introuvable
-          </h1>
-          <p className="mt-2 max-w-md text-muted-foreground">
-            Cette randonnée n’est plus disponible ou n’a pas pu être chargée.
-          </p>
-        </div>
-      </section>
-    );
-  }
+  return (
+    <section className="page-container" aria-labelledby="hike-not-found">
+      <div className="mb-2">
+        <HikeCollectionLink />
+      </div>
+      <div className="surface flex min-h-72 flex-col items-center justify-center px-6 py-12 text-center">
+        <MapPinned aria-hidden="true" className="mb-4 size-10 text-primary" />
+        <h1 id="hike-not-found" className="text-2xl font-semibold">
+          Randonnée introuvable
+        </h1>
+        <p className="mt-2 max-w-md text-muted-foreground">
+          Cette randonnée n’est plus disponible.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+const HikeInformation = () => {
+  const hike = useHikeDetail();
+  if (!hike) return <HikePageSkeleton />;
 
   return (
     <article className="page-container pb-6 sm:pb-10">

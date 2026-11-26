@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { SimpleGPXParser } from "@/lib/gpx";
 import { getGpxDownloadUrl } from "@/lib/media-url";
-import { useHikeById } from "@/queries/hike.queries";
+import { useHikeDetail } from "./useHikeDetail";
 import { latLngBounds, type FitBoundsOptions, type LatLngTuple } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Download, Map, Navigation } from "lucide-react";
@@ -40,12 +40,7 @@ const HikeGPX = ({
   gpx: string;
   compact?: boolean;
 }) => {
-  const { data: hike } = useHikeById({
-    select: (data) => ({
-      gpxFiles: data.data?.gpxFiles,
-      title: data.data?.title,
-    }),
-  });
+  const hike = useHikeDetail();
 
   const track = useMemo(() => {
     try {

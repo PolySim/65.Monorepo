@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { parseArgs } from "node:util";
 
 const state = (id, name) => ({ id, name, image_path: "fixture.svg" });
 const north = state("north", "Massif Nord");
@@ -31,9 +32,46 @@ const hikes = ["wide", "single", "empty", "error"].map((id) => ({
   gpxFiles: [{ path: `${id}.gpx` }],
 }));
 
+const catalogHikes = Array.from({ length: 24 }, (_, index) => ({
+  ...hikes[0],
+  id: `catalog-${index}`,
+  title: `Activité catalogue ${index}`,
+  mainImage:
+    index === 2
+      ? null
+      : { id: `cover-${index}`, path: `catalog-${index}.svg` },
+}));
+
+const catalogCategories = categories.map((category) =>
+  category.id === "ski"
+    ? {
+        ...category,
+        states: [
+          { ...south, image_path: "catalog-menu.svg" },
+          { ...state("east", "Massif Est"), image_path: "catalog-1.svg" },
+          { ...state("west", "Massif Ouest"), image_path: null },
+        ],
+      }
+    : category,
+);
+
+const { values: args } = parseArgs({ options: {
+  "hike-delay": { type: "string", default: "0" },
+  "hike-trace": { type: "boolean" },
+} });
+const delayMs = Number(args["hike-delay"]);
+const delay = () => new Promise((resolve) => setTimeout(resolve, delayMs));
+const retryAttempts = new Set();
+
 createServer(async (req, res) => {
   const url = new URL(req.url, "http://127.0.0.1");
   const { pathname } = url;
+  if (args["hike-trace"]) {
+    const start = Date.now();
+    res.once("finish", () => console.log(JSON.stringify({
+      pathname, method: req.method, start, end: Date.now(), status: res.statusCode,
+    })));
+  }
   const mode = /(?:^|;\s*)qa-ui=([\w-]+)/.exec(req.headers.cookie ?? "")?.[1];
   const json = (data, status = 200) => {
     res.writeHead(status, { "Content-Type": "application/json" });
@@ -44,13 +82,14 @@ createServer(async (req, res) => {
     res.end(text);
   };
   if (pathname === "/api/auth/get-session")
-    return json(mode ? { user: { id: "fixture", name: "QA fictive" } } : null);
+    return json(mode ? { user: { id: `fixture-${mode}`, name: "QA fictive" } } : null);
   if (!mode) return json(null, 401);
   if (pathname === "/users") return json({ id: "fixture", roleId: "member" });
   if (pathname === "/categories") {
     await new Promise((resolve) => setTimeout(resolve, 650));
     if (mode === "error") return json(null, 503);
-    return json(mode === "empty" ? [] : categories);
+    if (mode === "empty") return json([]);
+    return json(mode === "catalog" ? catalogCategories : categories);
   }
   if (pathname === "/hikes/filters") {
     let body = "";
@@ -60,7 +99,7 @@ createServer(async (req, res) => {
     if (stateId === "east")
       await new Promise((resolve) => setTimeout(resolve, 800));
     return json(
-      hikes.filter(
+      (mode === "catalog" ? catalogHikes : hikes).filter(
         (hike) =>
           (!categoryId || hike.category.id === categoryId) &&
           (!stateId || hike.state.id === stateId),
@@ -88,15 +127,27 @@ createServer(async (req, res) => {
         })),
     );
   }
-  if (pathname.endsWith("/favorite"))
+  if (pathname.endsWith("/favorite")) {
+    if (delayMs) await delay();
     return mode === "member-error"
       ? json(null, 503)
       : json({ isFavorite: mode === "saved" });
+  }
   if (pathname.startsWith("/hikes/")) {
-    const hike = hikes.find(({ id }) => pathname === `/hikes/${id}`);
+    if (delayMs) await delay();
+    if (mode === "detail-retry" && !retryAttempts.has(req.headers.cookie)) {
+      retryAttempts.add(req.headers.cookie);
+      return json(null, 503);
+    }
+    if (pathname === "/hikes/missing-empty") return file("", "text/plain");
+    const hike = (mode === "catalog" ? catalogHikes : hikes).find(
+      ({ id }) => pathname === `/hikes/${id}`,
+    );
+    if (hike && mode === "detail-other") return json({ ...hike, title: "Autre compte fictif" });
     return json(hike ?? null, hike ? 200 : 404);
   }
   if (pathname === "/gpx") {
+    if (delayMs) await delay();
     const name = url.searchParams.get("path");
     const tracks = {
       "wide.gpx":
@@ -107,10 +158,14 @@ createServer(async (req, res) => {
     if (!Object.hasOwn(tracks, name)) return json(null, 404);
     return file(`<gpx>${tracks[name]}</gpx>`, "application/gpx+xml");
   }
+  const imagePath = url.searchParams.get("path");
   if (
     pathname === "/images" &&
-    url.searchParams.get("path") === "fixture.svg"
+    (imagePath === "fixture.svg" ||
+      (imagePath !== "catalog-1.svg" &&
+        /^catalog-(?:menu|\d+)\.svg$/.test(imagePath ?? "")))
   ) {
+    if (delayMs) await delay();
     return file(
       '<svg xmlns="http://www.w3.org/2000/svg" width="480" height="300"><rect width="480" height="300" fill="#346854"/></svg>',
       "image/svg+xml",

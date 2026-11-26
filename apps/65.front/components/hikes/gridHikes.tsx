@@ -7,20 +7,25 @@ import { AlertTriangle, RefreshCw } from "lucide-react";
 import EmptyHikes from "./emptyHikes";
 import HikeElement from "./hikeElement";
 
+const gridClassName =
+  "grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 xl:gap-x-8";
+
 const HikeGridSkeleton = () => (
-  <div
-    className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3"
-    role="status"
-  >
+  <div className={gridClassName} role="status">
     <span className="sr-only">Chargement des activités</span>
     {Array.from({ length: 6 }).map((_, index) => (
-      <div key={index} className="surface overflow-hidden">
+      <div
+        key={index}
+        aria-hidden="true"
+        className="overflow-hidden rounded-md border border-border bg-card"
+      >
         <div className="skeleton aspect-[16/10]" />
-        <div className="space-y-3 p-5">
-          <div className="skeleton h-3 w-20 rounded" />
-          <div className="skeleton h-6 w-3/4 rounded" />
-          <div className="skeleton h-4 w-2/5 rounded" />
-          <div className="skeleton mt-5 h-10 rounded-lg" />
+        <div className="px-4 pt-4 pb-3 sm:px-5 sm:pt-5 sm:pb-4">
+          <div className="skeleton h-4 w-1/3 rounded" />
+          <div className="skeleton mt-1.5 h-[1.5625rem] w-3/4 rounded" />
+          <div className="mt-4 border-t border-border pt-3">
+            <div className="skeleton h-5 w-1/2 rounded" />
+          </div>
         </div>
       </div>
     ))}
@@ -39,7 +44,7 @@ const GridHikes = (props: { isFavorites?: boolean; isAdmin?: boolean }) => {
   if (query.isError) {
     return (
       <div
-        className="surface flex min-h-72 flex-col items-center justify-center px-6 py-10 text-center"
+        className="flex min-h-72 rounded-md border border-border bg-card flex-col items-center justify-center px-6 py-10 text-center"
         role="alert"
       >
         <span className="flex size-12 items-center justify-center rounded-xl bg-sunrise-soft text-accent-foreground">
@@ -67,9 +72,14 @@ const GridHikes = (props: { isFavorites?: boolean; isAdmin?: boolean }) => {
   }
 
   return hikes && hikes.length > 0 ? (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-      {hikes.map((hike) => (
-        <HikeElement key={hike.id} hike={hike} isAdmin={props.isAdmin} />
+    <div className={gridClassName}>
+      {hikes.map((hike, index) => (
+        <HikeElement
+          key={hike.id}
+          hike={hike}
+          isAdmin={props.isAdmin}
+          priority={index === 0}
+        />
       ))}
     </div>
   ) : (

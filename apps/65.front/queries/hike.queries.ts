@@ -3,7 +3,6 @@ import {
   deleteHike,
   getHikeById,
   getHikeFavorites,
-  getHikeFavoriteStatus,
   getHikeSuggestions,
   getHikes,
   setHikeFavorite,
@@ -13,6 +12,7 @@ import { useAppParams } from "@/hook/useAppParams";
 import {
   CreateHikeDto,
   Hike,
+  HikeFavoriteStatus,
   HikeFilter,
   HIKE_SUGGESTION_MAX_LENGTH,
   UpdateHikeDto,
@@ -100,12 +100,13 @@ export const useHikeFavoriteStatus = (enabled: boolean) => {
   const { hikeId } = useAppParams();
   return useQuery({
     queryKey: favoriteStatusKey(hikeId),
-    queryFn: async () => {
-      const response = await getHikeFavoriteStatus(hikeId);
-      if (!response.success || !response.data) {
-        throw new Error("Impossible de charger le statut favori");
-      }
-      return response.data;
+    queryFn: async ({ signal }) => {
+      const response = await fetch(`/api/hikes/${encodeURIComponent(hikeId)}/favorite`, {
+        cache: "no-store",
+        signal,
+      });
+      if (!response.ok) throw new Error("Impossible de charger le statut favori");
+      return (await response.json()) as HikeFavoriteStatus;
     },
     enabled: enabled && !!hikeId,
     staleTime: 0,

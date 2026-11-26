@@ -27,3 +27,11 @@ node scripts/qa-ui-smoke.mjs \
 Le même smoke couvre le parcours membre à 390 × 844 et 1280 × 850 : suggestions au clavier, collection et liens de massif, favoris présents/vides/en erreur, fiche ouverte dans un onglet neuf, accès carte/photos et retour de focus après fermeture de la galerie. Les captures `member-*` sont enregistrées dans `--output`. Les images d’activités sont synthétiques ; le fond de carte externe est volontairement bloqué. La suite `qa-data-favorites.mjs` reste dédiée à la mutation des favoris et à l’isolation des comptes.
 
 Pour le rapport `qa-ui`, indiquer les routes, dimensions/DPR, ordre de tabulation et focus après Échap, marge/zoom/point GPX, visibilité de `0 m`, et URL/statut/octets des images desktop ainsi que l’absence de requêtes mobiles pour ces images. Joindre captures et/ou relevé Réseau, avec localisation précise des écarts.
+
+### Catalogue et menu des catégories
+
+```sh
+node scripts/qa-catalog.mjs --playwright "$PW" --chromium "$CH" --output /tmp/65-catalog
+```
+
+Sur `/categories/ski` avec `qa-ui=catalog`, la fixture sert 24 cartes dont une photo en 404 et une photo NULL. Le scénario vérifie les fallbacks, le focus et l’absence de déplacement au survol, les états du menu au clavier et le chargement initial des images, à 390, 820 et 1440 px (ce dernier à DPR 1 et 2). `--baseline` relève les mêmes métriques froides sans imposer les nouvelles assertions. Les octets sont ceux observés pour `/api/images` sur la fixture ; le SVG synthétique n’est pas redimensionné par la fixture, donc ces octets ne permettent pas d’estimer le gain des photos réelles.

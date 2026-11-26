@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { useHikeById } from "@/queries/hike.queries";
+import { useHikeDetail } from "./useHikeDetail";
 import { ChevronLeft, ChevronRight, XIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ImagesCarroussel from "./ImagesCarroussel";
@@ -28,7 +28,7 @@ const ImageContainer = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  const { data: hike } = useHikeById();
+  const hike = useHikeDetail();
   const containerRef = useRef<HTMLDivElement>(null);
   const imageCount = hike?.images?.length ?? 0;
 

@@ -130,7 +130,7 @@ export const getHikeFavorites = async () => {
   }
 };
 
-async function requestFavoriteStatus(hikeId: string, isFavorite?: boolean) {
+export async function setHikeFavorite(hikeId: string, isFavorite: boolean) {
   try {
     const authHeaders = await getAuthHeaders();
     if (!authHeaders) return { success: false };
@@ -138,13 +138,10 @@ async function requestFavoriteStatus(hikeId: string, isFavorite?: boolean) {
     const res = await fetch(
       `${config.API_URL}/hikes/${encodeURIComponent(hikeId)}/favorite`,
       {
-        headers: authHeaders,
+        method: "PUT",
+        headers: { ...authHeaders, "Content-Type": "application/json" },
         cache: "no-store",
-        ...(isFavorite !== undefined && {
-          method: "PUT",
-          headers: { ...authHeaders, "Content-Type": "application/json" },
-          body: JSON.stringify({ isFavorite }),
-        }),
+        body: JSON.stringify({ isFavorite }),
       },
     );
     if (!res.ok) return { success: false };
@@ -155,12 +152,6 @@ async function requestFavoriteStatus(hikeId: string, isFavorite?: boolean) {
     return { success: false };
   }
 }
-
-export const getHikeFavoriteStatus = async (hikeId: string) =>
-  requestFavoriteStatus(hikeId);
-
-export const setHikeFavorite = async (hikeId: string, isFavorite: boolean) =>
-  requestFavoriteStatus(hikeId, isFavorite);
 
 export const createHike = async (hike: CreateHikeDto) => {
   try {
